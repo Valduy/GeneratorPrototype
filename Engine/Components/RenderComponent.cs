@@ -53,15 +53,9 @@ namespace GameEngine.Components
                 for (int i = 0; i < triangles.Length; i += 3)
                 {
                     var offset = i * 9;
-                    result[offset] = Shape[triangles[i]].X;
-                    result[offset + 1] = Shape[triangles[i]].Y;
-                    result[offset + 2] = 0;
-                    result[offset + 3] = Shape[triangles[i + 1]].X;
-                    result[offset + 4] = Shape[triangles[i + 1]].Y;
-                    result[offset + 5] = 0;
-                    result[offset + 6] = Shape[triangles[i + 2]].X;
-                    result[offset + 7] = Shape[triangles[i + 2]].Y;
-                    result[offset + 8] = 0;
+                    WriteVector2ToArray(new ArraySegment<float>(result, offset, 3), Shape[triangles[i]]);
+                    WriteVector2ToArray(new ArraySegment<float>(result, offset + 3, 3), Shape[triangles[i + 1]]);
+                    WriteVector2ToArray(new ArraySegment<float>(result, offset + 6, 3), Shape[triangles[i + 2]]);
                 }
 
                 return result;
@@ -72,14 +66,18 @@ namespace GameEngine.Components
 
                 for (int i = 0; i < Shape.Count; i++)
                 {
-                    int offset = i * 3;
-                    result[offset] = Shape[i].X;
-                    result[offset + 1] = Shape[i].Y;
-                    result[offset + 2] = 0;
+                    WriteVector2ToArray(new ArraySegment<float>(result, i * 3, 3), Shape[i]);
                 }
 
                 return result;
             }
+        }
+
+        private void WriteVector2ToArray(ArraySegment<float> segment, Vector2 vertex)
+        {
+            segment[0] = vertex.X;
+            segment[1] = vertex.Y;
+            segment[2] = 0;
         }
     }
 }

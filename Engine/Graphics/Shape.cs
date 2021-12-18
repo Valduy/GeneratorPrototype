@@ -8,8 +8,7 @@ namespace GameEngine.Graphics
         private readonly List<Vector2> _vertices;
 
         public int Count => _vertices.Count;
-
-        // TODO: simple polygon, order and colinear vertices check
+        
         public Shape(IEnumerable<Vector2> vertices)
         {
             _vertices = new List<Vector2>(vertices);

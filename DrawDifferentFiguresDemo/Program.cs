@@ -55,7 +55,6 @@ namespace DrawDifferentFiguresDemo
             });
             convexGo.Position = new Vector2(leftTopCornerX + 550, leftTopCornerY - 100);
 
-            // TODO: Well may be later....
             var nonConvexGo = game.Engine.CreateGameObject();
             nonConvexGo.Add(() => new RenderComponent(game.Window.Renderer)
             {
@@ -74,6 +73,24 @@ namespace DrawDifferentFiguresDemo
                 })
             });
             nonConvexGo.Position = new Vector2(leftTopCornerX + 700, leftTopCornerY - 100);
+
+            var complexGo = game.Engine.CreateGameObject();
+            complexGo.Add(() => new RenderComponent(game.Window.Renderer)
+            {
+                Color = Colors.Green,
+                Shape = new Shape(new[]
+                {
+                    new Vector2(-20, 10),
+                    new Vector2(-60, 0),
+                    new Vector2(0, -50),
+                    new Vector2(30, 30),
+                    new Vector2(50, -60),
+                    new Vector2(70, 0),
+                    new Vector2(20, 50),
+                    new Vector2(0, 20),
+                    new Vector2(-40, 60),
+                })
+            });
 
             game.Run();
         }

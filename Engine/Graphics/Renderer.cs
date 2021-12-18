@@ -106,16 +106,12 @@ namespace GameEngine.Graphics
             switch (context.Count)
             {
                 case 0:
-                    return;
                 case 1:
+                    return;
                 case 2:
                     GL.DrawArrays(PrimitiveType.Lines, 0, context.Count);
                     break;
-                case 3:
-                    GL.DrawArrays(PrimitiveType.Triangles, 0, context.Count);
-                    break;
                 default:
-                    //GL.DrawArrays(PrimitiveType.TriangleFan, 0, context.Count);
                     GL.DrawArrays(PrimitiveType.Triangles, 0, context.Count);
                     break;
             }

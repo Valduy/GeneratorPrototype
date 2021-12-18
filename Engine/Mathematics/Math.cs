@@ -5,11 +5,12 @@ namespace GameEngine.Mathematics
 {
     public static class Math
     {
+        // TODO: simple polygon, order and colinear vertices check
         public static int[] Triangulate(IReadOnlyList<Vector2> vertices)
         {
-            if (vertices.Count < 2)
+            if (vertices.Count < 3)
             {
-                throw new ArgumentException("Should have more then 2 vertices.");
+                throw new ArgumentException("Should have more then 3 vertices.");
             }
 
             var indexes = Enumerable.Range(0, vertices.Count).ToList();
@@ -25,12 +26,12 @@ namespace GameEngine.Mathematics
                     int b = indexes.GetCircular(i - 1);
                     int c = indexes.GetCircular(i + 1);
 
-                    var va = vertices[a];
-                    var vb = vertices[b];
-                    var vc = vertices[c];
+                    Vector2 va = vertices[a];
+                    Vector2 vb = vertices[b];
+                    Vector2 vc = vertices[c];
 
-                    var vectorVaVb = vb - va;
-                    var vectorVaVc = vc - va;
+                    Vector2 vectorVaVb = vb - va;
+                    Vector2 vectorVaVc = vc - va;
 
                     // Is vertex convex?
                     if (Cross(vectorVaVb, vectorVaVc) > 0.0f)
@@ -85,11 +86,7 @@ namespace GameEngine.Mathematics
             var bp = p - b;
             var cp = p - c;
 
-            float cross1 = Math.Cross(ab, ap);
-            float cross2 = Math.Cross(bc, ap);
-            float cross3 = Math.Cross(ca, ap);
-
-            if (cross1 < 0 || cross2 < 0 || cross3 < 0)
+            if (Cross(ab, ap) < 0 || Cross(bc, bp) < 0 || Cross(ca, cp) < 0)
             {
                 return false;
             }
