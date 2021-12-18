@@ -10,7 +10,6 @@ namespace GameEngine.Components
         private readonly Renderer _renderer;
 
         private Shape _shape = new(Enumerable.Empty<Vector2>());
-        private int _layer = -10;
         private RenderContext _context;
 
         public Shape Shape
@@ -28,17 +27,7 @@ namespace GameEngine.Components
         /// <summary>
         /// Define render layer. Object on lower layer render behind object on higher layer.
         /// </summary>
-        public int Layer
-        {
-            get => _layer;
-            set
-            {
-                if (_layer == value) return;
-                _layer = value;
-                _renderer.Unregister(_context);
-                _context = _renderer.Register(GetVertices());
-            }
-        }
+        public int Layer { get; set; }
 
         public Vector3 Color { get; set; } = Colors.Gray;
 
@@ -62,7 +51,7 @@ namespace GameEngine.Components
                 int offset = i * 3;
                 result[offset] = Shape[i].X;
                 result[offset + 1] = Shape[i].Y;
-                result[offset + 2] = Layer;
+                result[offset + 2] = 0;
             }
 
             return result;
