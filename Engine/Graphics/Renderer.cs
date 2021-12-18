@@ -112,10 +112,11 @@ namespace GameEngine.Graphics
                     GL.DrawArrays(PrimitiveType.Lines, 0, context.Count);
                     break;
                 case 3:
-                    GL.DrawArrays(PrimitiveType.LineLoop, 0, context.Count);
+                    GL.DrawArrays(PrimitiveType.Triangles, 0, context.Count);
                     break;
                 default:
-                    GL.DrawArrays(PrimitiveType.LineLoop, 0, context.Count);
+                    //GL.DrawArrays(PrimitiveType.TriangleFan, 0, context.Count);
+                    GL.DrawArrays(PrimitiveType.Triangles, 0, context.Count);
                     break;
             }
         }

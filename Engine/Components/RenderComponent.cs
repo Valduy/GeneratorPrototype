@@ -2,6 +2,7 @@
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
+using Math = GameEngine.Mathematics.Math;
 
 namespace GameEngine.Components
 {
@@ -44,17 +45,41 @@ namespace GameEngine.Components
 
         private float[] GetVertices()
         {
-            var result = new float[Shape.Count * 3];
-
-            for (int i = 0; i < Shape.Count; i++)
+            if (Shape.Count > 3)
             {
-                int offset = i * 3;
-                result[offset] = Shape[i].X;
-                result[offset + 1] = Shape[i].Y;
-                result[offset + 2] = 0;
-            }
+                var triangles = Math.Triangulate(Shape.ToArray());
+                var result = new float[triangles.Length * 9];
 
-            return result;
+                for (int i = 0; i < triangles.Length; i += 3)
+                {
+                    var offset = i * 9;
+                    result[offset] = Shape[triangles[i]].X;
+                    result[offset + 1] = Shape[triangles[i]].Y;
+                    result[offset + 2] = 0;
+                    result[offset + 3] = Shape[triangles[i + 1]].X;
+                    result[offset + 4] = Shape[triangles[i + 1]].Y;
+                    result[offset + 5] = 0;
+                    result[offset + 6] = Shape[triangles[i + 2]].X;
+                    result[offset + 7] = Shape[triangles[i + 2]].Y;
+                    result[offset + 8] = 0;
+                }
+
+                return result;
+            }
+            else
+            {
+                var result = new float[Shape.Count * 3];
+
+                for (int i = 0; i < Shape.Count; i++)
+                {
+                    int offset = i * 3;
+                    result[offset] = Shape[i].X;
+                    result[offset + 1] = Shape[i].Y;
+                    result[offset + 2] = 0;
+                }
+
+                return result;
+            }
         }
     }
 }

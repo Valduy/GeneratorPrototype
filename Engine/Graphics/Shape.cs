@@ -9,6 +9,7 @@ namespace GameEngine.Graphics
 
         public int Count => _vertices.Count;
 
+        // TODO: simple polygon, order and colinear vertices check
         public Shape(IEnumerable<Vector2> vertices)
         {
             _vertices = new List<Vector2>(vertices);
@@ -64,5 +65,7 @@ namespace GameEngine.Graphics
                 new Vector2(-halfWidth, halfHeight),
             });
         }
+
+        // TODO: circle, may be...
     }
 }
