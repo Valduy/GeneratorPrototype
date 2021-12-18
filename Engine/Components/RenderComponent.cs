@@ -27,7 +27,7 @@ namespace GameEngine.Components
         /// <summary>
         /// Define render layer. Object on lower layer render behind object on higher layer.
         /// </summary>
-        public int Layer { get; set; }
+        public int Layer { get; set; } = -10;
 
         public Vector3 Color { get; set; } = Colors.Gray;
 

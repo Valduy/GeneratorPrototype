@@ -56,24 +56,24 @@ namespace DrawDifferentFiguresDemo
             convexGo.Position = new Vector2(leftTopCornerX + 550, leftTopCornerY - 100);
 
             // TODO: Well may be later....
-            //var nonConvexGo = game.Engine.CreateGameObject();
-            //nonConvexGo.Add(() => new RenderComponent(game.Window.Renderer)
-            //{
-            //    Color = new Vector3(0, 1, 1),
-            //    Shape = new Shape(new[]
-            //    {
-            //        new Vector2(-25, -50),
-            //        new Vector2(0, -50),
-            //        new Vector2(0, 0),
-            //        new Vector2(50, 0),
-            //        new Vector2(50, 25),
-            //        new Vector2(25, 50),
-            //        new Vector2(-25, 50),
-            //        new Vector2(-50, 25),
-            //        new Vector2(-50, -25),
-            //    })
-            //});
-            //nonConvexGo.Position = new Vector2(leftTopCornerX + 550, leftTopCornerY - 100);
+            var nonConvexGo = game.Engine.CreateGameObject();
+            nonConvexGo.Add(() => new RenderComponent(game.Window.Renderer)
+            {
+                Color = Colors.Cyan,
+                Shape = new Shape(new[]
+                {
+                    new Vector2(-25, -50),
+                    new Vector2(0, -50),
+                    new Vector2(0, 0),
+                    new Vector2(50, 0),
+                    new Vector2(50, 25),
+                    new Vector2(25, 50),
+                    new Vector2(-25, 50),
+                    new Vector2(-50, 25),
+                    new Vector2(-50, -25),
+                })
+            });
+            nonConvexGo.Position = new Vector2(leftTopCornerX + 700, leftTopCornerY - 100);
 
             game.Run();
         }
