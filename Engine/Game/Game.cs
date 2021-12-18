@@ -7,7 +7,7 @@ namespace GameEngine.Game
     {
         public const int WindowWidth = 800;
         public const int WindowHeight = 600;
-        public const string WindowTitle = "Generation prototype";
+        public const string WindowTitle = "";
         
         public readonly Engine Engine = new();
         public readonly Window Window = new(WindowWidth, WindowHeight, WindowTitle);

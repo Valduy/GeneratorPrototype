@@ -17,11 +17,7 @@ namespace DrawDifferentFiguresDemo
             lineGo.Add(() => new RenderComponent(game.Window.Renderer)
             {
                 Color = Colors.Yellow,
-                Shape = new Shape(new[]
-                {
-                    new Vector2(-50, 0),
-                    new Vector2(50, 0)
-                })
+                Shape = Shape.Line(new Vector2(-50, 0), new Vector2(50, 0))
             });
             lineGo.Position = new Vector2(leftTopCornerX + 100, leftTopCornerY - 100);
 
@@ -29,12 +25,7 @@ namespace DrawDifferentFiguresDemo
             triangleGo.Add(() => new RenderComponent(game.Window.Renderer)
             {
                 Color = Colors.Red,
-                Shape = new Shape(new []
-                {
-                    new Vector2(-50, -50),
-                    new Vector2(50, -50),
-                    new Vector2(0, 50),
-                })
+                Shape = Shape.Triangle(100)
             });
             triangleGo.Position = new Vector2(leftTopCornerX + 250, leftTopCornerY - 100);
 
@@ -42,13 +33,7 @@ namespace DrawDifferentFiguresDemo
             squareGo.Add(() => new RenderComponent(game.Window.Renderer)
             {
                 Color = Colors.Lime,
-                Shape = new Shape(new []
-                {
-                    new Vector2(-50, -50),
-                    new Vector2(50, -50),
-                    new Vector2(50, 50),
-                    new Vector2(-50, 50)
-                })
+                Shape = Shape.Square(100)
             });
             squareGo.Position = new Vector2(leftTopCornerX + 400, leftTopCornerY - 100);
 
