@@ -22,5 +22,47 @@ namespace GameEngine.Graphics
 
         IEnumerator IEnumerable.GetEnumerator() 
             => GetEnumerator();
+
+        public static Shape CreateLine(Vector2 a, Vector2 b) 
+            => new(new[] {a, b});
+
+        public static Shape CreateTriangle(float side)
+        {
+            var leg = side / 2;
+
+            return new Shape(new[]
+            {
+                new Vector2(-leg, -leg),
+                new Vector2(leg, -leg),
+                new Vector2(0, leg),
+            });
+        }
+
+        public static Shape Square(float side)
+        {
+            var half = side / 2;
+
+            return new Shape(new[]
+            {
+                new Vector2(-half, -half),
+                new Vector2(half, -half),
+                new Vector2(half, half),
+                new Vector2(-half, half),
+            });
+        }
+
+        public static Shape Rectangle(float width, float height)
+        {
+            var halfWidth = width / 2;
+            var halfHeight = height / 2;
+
+            return new Shape(new[]
+            {
+                new Vector2(-halfWidth, -halfHeight),
+                new Vector2(halfWidth, -halfHeight),
+                new Vector2(halfWidth, halfHeight),
+                new Vector2(-halfWidth, halfHeight),
+            });
+        }
     }
 }
