@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using GameEngine.Components;
+﻿using GameEngine.Components;
 using GameEngine.Game;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
@@ -17,7 +16,7 @@ namespace DrawDifferentFiguresDemo
             var lineGo = game.Engine.CreateGameObject();
             lineGo.Add(() => new RenderComponent(game.Window.Renderer)
             {
-                Color = new Vector3(1, 1, 0),
+                Color = Colors.Yellow,
                 Shape = new Shape(new[]
                 {
                     new Vector2(-50, 0),
@@ -29,7 +28,7 @@ namespace DrawDifferentFiguresDemo
             var triangleGo = game.Engine.CreateGameObject();
             triangleGo.Add(() => new RenderComponent(game.Window.Renderer)
             {
-                Color = new Vector3(1, 0, 0),
+                Color = Colors.Red,
                 Shape = new Shape(new []
                 {
                     new Vector2(-50, -50),
@@ -42,7 +41,7 @@ namespace DrawDifferentFiguresDemo
             var squareGo = game.Engine.CreateGameObject();
             squareGo.Add(() => new RenderComponent(game.Window.Renderer)
             {
-                Color = new Vector3(0, 1, 0),
+                Color = Colors.Lime,
                 Shape = new Shape(new []
                 {
                     new Vector2(-50, -50),
@@ -56,7 +55,7 @@ namespace DrawDifferentFiguresDemo
             var convexGo = game.Engine.CreateGameObject();
             convexGo.Add(() => new RenderComponent(game.Window.Renderer)
             {
-                Color = new Vector3(0, 0, 1),
+                Color = Colors.Blue,
                 Shape = new Shape(new[]
                 {
                     new Vector2(-25, -50),

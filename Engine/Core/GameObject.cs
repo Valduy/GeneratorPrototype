@@ -9,6 +9,7 @@ namespace GameEngine.Core
     /// </summary>
     public class GameObject
     {
+        private readonly List<GameObject> _children = new();
         private readonly Dictionary<Type, Component> _componentsMap = new();
 
         /// <summary>
@@ -17,19 +18,112 @@ namespace GameEngine.Core
         public readonly Engine Engine;
 
         /// <summary>
+        /// Parent <see cref="GameObject"/>.
+        /// </summary>
+        public GameObject? Parent { get; private set; }
+
+        /// <summary>
+        /// Children <see cref="GameObject"/>'s.
+        /// </summary>
+        public IReadOnlyList<GameObject> Children => _children;
+
+        /// <summary>
+        /// Local rotation relative to <see cref="Parent"/>.
+        /// </summary>
+        public float LocalRotation { get; set; } = 0;
+
+        /// <summary>
+        /// Local scale relative to <see cref="Parent"/>.
+        /// </summary>
+        public Vector2 LocalScale { get; set; } = new(1);
+
+        /// <summary>
+        /// Local position relative to <see cref="Parent"/>.
+        /// </summary>
+        public Vector2 LocalPosition { get; set; } = new(0);
+
+        /// <summary>
         /// World rotation.
         /// </summary>
-        public float Rotation { get; set; } = 0;
+        public float Rotation
+        {
+            get
+            {
+                if (Parent != null)
+                {
+                    return Parent.Rotation + LocalRotation;
+                }
+
+                return LocalRotation;
+            }
+            set
+            {
+                if (Parent != null)
+                {
+                    LocalRotation = Parent.Rotation - value;
+                }
+                else
+                {
+                    LocalRotation = value;
+                }
+            }
+        }
 
         /// <summary>
         /// World scale.
         /// </summary>
-        public Vector2 Scale { get; set; } = new(1);
+        public Vector2 Scale
+        {
+            get
+            {
+                if (Parent != null)
+                {
+                    return Parent.Scale * LocalScale;
+                }
+
+                return LocalScale;
+            }
+            set
+            {
+                if (Parent != null)
+                {
+                    LocalScale = new Vector2(Parent.Scale.X / value.X, Parent.Scale.Y / value.Y);
+                }
+
+                LocalScale = value;
+            }
+        }
 
         /// <summary>
         /// World position.
         /// </summary>
-        public Vector2 Position { get; set; } = new(0);
+        public Vector2 Position
+        {
+            get
+            {
+                if (Parent != null)
+                {
+                    var offset = new Vector4(LocalPosition.X, LocalPosition.Y, 0, 1);
+                    offset *= Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(Parent.Rotation));
+                    return new Vector2(Parent.Position.X + offset.X, Parent.Position.Y + offset.Y);
+                }
+
+                return LocalPosition;
+            }
+            set
+            {
+                if (Parent != null)
+                {
+                    var offset = new Vector4(value.X - Parent.Position.X, value.Y - Parent.Position.Y, 0, 1);
+                    offset *= Matrix4.CreateRotationZ(-MathHelper.DegreesToRadians(Parent.Rotation));
+                    LocalPosition = new Vector2(offset.X, offset.Y);
+                }
+                else
+                {
+                    LocalPosition = value;
+                }
+            }
+        }
 
         /// <summary>
         /// Event, which fires when new <see cref="Component"/> added to <see cref="GameObject"/>.
@@ -44,6 +138,23 @@ namespace GameEngine.Core
         internal GameObject(Engine engine)
         {
             Engine = engine;
+        }
+
+        public void AddChild(GameObject go)
+        {
+            if (go.Parent == this) return;
+            go.Parent?.RemoveChild(go);
+            go.Parent = this;
+            _children.Add(go);
+        }
+
+        public void RemoveChild(GameObject go)
+        {
+            if (go.Parent == this)
+            {
+                go.Parent = null;
+                _children.Remove(go);
+            }
         }
 
         /// <summary>

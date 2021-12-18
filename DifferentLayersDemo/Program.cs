@@ -14,7 +14,7 @@ namespace DifferentLayersDemo
             var triangle1Go = game.Engine.CreateGameObject();
             triangle1Go.Add(() => new RenderComponent(game.Window.Renderer)
             {
-                Color = new Vector3(1, 1, 0),
+                Color = Colors.Yellow,
                 Layer = -10, // Further from camera.
                 Shape = new Shape(new[]
                 {
@@ -27,7 +27,7 @@ namespace DifferentLayersDemo
             var triangle2Go = game.Engine.CreateGameObject();
             triangle2Go.Add(() => new RenderComponent(game.Window.Renderer)
             {
-                Color = new Vector3(1, 0, 0),
+                Color = Colors.Red,
                 Layer = -9, // Closer to camera.
                 Shape = new Shape(new[]
                 {

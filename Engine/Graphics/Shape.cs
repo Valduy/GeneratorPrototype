@@ -23,10 +23,10 @@ namespace GameEngine.Graphics
         IEnumerator IEnumerable.GetEnumerator() 
             => GetEnumerator();
 
-        public static Shape CreateLine(Vector2 a, Vector2 b) 
+        public static Shape Line(Vector2 a, Vector2 b) 
             => new(new[] {a, b});
 
-        public static Shape CreateTriangle(float side)
+        public static Shape Triangle(float side)
         {
             var leg = side / 2;
 

@@ -40,7 +40,7 @@ namespace GameEngine.Components
             }
         }
 
-        public Vector3 Color { get; set; } = new(150);
+        public Vector3 Color { get; set; } = Colors.Gray;
 
         public RenderComponent(Renderer renderer)
         {
