@@ -47,7 +47,7 @@ namespace GameEngine.Components
         {
             if (Shape.Count > 3)
             {
-                var triangles = Math.Triangulate(Shape.ToArray());
+                var triangles = Math.Triangulate(Shape);
                 var result = new float[triangles.Length * 9];
 
                 for (int i = 0; i < triangles.Length; i += 3)

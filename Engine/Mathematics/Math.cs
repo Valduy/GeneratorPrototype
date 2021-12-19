@@ -1,19 +1,19 @@
-﻿using GameEngine.Helpers;
+﻿using GameEngine.Graphics;
+using GameEngine.Helpers;
 using OpenTK.Mathematics;
 
 namespace GameEngine.Mathematics
 {
     public static class Math
     {
-        // TODO: simple polygon, order and colinear vertices check
-        public static int[] Triangulate(IReadOnlyList<Vector2> vertices)
+        public static int[] Triangulate(Shape shape)
         {
-            if (vertices.Count < 3)
+            if (shape.Count < 3)
             {
-                throw new ArgumentException("Should have more then 3 vertices.");
+                throw new ArgumentException("Should have more then 3 shape.");
             }
 
-            var indexes = Enumerable.Range(0, vertices.Count).ToList();
+            var indexes = Enumerable.Range(0, shape.Count).ToList();
             int trianglesCount = indexes.Count - 2;
             var triangles = new int[trianglesCount * 3];
             int currentTriangleIndex = 0;
@@ -26,9 +26,9 @@ namespace GameEngine.Mathematics
                     int b = indexes.GetCircular(i - 1);
                     int c = indexes.GetCircular(i + 1);
 
-                    Vector2 va = vertices[a];
-                    Vector2 vb = vertices[b];
-                    Vector2 vc = vertices[c];
+                    Vector2 va = shape[a];
+                    Vector2 vb = shape[b];
+                    Vector2 vc = shape[c];
 
                     Vector2 vectorVaVb = vb - va;
                     Vector2 vectorVaVc = vc - va;
@@ -42,14 +42,14 @@ namespace GameEngine.Mathematics
                     bool isEar = true;
 
                     // Does potential ear contain any poly vertex?
-                    for (int j = 0; j < vertices.Count; j++)
+                    for (int j = 0; j < shape.Count; j++)
                     {
                         if (j == a || j == b || j == c)
                         {
                             continue;
                         }
 
-                        Vector2 p = vertices[j];
+                        Vector2 p = shape[j];
                         
                         if (IsPointInTriangle(p, vb, va, vc))
                         {
@@ -75,6 +75,43 @@ namespace GameEngine.Mathematics
             triangles[currentTriangleIndex] = indexes[2];
             return triangles;
         }
+
+        public static bool IsContainsCollinearNeighboringEdges(IList<Vector2> vertices)
+        {
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                Vector2 va = vertices[i];
+                Vector2 vb = vertices.GetCircular(i - 1);
+                Vector2 vc = vertices.GetCircular(i + 1);
+
+                Vector2 vectorVaVb = vb - va;
+                Vector2 vectorVaVc = vc - va;
+
+                if (Cross(vectorVaVb, vectorVaVc) == 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static float Area(IReadOnlyList<Vector2> vertices)
+        {
+            float area = 0;
+
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                int j = (i + 1) % vertices.Count;
+                area += vertices[i].X * vertices[j].Y;
+                area -= vertices[j].X * vertices[i].Y;
+            }
+
+            return area;
+        }
+
+        public static bool IsCounterClockWise(IReadOnlyList<Vector2> vertices) 
+            => Area(vertices) > 0;
 
         public static bool IsPointInTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
         {

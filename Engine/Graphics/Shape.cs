@@ -8,10 +8,21 @@ namespace GameEngine.Graphics
         private readonly List<Vector2> _vertices;
 
         public int Count => _vertices.Count;
-        
+
+        // TODO: simple/complex polygon check
         public Shape(IEnumerable<Vector2> vertices)
         {
             _vertices = new List<Vector2>(vertices);
+
+            if (Count > 3 && !Mathematics.Math.IsCounterClockWise(_vertices))
+            {
+                throw new ArgumentException("Vertices should be counter clock wise.");
+            }
+
+            if (Count > 4 && Mathematics.Math.IsContainsCollinearNeighboringEdges(_vertices))
+            {
+                throw new ArgumentException("Poly should not contain collinear neighboring edges.");
+            }
         }
 
         public Vector2 this[int index] 
