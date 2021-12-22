@@ -32,7 +32,6 @@ namespace GameEngine.Game
 
         private void OnWindowLoaded()
         {
-            //Window.CursorGrabbed = true;
             Engine.Start();
         }
 

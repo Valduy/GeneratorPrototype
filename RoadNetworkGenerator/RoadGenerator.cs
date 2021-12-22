@@ -5,7 +5,7 @@
         private readonly PriorityQueue<Sucessor, int> _sucessors = new();
         private readonly InputData _inputData;
         private readonly GlobalGoalsProcessor _globalGoals;
-        private readonly LocalConstrainter _localConstraints;
+        private readonly LocalConstraintsProcessor _localConstraints;
 
         public readonly RoadSegment Initial;
 
@@ -13,7 +13,7 @@
         {
             _inputData = data;
             _globalGoals = new GlobalGoalsProcessor(_inputData);
-            _localConstraints = new LocalConstrainter(_inputData);
+            _localConstraints = new LocalConstraintsProcessor(_inputData);
 
             Initial = new RoadSegment(data.Start, data.Start);
 

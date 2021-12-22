@@ -40,7 +40,7 @@ namespace GameEngine.Core
 
         public void Start()
         {
-            foreach (var go in _gameObjects)
+            foreach (var go in _gameObjects.ToList())
             {
                 go.Start();
             }
@@ -50,7 +50,7 @@ namespace GameEngine.Core
 
         public void GameUpdate(FrameEventArgs args)
         {
-            foreach (var go in _gameObjects)
+            foreach (var go in _gameObjects.ToList())
             {
                 go.GameUpdate(args);
             }
@@ -58,7 +58,7 @@ namespace GameEngine.Core
 
         public void RenderUpdate(FrameEventArgs args)
         {
-            foreach (var go in _gameObjects)
+            foreach (var go in _gameObjects.ToList())
             {
                 go.RenderUpdate(args);
             }
@@ -66,7 +66,7 @@ namespace GameEngine.Core
 
         public void Stop()
         {
-            foreach (var go in _gameObjects)
+            foreach (var go in _gameObjects.ToList())
             {
                 go.Stop();
             }

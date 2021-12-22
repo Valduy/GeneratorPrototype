@@ -36,6 +36,15 @@ namespace RoadNetworkGenerator
                 return ChooseNewGoals(sucessor)
                     .Select(p => CreateNewGlobalBranch(sucessor, segment, p))
                     .ToTriple();
+                //var goals = ChooseNewGoals(sucessor);
+                //var brunches = new List<Sucessor>();
+
+                //foreach (var goal in goals)
+                //{
+                //    brunches.Add(CreateNewGlobalBranch(sucessor, segment, goal));
+                //}
+
+                //return brunches.ToTriple();
             }
 
             // Else: just branch and grow
@@ -66,7 +75,7 @@ namespace RoadNetworkGenerator
             Time = sucessor.Time + 1,
             Parent = segment,
             BranchStart = segment.End,
-            LocalGoal = InputData.SegmentLength * (newGlobalGoal - segment.End).Normalized(),
+            LocalGoal = segment.End + InputData.SegmentLength * (newGlobalGoal - segment.End).Normalized(),
             GlobalGoal = newGlobalGoal,
         };
 
@@ -74,7 +83,7 @@ namespace RoadNetworkGenerator
         {
             var mainSucessor = (Sucessor)sucessor.Clone();
             mainSucessor.Parent = segment;
-            mainSucessor.LocalGoal = InputData.SegmentLength * (mainSucessor.GlobalGoal - mainSucessor.Parent.End).Normalized();
+            mainSucessor.LocalGoal = segment.End + InputData.SegmentLength * (mainSucessor.GlobalGoal - mainSucessor.Parent.End).Normalized();
             return mainSucessor;
         }
 
