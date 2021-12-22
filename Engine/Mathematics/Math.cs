@@ -133,5 +133,32 @@ namespace GameEngine.Mathematics
 
         public static float Cross(Vector2 a, Vector2 b) 
             => a.X * b.Y - a.Y * b.X;
+
+        public static bool Equal(Vector2 a, Vector2 b, float epsilon) 
+            => Equal(a.X, b.X, epsilon) && Equal(a.Y, b.Y, epsilon);
+
+        public static bool Equal(float a, float b, float epsilon)
+        {
+            const float floatNormal = (1 << 23) * float.Epsilon;
+            float absA = System.Math.Abs(a);
+            float absB = System.Math.Abs(b);
+            float diff = System.Math.Abs(a - b);
+
+            if (a == b)
+            {
+                // Shortcut, handles infinities
+                return true;
+            }
+
+            if (a == 0.0f || b == 0.0f || diff < floatNormal)
+            {
+                // a or b is zero, or both are extremely close to it.
+                // relative error is less meaningful here
+                return diff < (epsilon * floatNormal);
+            }
+
+            // use relative error
+            return diff / System.Math.Min((absA + absB), float.MaxValue) < epsilon;
+        }
     }
 }

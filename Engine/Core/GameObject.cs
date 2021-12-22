@@ -103,8 +103,10 @@ namespace GameEngine.Core
             {
                 if (Parent != null)
                 {
-                    var offset = new Vector4(LocalPosition.X, LocalPosition.Y, 0, 1);
-                    offset *= Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(Parent.Rotation));
+                    var offset = new Vector3(LocalPosition.X, LocalPosition.Y, 1);
+                    offset *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(Parent.Rotation));
+                    //var offset = new Vector4(LocalPosition.X, LocalPosition.Y, 0, 1);
+                    //offset *= Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(Parent.Rotation));
                     return new Vector2(Parent.Position.X + offset.X, Parent.Position.Y + offset.Y);
                 }
 
@@ -114,8 +116,10 @@ namespace GameEngine.Core
             {
                 if (Parent != null)
                 {
-                    var offset = new Vector4(value.X - Parent.Position.X, value.Y - Parent.Position.Y, 0, 1);
-                    offset *= Matrix4.CreateRotationZ(-MathHelper.DegreesToRadians(Parent.Rotation));
+                    var offset = new Vector3(value.X - Parent.Position.X, value.Y - Parent.Position.Y, 1);
+                    offset *= Matrix3.CreateRotationZ(-MathHelper.DegreesToRadians(Parent.Rotation));
+                    //var offset = new Vector4(value.X - Parent.Position.X, value.Y - Parent.Position.Y, 0, 1);
+                    //offset *= Matrix4.CreateRotationZ(-MathHelper.DegreesToRadians(Parent.Rotation));
                     LocalPosition = new Vector2(offset.X, offset.Y);
                 }
                 else
