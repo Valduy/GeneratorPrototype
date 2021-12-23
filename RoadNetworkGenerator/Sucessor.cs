@@ -2,8 +2,9 @@
 
 namespace RoadNetworkGenerator
 {
-    public enum RoadType
+    public enum SucessorType
     {
+        Pivot,
         Main,
         Branch,
     }
@@ -13,7 +14,7 @@ namespace RoadNetworkGenerator
         /// <summary>
         /// Type of potential road segment.
         /// </summary>
-        public RoadType RoadType;
+        public SucessorType SucessorType;
 
         /// <summary>
         /// Actually, priority in sucessors priority queue.
@@ -42,7 +43,7 @@ namespace RoadNetworkGenerator
 
         public object Clone() => new Sucessor()
         {
-            RoadType = RoadType,
+            SucessorType = SucessorType,
             Time = Time,
             Parent = Parent,
             BranchStart = BranchStart,

@@ -13,15 +13,21 @@ namespace RoadNetworkGenerator
 
         public bool Process(Sucessor sucessor)
         {
-            if (sucessor.RoadType == RoadType.Branch)
+            if (sucessor.SucessorType == SucessorType.Branch)
             {
                 //TODO: Now just deprecate brunching, but it,s nonsense...
                 return false;
             }
 
+            if (sucessor.SucessorType == SucessorType.Pivot)
+            {
+                return true;
+            }
+            
             if (Vector2.Distance(sucessor.GlobalGoal, sucessor.LocalGoal) <= _inputData.SegmentLength)
             {
                 sucessor.LocalGoal = sucessor.GlobalGoal;
+                return true;
             }
 
             // TODO: correct according to road intersection possibilities

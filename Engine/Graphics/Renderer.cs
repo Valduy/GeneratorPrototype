@@ -88,7 +88,7 @@ namespace GameEngine.Graphics
         {
             var model = Matrix4.Identity;
             model *= Matrix4.CreateScale(scale.X, scale.Y, 1.0f);
-            model *= Matrix4.CreateRotationZ((float)MathHelper.DegreesToRadians(rotation));
+            model *= Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(rotation));
             model *= Matrix4.CreateTranslation(position.X, position.Y, layer);
             return model;
         }
@@ -98,6 +98,7 @@ namespace GameEngine.Graphics
             return Matrix4.LookAt(new Vector3(Camera.Position.X, Camera.Position.Y, 0), new Vector3(Camera.Position.X, Camera.Position.Y, -1), Vector3.UnitY);
         }
 
+        // TODO: Fix zoom!!!
         private Matrix4 GetProjectionMatrix() 
             => Matrix4.CreateOrthographic(_window.Size.X + Camera.Zoom, _window.Size.Y + Camera.Zoom, 0.1f, 100.0f);
 

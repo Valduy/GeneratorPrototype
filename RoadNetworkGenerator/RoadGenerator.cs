@@ -19,7 +19,7 @@
 
             var sucessor = new Sucessor()
             {
-                RoadType = RoadType.Main,
+                SucessorType = SucessorType.Main,
                 Time = 0,
                 Parent = Initial,
                 BranchStart = data.Start,

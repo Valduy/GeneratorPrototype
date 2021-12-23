@@ -16,43 +16,37 @@ namespace RoadNetworkGenerator
 
         // TODO: don't forget set right time for segments!!! 
         // TODO: don't forget provide relationships!!!
-        public (Sucessor? a, Sucessor? b, Sucessor? right) Process(Sucessor sucessor, RoadSegment segment) => sucessor.RoadType switch
+        public (Sucessor? a, Sucessor? b, Sucessor? c) Process(Sucessor sucessor, RoadSegment segment) => sucessor.SucessorType switch
         {
-            RoadType.Main => ProcessMain(sucessor, segment),
-            RoadType.Branch => ProcessBranch(sucessor),
+            SucessorType.Pivot => SetNewGoals(sucessor, segment),
+            SucessorType.Main => ProcessMain(sucessor, segment),
+            SucessorType.Branch => ProcessBranch(sucessor),
             _ => throw new ArgumentOutOfRangeException()
         };
 
+        private (Sucessor? a, Sucessor? b, Sucessor? right) SetNewGoals(Sucessor sucessor, RoadSegment segment) 
+            => ChooseNewGoals(sucessor)
+                .Select(p => CreateNewGlobalBranch(sucessor, segment, p))
+                .ToTriple();
+
         private (Sucessor? a, Sucessor? b, Sucessor? c) ProcessMain(Sucessor sucessor, RoadSegment segment)
         {
-            Sucessor? a = null;
-            Sucessor? b = null;
-            Sucessor? c = null;
+            (Sucessor? a, Sucessor? b, Sucessor? c) result = (null, null, null);
 
             // If: goal achieved.
             if (IsGoalAchieved(sucessor))
             {
-                // Then: choose new goals and create for them sucessors.
-                return ChooseNewGoals(sucessor)
-                    .Select(p => CreateNewGlobalBranch(sucessor, segment, p))
-                    .ToTriple();
-                //var goals = ChooseNewGoals(sucessor);
-                //var brunches = new List<Sucessor>();
-
-                //foreach (var goal in goals)
-                //{
-                //    brunches.Add(CreateNewGlobalBranch(sucessor, segment, goal));
-                //}
-
-                //return brunches.ToTriple();
+                result.a = CreatePivot(sucessor, segment);
+            }
+            // Else: just branch and grow
+            else
+            {
+                result.a = GrowMain(sucessor, segment);
+                //result.b = BrunchMain(sucessor, segment, 90);
+                //result.c = BrunchMain(sucessor, segment, -90);
             }
 
-            // Else: just branch and grow
-            a = GrowMain(sucessor, segment);
-            b = BrunchMain(sucessor, segment, 90);
-            c = BrunchMain(sucessor, segment, -90);
-
-            return (a, b, c);
+            return result;
         }
 
         private (Sucessor? a, Sucessor? b, Sucessor? c) ProcessBranch(Sucessor sucessor)
@@ -69,9 +63,19 @@ namespace RoadNetworkGenerator
             .Take(System.Math.Min(Constants.Brunches, _pivots.Length - 2))
             .ToArray();
 
+        private Sucessor CreatePivot(Sucessor sucessor, RoadSegment segment) => new()
+        {
+            SucessorType = SucessorType.Pivot,
+            Time = sucessor.Time + 1,
+            Parent = segment,
+            BranchStart = segment.End,
+            LocalGoal = segment.End,
+            GlobalGoal = segment.End
+        };
+
         private Sucessor CreateNewGlobalBranch(Sucessor sucessor, RoadSegment segment, Vector2 newGlobalGoal) => new()
         {
-            RoadType = RoadType.Main,
+            SucessorType = SucessorType.Main,
             Time = sucessor.Time + 1,
             Parent = segment,
             BranchStart = segment.End,
@@ -98,7 +102,7 @@ namespace RoadNetworkGenerator
             
             return new Sucessor()
             {
-                RoadType = RoadType.Branch,
+                SucessorType = SucessorType.Branch,
                 Time = sucessor.Time + 1, // TODO: Set relevant time...
                 Parent = segment,
                 BranchStart = segment.End,
