@@ -41,6 +41,7 @@
             {
                 newSegment = new RoadSegment(sucessor.Parent.End, sucessor.LocalGoal);
                 sucessor.Parent.Children.Add(newSegment);
+                // TODO: connect with other (may be not create node, just reuse)
                 var (a, b, c) = _globalGoals.Process(sucessor, newSegment);
                 TryAddBranch(a);
                 TryAddBranch(b);

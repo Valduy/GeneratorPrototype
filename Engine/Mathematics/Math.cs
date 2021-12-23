@@ -8,6 +8,9 @@ namespace GameEngine.Mathematics
     {
         // NOTE: I use words "shape" and "polygon" as synonyms.
 
+        public const float FloatEpsilon = 0.1f;
+        public const float FullCircle = 360;
+
         /// <summary>
         /// Method triangulate <see cref="Shape"/>.
         /// Use "Ear clipping" method (https://en.wikipedia.org/wiki/Polygon_triangulation).
@@ -201,5 +204,11 @@ namespace GameEngine.Mathematics
             // use relative error
             return diff / System.Math.Min((absA + absB), float.MaxValue) < epsilon;
         }
+
+        public static bool IsAABBIntersects(
+            Vector2 position1, float width1, float height1,
+            Vector2 position2, float width2, float height2) 
+            => System.Math.Abs(position1.X - position2.X) * 2 < (width1 + width2)
+               && System.Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
     }
 }

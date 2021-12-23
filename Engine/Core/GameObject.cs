@@ -105,8 +105,6 @@ namespace GameEngine.Core
                 {
                     var offset = new Vector3(LocalPosition.X, LocalPosition.Y, 1);
                     offset *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(Parent.Rotation));
-                    //var offset = new Vector4(LocalPosition.X, LocalPosition.Y, 0, 1);
-                    //offset *= Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(Parent.Rotation));
                     return new Vector2(Parent.Position.X + offset.X, Parent.Position.Y + offset.Y);
                 }
 
@@ -118,8 +116,6 @@ namespace GameEngine.Core
                 {
                     var offset = new Vector3(value.X - Parent.Position.X, value.Y - Parent.Position.Y, 1);
                     offset *= Matrix3.CreateRotationZ(-MathHelper.DegreesToRadians(Parent.Rotation));
-                    //var offset = new Vector4(value.X - Parent.Position.X, value.Y - Parent.Position.Y, 0, 1);
-                    //offset *= Matrix4.CreateRotationZ(-MathHelper.DegreesToRadians(Parent.Rotation));
                     LocalPosition = new Vector2(offset.X, offset.Y);
                 }
                 else
@@ -291,33 +287,45 @@ namespace GameEngine.Core
 
         public void Start()
         {
-            foreach (var component in _componentsMap)
+            foreach (var component in _componentsMap.ToList())
             {
-                component.Value.Start();
+                if (component.Value.GameObject == this)
+                {
+                    component.Value.Start();
+                }
             }
         }
 
         public void GameUpdate(FrameEventArgs args)
         {
-            foreach (var component in _componentsMap)
+            foreach (var component in _componentsMap.ToList())
             {
-                component.Value.GameUpdate(args);
+                if (component.Value.GameObject == this)
+                {
+                    component.Value.GameUpdate(args);
+                }
             }
         }
 
         public void RenderUpdate(FrameEventArgs args)
         {
-            foreach (var component in _componentsMap)
+            foreach (var component in _componentsMap.ToList())
             {
-                component.Value.RenderUpdate(args);
+                if (component.Value.GameObject == this)
+                {
+                    component.Value.RenderUpdate(args);
+                }
             }
         }
 
         public void Stop()
         {
-            foreach (var component in _componentsMap)
+            foreach (var component in _componentsMap.ToList())
             {
-                component.Value.Stop();
+                if (component.Value.GameObject == this)
+                {
+                    component.Value.Stop();
+                }
             }
         }
     }

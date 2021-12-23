@@ -60,7 +60,7 @@ namespace RoadNetworkGenerator
         private Vector2[] ChooseNewGoals(Sucessor sucessor) => _pivots
             .Except(new[] { sucessor.BranchStart, sucessor.LocalGoal }, new Vector2Comparer())
             .OrderBy(p => Vector2.Distance(p, sucessor.LocalGoal))
-            .Take(System.Math.Min(Constants.Brunches, _pivots.Length - 2))
+            .Take(Constants.Brunches)
             .ToArray();
 
         private Sucessor CreatePivot(Sucessor sucessor, RoadSegment segment) => new()
