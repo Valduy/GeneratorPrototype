@@ -17,9 +17,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DifferentLayersDemo", "Diff
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RelationshipDemo", "RelationshipDemo\RelationshipDemo.csproj", "{38C83E38-9CFB-4E1D-AC1E-9282CF5B4AF3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoadNetworkGenerator", "RoadNetworkGenerator\RoadNetworkGenerator.csproj", "{89F1C609-EEAE-4B21-813A-2835442A9886}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoadNetworkGenerator", "RoadNetworkGenerator\RoadNetworkGenerator.csproj", "{89F1C609-EEAE-4B21-813A-2835442A9886}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoadGenerationDemo", "RoadGenerationDemo\RoadGenerationDemo.csproj", "{CC27E08E-F3DD-47C2-A524-8E0C50AA89BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoadGenerationDemo", "RoadGenerationDemo\RoadGenerationDemo.csproj", "{CC27E08E-F3DD-47C2-A524-8E0C50AA89BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingFoundamentDemo", "BuildingFoundamentDemo\BuildingFoundamentDemo.csproj", "{945D78E4-73E7-48B8-9086-2B682C35085C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +61,10 @@ Global
 		{CC27E08E-F3DD-47C2-A524-8E0C50AA89BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC27E08E-F3DD-47C2-A524-8E0C50AA89BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC27E08E-F3DD-47C2-A524-8E0C50AA89BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{945D78E4-73E7-48B8-9086-2B682C35085C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{945D78E4-73E7-48B8-9086-2B682C35085C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{945D78E4-73E7-48B8-9086-2B682C35085C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{945D78E4-73E7-48B8-9086-2B682C35085C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -68,6 +74,7 @@ Global
 		{99DE13C7-B961-43D7-925A-8419662B0168} = {6AB14D0D-085C-43C9-BFBB-5B89862E0A63}
 		{38C83E38-9CFB-4E1D-AC1E-9282CF5B4AF3} = {6AB14D0D-085C-43C9-BFBB-5B89862E0A63}
 		{CC27E08E-F3DD-47C2-A524-8E0C50AA89BE} = {6AB14D0D-085C-43C9-BFBB-5B89862E0A63}
+		{945D78E4-73E7-48B8-9086-2B682C35085C} = {6AB14D0D-085C-43C9-BFBB-5B89862E0A63}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2E8EA375-1FF9-420C-A6AC-CBB14D5C3F00}
