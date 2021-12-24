@@ -57,11 +57,10 @@ namespace RoadNetworkGenerator
         private bool IsGoalAchieved(Sucessor sucessor) 
             => _pivots.Any(pivot => Math.Equal(pivot, sucessor.LocalGoal, Constants.FloatEpsilon));
 
-        private Vector2[] ChooseNewGoals(Sucessor sucessor) => _pivots
-            .Except(new[] { sucessor.BranchStart, sucessor.LocalGoal }, new Vector2Comparer())
+        private IEnumerable<Vector2> ChooseNewGoals(Sucessor sucessor) => _pivots
+            .Except(new[] {sucessor.BranchStart, sucessor.LocalGoal}, new Vector2Comparer())
             .OrderBy(p => Vector2.Distance(p, sucessor.LocalGoal))
-            .Take(Constants.Brunches)
-            .ToArray();
+            .Take(Constants.Brunches);
 
         private Sucessor CreatePivot(Sucessor sucessor, RoadSegment segment) => new()
         {
