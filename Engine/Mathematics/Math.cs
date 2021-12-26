@@ -175,6 +175,16 @@ namespace GameEngine.Mathematics
             => thisPolygon.All(p => IsPointInConvexPolygon(p, otherPolygon));
 
         /// <summary>
+        /// Method check, is convex polygons intersects.
+        /// </summary>
+        /// <param name="thisPolygon">First convex polygon.</param>
+        /// <param name="otherPolygon">Second convex polygon.</param>
+        /// <returns>True if intersect, false in other case.</returns>
+        public static bool IsConvexPolygonsIntersects(IList<Vector2> thisPolygon, IList<Vector2> otherPolygon) 
+            => thisPolygon.Any(p => IsPointInConvexPolygon(p, otherPolygon))
+               || otherPolygon.Any(p => IsPointInConvexPolygon(p, thisPolygon));
+
+        /// <summary>
         /// Calculate cross production for 2d vectors.
         /// </summary>
         /// <param name="a">Vector a.</param>
