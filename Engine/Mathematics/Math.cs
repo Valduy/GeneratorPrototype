@@ -171,7 +171,7 @@ namespace GameEngine.Mathematics
         /// <param name="thisPolygon">Polygon that we check if it is inside another.</param>
         /// <param name="otherPolygon">Other convex polygon.</param>
         /// <returns>True, if polygon inside other convex polygon, else in other case.</returns>
-        public static bool IsPolygonInsideConvexPolygon(Vector2[] thisPolygon, Vector2[] otherPolygon) 
+        public static bool IsPolygonInsideConvexPolygon(IList<Vector2> thisPolygon, IList<Vector2> otherPolygon) 
             => thisPolygon.All(p => IsPointInConvexPolygon(p, otherPolygon));
 
         /// <summary>
