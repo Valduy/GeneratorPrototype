@@ -7,7 +7,7 @@
         private readonly GlobalGoalsProcessor _globalGoals;
         private readonly LocalConstraintsProcessor _localConstraints;
 
-        public readonly RoadSegment Initial;
+        public readonly RoadNode Initial;
 
         public RoadGenerator(InputData data)
         {
@@ -15,14 +15,13 @@
             _globalGoals = new GlobalGoalsProcessor(_inputData);
             _localConstraints = new LocalConstraintsProcessor(_inputData);
 
-            Initial = new RoadSegment(data.Start, data.Start);
+            Initial = new RoadNode(data.Start);
 
             var sucessor = new Sucessor()
             {
                 SucessorType = SucessorType.Main,
                 Time = 0,
                 Parent = Initial,
-                BranchStart = data.Start,
                 LocalGoal = data.Start,
                 GlobalGoal = data.Start,
             };
@@ -36,13 +35,12 @@
             if (_sucessors.Count == 0) return false;
 
             var sucessor = _sucessors.Dequeue();
+            var node = _localConstraints.Process(sucessor);
 
-            if (_localConstraints.Process(sucessor))
+            if (node != null)
             {
-                newSegment = new RoadSegment(sucessor.Parent.End, sucessor.LocalGoal);
-                sucessor.Parent.Children.Add(newSegment);
-                // TODO: connect with other (may be not create node, just reuse)
-                var (a, b, c) = _globalGoals.Process(sucessor, newSegment);
+                newSegment = new RoadSegment(sucessor.Parent.Position, node.Position);
+                var (a, b, c) = _globalGoals.Process(sucessor, node);
                 TryAddBranch(a);
                 TryAddBranch(b);
                 TryAddBranch(c);

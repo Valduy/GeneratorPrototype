@@ -11,28 +11,43 @@ namespace RoadNetworkGenerator
             _inputData = inputData;
         }
 
-        public bool Process(Sucessor sucessor)
+        public RoadNode? Process(Sucessor sucessor)
         {
             if (sucessor.SucessorType == SucessorType.Branch)
             {
-                //TODO: Now just deprecate brunching, but it,s nonsense...
-                return false;
+                return null;
             }
 
             if (sucessor.SucessorType == SucessorType.Pivot)
             {
-                return true;
+                return null;
             }
-            
+
             if (Vector2.Distance(sucessor.GlobalGoal, sucessor.LocalGoal) <= _inputData.SegmentLength)
             {
                 sucessor.LocalGoal = sucessor.GlobalGoal;
-                return true;
+
             }
 
-            // TODO: correct according to road intersection possibilities
-            // TODO: make "perception" to find roads for merge
-            return true;
+            return CreateNode(sucessor);
+        }
+
+        private void ConnectWithNode()
+        {
+
+        }
+
+        private void ConnectWithSegment()
+        {
+
+        }
+
+        private RoadNode CreateNode(Sucessor sucessor)
+        {
+            var node = new RoadNode(sucessor.LocalGoal);
+            node.Neighbours.Add(node);
+            node.Neighbours.Add(sucessor.Parent);
+            return node;
         }
     }
 }

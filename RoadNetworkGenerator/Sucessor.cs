@@ -24,12 +24,7 @@ namespace RoadNetworkGenerator
         /// <summary>
         /// Segment-ancestor of this sucessor.
         /// </summary>
-        public RoadSegment Parent;
-
-        /// <summary>
-        /// Initial point of current branch (one of pivot point).
-        /// </summary>
-        public Vector2 BranchStart;
+        public RoadNode Parent;
 
         /// <summary>
         /// Destination point for current sucessor (local goal).
@@ -46,7 +41,6 @@ namespace RoadNetworkGenerator
             SucessorType = SucessorType,
             Time = Time,
             Parent = Parent,
-            BranchStart = BranchStart,
             LocalGoal = LocalGoal,
             GlobalGoal = GlobalGoal
         };

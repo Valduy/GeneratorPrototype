@@ -62,8 +62,8 @@ namespace GameEngine.Mathematics
                         }
 
                         Vector2 p = shape[j];
-                        
-                        if (IsPointInTriangle(p, vb, va, vc))
+
+                        if (IsPointInConvexPolygon(p, new []{vb, va, vc}))
                         {
                             isEar = false;
                             break;
@@ -144,30 +144,35 @@ namespace GameEngine.Mathematics
             => Area(vertices) > 0;
 
         /// <summary>
-        /// Method check, is triangle <see cref="a"/>, <see cref="b"/>, <see cref="c"/> contains point <see cref="p"/>.
+        /// Method check, is point is inside convex polygon.
         /// </summary>
         /// <param name="p">Point.</param>
-        /// <param name="a">Vertex a.</param>
-        /// <param name="b">Vertex b.</param>
-        /// <param name="c">Vertex c.</param>
-        /// <returns>True if contains, false in other case.</returns>
-        public static bool IsPointInTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
+        /// <param name="polygon">Polygon's points.</param>
+        /// <returns>True if point inside polygon, false in other case.</returns>
+        public static bool IsPointInConvexPolygon(Vector2 p, Vector2[] polygon)
         {
-            var ab = b - a;
-            var bc = c - b;
-            var ca = a - c;
-
-            var ap = p - a;
-            var bp = p - b;
-            var cp = p - c;
-
-            if (Cross(ab, ap) < 0 || Cross(bc, bp) < 0 || Cross(ca, cp) < 0)
+            for (int i = 0; i < polygon.Length; i++)
             {
-                return false;
+                var edge = polygon.GetCircular(i + 1) - polygon[i];
+                var toPoint = p - polygon[i];
+
+                if (Cross(edge, toPoint) < 0)
+                {
+                    return false;
+                }
             }
 
             return true;
         }
+
+        /// <summary>
+        /// Method check, is polygon inside other convex polygon.
+        /// </summary>
+        /// <param name="thisPolygon">Polygon that we check if it is inside another.</param>
+        /// <param name="otherPolygon">Other convex polygon.</param>
+        /// <returns>True, if polygon inside other convex polygon, else in other case.</returns>
+        public static bool IsPolygonInsideConvexPolygon(Vector2[] thisPolygon, Vector2[] otherPolygon) 
+            => thisPolygon.All(p => IsPointInConvexPolygon(p, otherPolygon));
 
         /// <summary>
         /// Calculate cross production for 2d vectors.
@@ -210,5 +215,18 @@ namespace GameEngine.Mathematics
             Vector2 position2, float width2, float height2) 
             => System.Math.Abs(position1.X - position2.X) * 2 < (width1 + width2)
                && System.Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
+
+        /// <summary>
+        /// Method find intersection point between two segments.
+        /// </summary>
+        /// <param name="a1">First segment, first point.</param>
+        /// <param name="a2">First segment second point.</param>
+        /// <param name="b1">Second segment, first point.</param>
+        /// <param name="b2">Second segment, second point.</param>
+        /// <returns>True, if lines intersects, false in other case.</returns>
+        public static bool IsLineSegmentsIntersects(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2, out Vector2 intersection)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

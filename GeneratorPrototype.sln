@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoadNetworkGenerator", "Roa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoadGenerationDemo", "RoadGenerationDemo\RoadGenerationDemo.csproj", "{CC27E08E-F3DD-47C2-A524-8E0C50AA89BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingFoundamentDemo", "BuildingFoundamentDemo\BuildingFoundamentDemo.csproj", "{945D78E4-73E7-48B8-9086-2B682C35085C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BuildingFoundamentDemo", "BuildingFoundamentDemo\BuildingFoundamentDemo.csproj", "{945D78E4-73E7-48B8-9086-2B682C35085C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
