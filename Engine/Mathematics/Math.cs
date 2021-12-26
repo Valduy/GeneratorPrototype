@@ -120,7 +120,7 @@ namespace GameEngine.Mathematics
         /// </summary>
         /// <param name="vertices">Vertexes of polygon.</param>
         /// <returns>Area of polygon.</returns>
-        public static float Area(IReadOnlyList<Vector2> vertices)
+        public static float Area(IList<Vector2> vertices)
         {
             float area = 0;
 
@@ -140,7 +140,7 @@ namespace GameEngine.Mathematics
         /// </summary>
         /// <param name="vertices">Vertexes of polygon.</param>
         /// <returns>True, if polygon counter clock wise oriented and false in other case.</returns>
-        public static bool IsCounterClockWise(IReadOnlyList<Vector2> vertices) 
+        public static bool IsCounterClockWise(IList<Vector2> vertices) 
             => Area(vertices) > 0;
 
         /// <summary>
@@ -149,9 +149,9 @@ namespace GameEngine.Mathematics
         /// <param name="p">Point.</param>
         /// <param name="polygon">Polygon's points.</param>
         /// <returns>True if point inside polygon, false in other case.</returns>
-        public static bool IsPointInConvexPolygon(Vector2 p, Vector2[] polygon)
+        public static bool IsPointInConvexPolygon(Vector2 p, IList<Vector2> polygon)
         {
-            for (int i = 0; i < polygon.Length; i++)
+            for (int i = 0; i < polygon.Count; i++)
             {
                 var edge = polygon.GetCircular(i + 1) - polygon[i];
                 var toPoint = p - polygon[i];

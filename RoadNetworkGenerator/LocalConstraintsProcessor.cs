@@ -26,7 +26,7 @@ namespace RoadNetworkGenerator
             if (Vector2.Distance(sucessor.GlobalGoal, sucessor.LocalGoal) <= _inputData.SegmentLength)
             {
                 sucessor.LocalGoal = sucessor.GlobalGoal;
-
+                var node = CreateNode(sucessor);
             }
 
             return CreateNode(sucessor);

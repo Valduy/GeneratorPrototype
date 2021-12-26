@@ -32,6 +32,25 @@ namespace GameEngine.Components
 
         public Vector3 Color { get; set; } = Colors.Gray;
 
+        public List<Vector2> Points
+        {
+            get
+            {
+                var result = new List<Vector2>();
+                var model = Matrix3.CreateScale(GameObject!.Scale.X, GameObject.Scale.Y, 1);
+                model *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(GameObject.Rotation));
+
+                foreach (var p in Shape)
+                {
+                    var temp = new Vector3(p.X, p.Y, 1);
+                    temp *= model;
+                    result.Add(new Vector2(GameObject.Position.X + temp.X, GameObject.Position.Y + temp.Y));
+                }
+
+                return result;
+            }
+        }
+
         public RenderComponent(Renderer renderer)
         {
             _renderer = renderer;
