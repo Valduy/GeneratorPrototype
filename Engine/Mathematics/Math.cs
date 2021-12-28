@@ -10,6 +10,8 @@ namespace GameEngine.Mathematics
 
         public const float FloatEpsilon = 0.1f;
         public const float FullCircle = 360;
+        public const float HalfCircle = FullCircle / 2;
+        public const float PI = 3.14159274f;
 
         /// <summary>
         /// Method triangulate <see cref="Shape"/>.
@@ -184,6 +186,18 @@ namespace GameEngine.Mathematics
             => thisPolygon.Any(p => IsPointInConvexPolygon(p, otherPolygon))
                || otherPolygon.Any(p => IsPointInConvexPolygon(p, thisPolygon));
 
+        public static float Cos(float radians)
+            => (float) System.Math.Cos(radians);
+
+        public static float Acos(float cos) 
+            => (float)System.Math.Acos(cos);
+
+        public static float ToDegrees(float radians) 
+            => radians * HalfCircle / PI;
+
+        public static float ToRadians(float degrees) 
+            => degrees * PI / 180;
+
         /// <summary>
         /// Calculate cross production for 2d vectors.
         /// </summary>
@@ -192,7 +206,16 @@ namespace GameEngine.Mathematics
         /// <returns>Component z of cross production.</returns>
         public static float Cross(Vector2 a, Vector2 b) 
             => a.X * b.Y - a.Y * b.X;
-        
+
+        /// <summary>
+        /// Calculate angle between 2 vectors.
+        /// </summary>
+        /// <param name="a">Vector a.</param>
+        /// <param name="b">Vector b.</param>
+        /// <returns>Angle between a and b in radians.</returns>
+        public static float Angle(Vector2 a, Vector2 b)
+            => Acos(Vector2.Dot(a, b) / (a.Length * b.Length));
+
         public static bool Equal(Vector2 a, Vector2 b, float epsilon) 
             => Equal(a.X, b.X, epsilon) && Equal(a.Y, b.Y, epsilon);
 

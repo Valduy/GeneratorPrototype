@@ -1,53 +1,87 @@
-﻿using OpenTK.Mathematics;
+﻿using Graph;
+using OpenTK.Mathematics;
+using Math = GameEngine.Mathematics.Math;
 
 namespace RoadNetworkGenerator
 {
     public class LocalConstraintsProcessor
     {
-        private readonly InputData _inputData;
+        public readonly InputData InputData;
+        public readonly Net<Sucessor> Net;
 
-        public LocalConstraintsProcessor(InputData inputData)
+        public LocalConstraintsProcessor(InputData inputData, Net<Sucessor> net)
         {
-            _inputData = inputData;
+            InputData = inputData;
+            Net = net;
         }
 
-        public RoadNode? Process(Sucessor sucessor)
+        public Node<Sucessor>? Process(Sucessor sucessor)
         {
+            // now, just fail
             if (sucessor.SucessorType == SucessorType.Branch)
             {
                 return null;
             }
-
-            if (sucessor.SucessorType == SucessorType.Pivot)
+            
+            if (Vector2.Distance(sucessor.Goal, sucessor.Position) <= InputData.SegmentLength)
             {
-                return null;
+                sucessor.Position = sucessor.Goal;
             }
 
-            if (Vector2.Distance(sucessor.GlobalGoal, sucessor.LocalGoal) <= _inputData.SegmentLength)
+            var destinations = GetPotentialDestinations(sucessor).ToList();
+
+            // TODO: connection with edges
+            if (destinations.Any())
             {
-                sucessor.LocalGoal = sucessor.GlobalGoal;
-                var node = CreateNode(sucessor);
+                var destination = destinations.First();
+                sucessor.Position = destination.Item.Position;
+                Net.Connect(sucessor.Parent!, destination);
+                return null;
             }
 
             return CreateNode(sucessor);
         }
 
-        private void ConnectWithNode()
+        private Node<Sucessor> CreateNode(Sucessor sucessor)
         {
+            var node = Net.CreateNode(sucessor);
 
-        }
+            if (sucessor.Parent != null)
+            {
+                Net.Connect(sucessor.Parent, node);
+            }
 
-        private void ConnectWithSegment()
-        {
-
-        }
-
-        private RoadNode CreateNode(Sucessor sucessor)
-        {
-            var node = new RoadNode(sucessor.LocalGoal);
-            node.Neighbours.Add(node);
-            node.Neighbours.Add(sucessor.Parent);
             return node;
+        }
+
+        private IEnumerable<Node<Sucessor>> GetPotentialDestinations(Sucessor sucessor)
+        {
+            if (sucessor.Parent == null) return Enumerable.Empty<Node<Sucessor>>();
+
+            return Net
+                .GetNodes()
+                .Where(n => IsValidDestination(sucessor, n))
+                .OrderBy(n => Vector2.Distance(sucessor.Parent.Item.Position, n.Item.Position));
+        }
+
+        private bool IsValidDestination(Sucessor sucessor, Node<Sucessor> destination) 
+            => destination != sucessor.Parent
+               && destination.Item.SucessorType is SucessorType.Main or SucessorType.Pivot
+               && IsDestinationInPerceptionRadius(sucessor, destination)
+               && IsDestinationInFrontArc(sucessor, destination);
+
+        private bool IsDestinationInPerceptionRadius(Sucessor sucessor, Node<Sucessor> destination)
+        {
+            var sourcePosition = sucessor.Parent!.Item.Position;
+            var destinationPosition = destination.Item.Position;
+            return Vector2.Distance(sourcePosition, destinationPosition) < InputData.PerceptionRadius;
+        }
+
+        private bool IsDestinationInFrontArc(Sucessor sucessor, Node<Sucessor> destination)
+        {
+            var vector = sucessor.Position - sucessor.Parent!.Item.Position;
+            var toOther = destination.Item.Position - sucessor.Parent.Item.Position;
+            return System.Math.Abs(Math.ToDegrees(Math.Angle(vector, toOther))) <= Constants.FrontArc / 2;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using Graph;
+using OpenTK.Mathematics;
 
 namespace RoadNetworkGenerator
 {
@@ -22,27 +23,27 @@ namespace RoadNetworkGenerator
         public int Time;
 
         /// <summary>
-        /// Segment-ancestor of this sucessor.
+        /// Node-ancestor of this sucessor.
         /// </summary>
-        public RoadNode Parent;
+        public Node<Sucessor>? Parent;
 
         /// <summary>
         /// Destination point for current sucessor (local goal).
         /// </summary>
-        public Vector2 LocalGoal;
+        public Vector2 Position;
 
         /// <summary>
         /// Pursued goal by current brunch (global goal).
         /// </summary>
-        public Vector2 GlobalGoal;
+        public Vector2 Goal;
 
         public object Clone() => new Sucessor()
         {
             SucessorType = SucessorType,
             Time = Time,
             Parent = Parent,
-            LocalGoal = LocalGoal,
-            GlobalGoal = GlobalGoal
+            Position = Position,
+            Goal = Goal
         };
     }
 }

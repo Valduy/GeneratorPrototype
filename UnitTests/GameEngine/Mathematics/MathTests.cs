@@ -8,6 +8,21 @@ namespace UnitTests.GameEngine.Mathematics
 {
     public class MathTests
     {
+        public static IEnumerable<object[]> VectorsAndAnglesGenerator
+        {
+            get
+            {
+                yield return new object[]
+                {
+                    new Vector2(2, 0), new Vector2(0, 3), 90
+                };
+                yield return new object[]
+                {
+                    new Vector2(2, 4 * Math.Cos(Math.ToRadians(30))), new Vector2(2, 0), 60
+                };
+            }
+        }
+
         [Theory]
         [ClassData(typeof(NotIntersectedGenerator))]
         public void IsAABBIntersects_NotIntersectedAABBs_False(Vector2 position1, Vector2 size1, Vector2 position2, Vector2 size2)
@@ -42,6 +57,15 @@ namespace UnitTests.GameEngine.Mathematics
             var result = Math.IsPointInConvexPolygon(point, polygons);
 
             Assert.True(result);
+        }
+
+        [Theory]
+        [MemberData(nameof(VectorsAndAnglesGenerator))]
+        public void Angle_Vectors_CorrectAngle(Vector2 a, Vector2 b, float angle)
+        {
+            var result = Math.ToDegrees(Math.Angle(a, b));
+
+            Assert.Equal(result, angle, 2);
         }
     }
 

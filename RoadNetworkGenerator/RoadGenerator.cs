@@ -1,4 +1,7 @@
-﻿namespace RoadNetworkGenerator
+﻿using Graph;
+using OpenTK.Mathematics;
+
+namespace RoadNetworkGenerator
 {
     public class RoadGenerator
     {
@@ -7,31 +10,28 @@
         private readonly GlobalGoalsProcessor _globalGoals;
         private readonly LocalConstraintsProcessor _localConstraints;
 
-        public readonly RoadNode Initial;
+        public readonly Net<Sucessor> Net = new();
 
         public RoadGenerator(InputData data)
         {
             _inputData = data;
-            _globalGoals = new GlobalGoalsProcessor(_inputData);
-            _localConstraints = new LocalConstraintsProcessor(_inputData);
-
-            Initial = new RoadNode(data.Start);
+            _globalGoals = new GlobalGoalsProcessor(_inputData, Net);
+            _localConstraints = new LocalConstraintsProcessor(_inputData, Net);
 
             var sucessor = new Sucessor()
             {
                 SucessorType = SucessorType.Main,
                 Time = 0,
-                Parent = Initial,
-                LocalGoal = data.Start,
-                GlobalGoal = data.Start,
+                Parent = null,
+                Position = data.Start,
+                Goal = data.Start,
             };
 
             _sucessors.Enqueue(sucessor, sucessor.Time);
         }
 
-        public bool Iterate(out RoadSegment? newSegment)
+        public bool Iterate()
         {
-            newSegment = null;
             if (_sucessors.Count == 0) return false;
 
             var sucessor = _sucessors.Dequeue();
@@ -39,8 +39,7 @@
 
             if (node != null)
             {
-                newSegment = new RoadSegment(sucessor.Parent.Position, node.Position);
-                var (a, b, c) = _globalGoals.Process(sucessor, node);
+                var (a, b, c) = _globalGoals.Process(node);
                 TryAddBranch(a);
                 TryAddBranch(b);
                 TryAddBranch(c);
@@ -59,5 +58,10 @@
 
             return false;
         }
+
+        private RoadSegment? CreateRoadSegment(Sucessor sucessor) 
+            => sucessor.Parent != null 
+                ? new RoadSegment(sucessor.Parent.Item.Position, sucessor.Position) 
+                : null;
     }
 }

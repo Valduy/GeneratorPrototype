@@ -2,6 +2,7 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
+using Net;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -23,6 +24,7 @@ namespace RoadGenerationDemo
             _keyboardState = keyboardState;
             _inputData = CreateInputData();
             _roadGenerator = new RoadGenerator(_inputData);
+            _roadGenerator.Net.Connected += OnConnected;
         }
 
         public override void Start()
@@ -39,21 +41,20 @@ namespace RoadGenerationDemo
         {
             if (!_keyboardState.IsKeyDown(Keys.Space)) return;
 
-            if (_roadGenerator.Iterate(out var newSegment))
-            {
-                if (newSegment == null) return;
-
-                var roadGo = GameObject!.Engine.CreateGameObject();
-                roadGo.Add(() => new RenderComponent(_renderer)
-                {
-                    Color = Colors.Gray,
-                    Shape = Shape.Line(newSegment.Start, newSegment.End)
-                });
-            }
-            else
+            if (!_roadGenerator.Iterate())
             {
                 Console.WriteLine("Generation end.");
             }
+        }
+
+        private void OnConnected(object? source, ConnectionEventArgs<Sucessor> args)
+        {
+            var roadGo = GameObject!.Engine.CreateGameObject();
+            roadGo.Add(() => new RenderComponent(_renderer)
+            {
+                Color = Colors.Gray,
+                Shape = Shape.Line(args.Node1.Item.Position, args.Node2.Item.Position)
+            });
         }
 
         private void CreateTriangle(Vector2 position)
@@ -73,11 +74,11 @@ namespace RoadGenerationDemo
             Start = new Vector2(100.0f, 100.0f),
             Goals = new[]
             {
-                new Vector2(150.0f, 900f),
-                new Vector2(500.0f, 500.0f),
-                new Vector2(700.0f, 300.0f)
+                new Vector2(900.0f, 200f),
+                new Vector2(700.0f, 700.0f),
+                new Vector2(150.0f, 800.0f)
             },
-            SegmentLength = 20,
+            SegmentLength = 50,
         };
     }
 }
