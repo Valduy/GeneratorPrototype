@@ -214,7 +214,7 @@ namespace GameEngine.Mathematics
         /// <param name="b">Vector b.</param>
         /// <returns>Angle between a and b in radians.</returns>
         public static float Angle(Vector2 a, Vector2 b)
-            => Acos(Vector2.Dot(a, b) / (a.Length * b.Length));
+            => Acos(System.Math.Clamp(Vector2.Dot(a, b) / (a.Length * b.Length), -1, 1));
 
         public static bool Equal(Vector2 a, Vector2 b, float epsilon) 
             => Equal(a.X, b.X, epsilon) && Equal(a.Y, b.Y, epsilon);

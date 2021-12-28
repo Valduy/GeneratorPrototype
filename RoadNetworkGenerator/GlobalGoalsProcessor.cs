@@ -43,22 +43,54 @@ namespace RoadNetworkGenerator
             }
             if (IsGoalAchieved(node.Item))
             {
-                //if (TryFindPivotNode(node.Item.Position, out var pivot))
-                //{
-                //    Net.Connect(node, pivot);
-                //}
-                //else
-                //{
-                //    node.Item.SucessorType = SucessorType.Pivot;
-                //    result = SetNewGoals(node);
-                //}
                 node.Item.SucessorType = SucessorType.Pivot;
                 result = SetNewGoals(node);
             }
             // Else: just branch and grow
             else
             {
-                result.a = GrowMain(node.Item, node);
+                var prevDirection = node.Item.Position - node.Item.Parent!.Item.Position;
+                var desiredDirection = node.Item.Goal - node.Item.Position;
+                int sign = System.Math.Sign(Math.Cross(prevDirection, desiredDirection));
+                
+                if (TryGetInfluencer(node, out var influencer))
+                {
+                    desiredDirection = (influencer!.Value - node.Item.Position);
+                    sign = System.Math.Sign(Math.Cross(prevDirection, desiredDirection));
+                }
+
+                var angle = MathHelper.RadiansToDegrees(Math.Angle(prevDirection, desiredDirection));
+                angle = System.Math.Min(angle, Constants.MaxAngle) * sign;
+  
+                prevDirection.Normalize();
+                prevDirection *= Constants.SegmentLength;
+                var direction = new Vector3(prevDirection.X, prevDirection.Y, 1);
+                direction *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(angle));
+                prevDirection = new Vector2(direction.X, direction.Y);
+                prevDirection += node.Item.Position;
+
+                result.a = GrowMain(node, prevDirection);
+
+
+                //var sucessor = GrowMain()
+
+                //if (TryGetInfluencer(node, out var influencer))
+                //{
+                //    result.a = GrowMain(node.Item, node);
+                //}
+                //else
+                //{
+
+                //}
+                //if (TryGetInfluencer(node, out var influencer))
+                //{
+                //    result.a = GrowMain(node.Item, node);
+                //}
+                //else
+                //{
+
+                //}
+
                 //result.b = BrunchMain(sucessor, segment, 90);
                 //result.c = BrunchMain(sucessor, segment, -90);
             }
@@ -115,15 +147,15 @@ namespace RoadNetworkGenerator
             SucessorType = SucessorType.Main,
             Time = node.Item.Time + 1,
             Parent = node,
-            Position = node.Item.Position + InputData.SegmentLength * (newGlobalGoal - node.Item.Position).Normalized(),
+            Position = node.Item.Position + Constants.SegmentLength * (newGlobalGoal - node.Item.Position).Normalized(),
             Goal = newGlobalGoal,
         };
 
-        private Sucessor GrowMain(Sucessor sucessor, Node<Sucessor> node)
+        private Sucessor GrowMain(Node<Sucessor> node, Vector2 position)
         {
-            var mainSucessor = (Sucessor)sucessor.Clone();
+            var mainSucessor = (Sucessor)node.Item.Clone();
             mainSucessor.Parent = node;
-            mainSucessor.Position = node.Item.Position + InputData.SegmentLength * (mainSucessor.Goal - node.Item.Position).Normalized();
+            mainSucessor.Position = position;
             return mainSucessor;
         }
 
@@ -169,6 +201,16 @@ namespace RoadNetworkGenerator
                 .FirstOrDefault(n => n.Item.Position == position && n.Item.SucessorType == SucessorType.Pivot);
 
             return pivot != null;
+        }
+
+        private bool TryGetInfluencer(Node<Sucessor> node, out Vector2? influencer)
+        {
+            influencer = InputData.ImportantPoints
+                .OrderBy(p => Vector2.Distance(node.Item.Position, p))
+                .FirstOrDefault();
+            
+            return Vector2.Distance(node.Item.Position, influencer.Value) <= Constants.InfluenceRadius
+                && Vector2.Dot(node.Item.Position - node.Item.Parent!.Item.Position, influencer.Value - node.Item.Position) > 0;
         }
 
         //private Sucessor BrunchMain(Sucessor sucessor, RoadSegment segment, float angle)

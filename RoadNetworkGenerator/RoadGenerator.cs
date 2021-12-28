@@ -58,10 +58,5 @@ namespace RoadNetworkGenerator
 
             return false;
         }
-
-        private RoadSegment? CreateRoadSegment(Sucessor sucessor) 
-            => sucessor.Parent != null 
-                ? new RoadSegment(sucessor.Parent.Item.Position, sucessor.Position) 
-                : null;
     }
 }

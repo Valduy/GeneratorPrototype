@@ -29,11 +29,14 @@ namespace RoadGenerationDemo
 
         public override void Start()
         {
-            CreateTriangle(_inputData.Start);
-
-            foreach (var goal in _inputData.Goals)
+            foreach (var goal in _inputData.Goals.Append(_inputData.Start))
             {
-                CreateTriangle(goal);
+                CreateTriangle(goal, Colors.Lime);
+            }
+
+            foreach (var point in _inputData.ImportantPoints)
+            {
+                CreateTriangle(point, Colors.Red);
             }
         }
 
@@ -57,13 +60,13 @@ namespace RoadGenerationDemo
             });
         }
 
-        private void CreateTriangle(Vector2 position)
+        private void CreateTriangle(Vector2 position, Vector3 color)
         {
             var triangleGo = GameObject!.Engine.CreateGameObject();
             triangleGo.Add(() => new RenderComponent(_renderer)
             {
                 Shape = Shape.Triangle(20),
-                Color = Colors.Lime,
+                Color = color,
                 Layer = -9,
             });
             triangleGo.Position = position;
@@ -78,7 +81,11 @@ namespace RoadGenerationDemo
                 new Vector2(700.0f, 700.0f),
                 new Vector2(150.0f, 800.0f)
             },
-            SegmentLength = 50,
+            ImportantPoints = new []
+            {
+                new Vector2(500, 300),
+                new Vector2(600, 800),
+            },
         };
     }
 }

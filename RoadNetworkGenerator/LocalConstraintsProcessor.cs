@@ -23,7 +23,7 @@ namespace RoadNetworkGenerator
                 return null;
             }
             
-            if (Vector2.Distance(sucessor.Goal, sucessor.Position) <= InputData.SegmentLength)
+            if (Vector2.Distance(sucessor.Goal, sucessor.Position) <= Constants.SegmentLength)
             {
                 sucessor.Position = sucessor.Goal;
             }
@@ -74,7 +74,7 @@ namespace RoadNetworkGenerator
         {
             var sourcePosition = sucessor.Parent!.Item.Position;
             var destinationPosition = destination.Item.Position;
-            return Vector2.Distance(sourcePosition, destinationPosition) < InputData.PerceptionRadius;
+            return Vector2.Distance(sourcePosition, destinationPosition) < Constants.PerceptionRadius;
         }
 
         private bool IsDestinationInFrontArc(Sucessor sucessor, Node<Sucessor> destination)
