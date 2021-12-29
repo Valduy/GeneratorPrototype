@@ -18,7 +18,7 @@ namespace UnitTests.GameEngine.Mathematics
                 };
                 yield return new object[]
                 {
-                    new Vector2(2, 4 * Math.Cos(Math.ToRadians(30))), new Vector2(2, 0), 60
+                    new Vector2(2, 4 * Math.Cos(MathHelper.DegreesToRadians(30))), new Vector2(2, 0), 60
                 };
             }
         }
@@ -63,7 +63,7 @@ namespace UnitTests.GameEngine.Mathematics
         [MemberData(nameof(VectorsAndAnglesGenerator))]
         public void Angle_Vectors_CorrectAngle(Vector2 a, Vector2 b, float angle)
         {
-            var result = Math.ToDegrees(Math.Angle(a, b));
+            var result = MathHelper.RadiansToDegrees(Math.Angle(a, b));
 
             Assert.Equal(result, angle, 2);
         }

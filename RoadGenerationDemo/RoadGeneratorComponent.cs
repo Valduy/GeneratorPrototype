@@ -55,7 +55,7 @@ namespace RoadGenerationDemo
             var roadGo = GameObject!.Engine.CreateGameObject();
             roadGo.Add(() => new RenderComponent(_renderer)
             {
-                Color = Colors.Gray,
+                Color = Colors.White,
                 Shape = Shape.Line(args.Node1.Item.Position, args.Node2.Item.Position)
             });
         }
@@ -85,6 +85,8 @@ namespace RoadGenerationDemo
             {
                 new Vector2(500, 300),
                 new Vector2(600, 800),
+                new Vector2(50, 400),
+                new Vector2(250, 650),
             },
         };
     }

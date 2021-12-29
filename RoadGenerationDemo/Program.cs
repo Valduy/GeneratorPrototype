@@ -14,19 +14,19 @@ namespace RoadGenerationDemo
         {
             using var game = new Game();
 
-            var backgroundGo = game.Engine.CreateGameObject();
-            backgroundGo.Add(() => new RenderComponent(game.Window.Renderer)
-            {
-                Shape = new Shape(new []
-                {
-                    new Vector2(0, 0),
-                    new Vector2(MapHeight, 0),
-                    new Vector2(MapHeight, MapWidth),
-                    new Vector2(0, MapWidth),
-                }),
-                Color = Colors.Green,
-                Layer = -99, // Very-very far...
-            });
+            //var backgroundGo = game.Engine.CreateGameObject();
+            //backgroundGo.Add(() => new RenderComponent(game.Window.Renderer)
+            //{
+            //    Shape = new Shape(new []
+            //    {
+            //        new Vector2(0, 0),
+            //        new Vector2(MapHeight, 0),
+            //        new Vector2(MapHeight, MapWidth),
+            //        new Vector2(0, MapWidth),
+            //    }),
+            //    Color = Colors.Gray,
+            //    Layer = -99, // Very-very far...
+            //});
 
             var operatorGo = game.Engine.CreateGameObject();
             operatorGo.Add(() => new OperatorComponent(game.Window));

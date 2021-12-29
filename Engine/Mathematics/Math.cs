@@ -9,9 +9,6 @@ namespace GameEngine.Mathematics
         // NOTE: I use words "shape" and "polygon" as synonyms.
 
         public const float FloatEpsilon = 0.1f;
-        public const float FullCircle = 360;
-        public const float HalfCircle = FullCircle / 2;
-        public const float PI = 3.14159274f;
 
         /// <summary>
         /// Method triangulate <see cref="Shape"/>.
@@ -192,12 +189,6 @@ namespace GameEngine.Mathematics
         public static float Acos(float cos) 
             => (float)System.Math.Acos(cos);
 
-        public static float ToDegrees(float radians) 
-            => radians * HalfCircle / PI;
-
-        public static float ToRadians(float degrees) 
-            => degrees * PI / 180;
-
         /// <summary>
         /// Calculate cross production for 2d vectors.
         /// </summary>
@@ -215,6 +206,13 @@ namespace GameEngine.Mathematics
         /// <returns>Angle between a and b in radians.</returns>
         public static float Angle(Vector2 a, Vector2 b)
             => Acos(System.Math.Clamp(Vector2.Dot(a, b) / (a.Length * b.Length), -1, 1));
+        
+        public static Vector2 Rotate(Vector2 vector, float angle)
+        {
+            var vector3d = new Vector3(vector.X, vector.Y, 1);
+            vector3d *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(angle));
+            return new Vector2(vector3d.X, vector3d.Y);
+        }
 
         public static bool Equal(Vector2 a, Vector2 b, float epsilon) 
             => Equal(a.X, b.X, epsilon) && Equal(a.Y, b.Y, epsilon);

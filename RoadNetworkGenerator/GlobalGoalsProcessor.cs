@@ -50,46 +50,20 @@ namespace RoadNetworkGenerator
             else
             {
                 var prevDirection = node.Item.Position - node.Item.Parent!.Item.Position;
-                var desiredDirection = node.Item.Goal - node.Item.Position;
-                int sign = System.Math.Sign(Math.Cross(prevDirection, desiredDirection));
-                
-                if (TryGetInfluencer(node, out var influencer))
-                {
-                    desiredDirection = (influencer!.Value - node.Item.Position);
-                    sign = System.Math.Sign(Math.Cross(prevDirection, desiredDirection));
-                }
+                var desiredDirection = TryGetInfluencer(node, out var influencer) 
+                    ? (influencer!.Value - node.Item.Position) 
+                    : node.Item.Goal - node.Item.Position;
 
+                int sign = System.Math.Sign(Math.Cross(prevDirection, desiredDirection));
                 var angle = MathHelper.RadiansToDegrees(Math.Angle(prevDirection, desiredDirection));
                 angle = System.Math.Min(angle, Constants.MaxAngle) * sign;
   
-                prevDirection.Normalize();
-                prevDirection *= Constants.SegmentLength;
-                var direction = new Vector3(prevDirection.X, prevDirection.Y, 1);
-                direction *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(angle));
-                prevDirection = new Vector2(direction.X, direction.Y);
-                prevDirection += node.Item.Position;
+                var direction = prevDirection.Normalized();
+                direction *= Constants.SegmentLength;
+                direction = Math.Rotate(direction, angle);
+                direction += node.Item.Position;
 
-                result.a = GrowMain(node, prevDirection);
-
-
-                //var sucessor = GrowMain()
-
-                //if (TryGetInfluencer(node, out var influencer))
-                //{
-                //    result.a = GrowMain(node.Item, node);
-                //}
-                //else
-                //{
-
-                //}
-                //if (TryGetInfluencer(node, out var influencer))
-                //{
-                //    result.a = GrowMain(node.Item, node);
-                //}
-                //else
-                //{
-
-                //}
+                result.a = GrowMain(node, direction);
 
                 //result.b = BrunchMain(sucessor, segment, 90);
                 //result.c = BrunchMain(sucessor, segment, -90);
