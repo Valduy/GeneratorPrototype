@@ -18,6 +18,8 @@ namespace RoadGenerationDemo
         private RoadGenerator _roadGenerator;
         private InputData _inputData;
 
+        private bool _isKeyPressed = false;
+
         public RoadGeneratorComponent(Renderer renderer, KeyboardState keyboardState)
         {
             _renderer = renderer;
@@ -42,12 +44,20 @@ namespace RoadGenerationDemo
 
         public override void GameUpdate(FrameEventArgs args)
         {
-            if (!_keyboardState.IsKeyDown(Keys.Space)) return;
-
-            if (!_roadGenerator.Iterate())
+            if (_keyboardState.IsKeyDown(Keys.Space) /*&& !_isKeyPressed*/)
             {
-                Console.WriteLine("Generation end.");
+                //_isKeyPressed = true;
+
+                if (!_roadGenerator.Iterate())
+                {
+                    Console.WriteLine("Generation end.");
+                }
             }
+            
+            //if (_keyboardState.IsKeyReleased(Keys.Space) && _isKeyPressed)
+            //{
+            //    _isKeyPressed = false;
+            //}
         }
 
         private void OnConnected(object? source, ConnectionEventArgs<Sucessor> args)

@@ -22,7 +22,7 @@ namespace RoadNetworkGenerator
         public (Sucessor? a, Sucessor? b, Sucessor? c) Process(Node<Sucessor> node) => node.Item.SucessorType switch
         {
             SucessorType.Main => ProcessMain(node),
-            SucessorType.Branch => ProcessBranch(node.Item),
+            SucessorType.Branch => ProcessBranch(node),
             _ => throw new ArgumentOutOfRangeException()
         };
 
@@ -58,23 +58,43 @@ namespace RoadNetworkGenerator
                 var angle = MathHelper.RadiansToDegrees(Math.Angle(prevDirection, desiredDirection));
                 angle = System.Math.Min(angle, Constants.MaxAngle) * sign;
   
-                var direction = prevDirection.Normalized();
-                direction *= Constants.SegmentLength;
-                direction = Math.Rotate(direction, angle);
-                direction += node.Item.Position;
+                var forward = prevDirection.Normalized();
+                forward *= Constants.SegmentLength;
+                forward = Math.Rotate(forward, angle);
 
-                result.a = GrowMain(node, direction);
+                result.a = GrowMain(node, forward + node.Item.Position);
 
-                //result.b = BrunchMain(sucessor, segment, 90);
-                //result.c = BrunchMain(sucessor, segment, -90);
+                if (IsCanBrunch(node))
+                {
+                    var left = Math.Rotate(forward, 90);
+                    result.b = CreateBrunch(node, left + node.Item.Position);
+
+                    var right = Math.Rotate(forward, -90);
+                    result.c = CreateBrunch(node, right + node.Item.Position);
+                }
             }
 
             return result;
         }
 
-        private (Sucessor? a, Sucessor? b, Sucessor? c) ProcessBranch(Sucessor sucessor)
+        private (Sucessor? a, Sucessor? b, Sucessor? c) ProcessBranch(Node<Sucessor> node)
         {
-            throw new NotImplementedException();
+            (Sucessor? a, Sucessor? b, Sucessor? c) result = (null, null, null);
+
+            var forward = (node.Item.Position - node.Item.Parent!.Item.Position).Normalized();
+            forward *= Constants.SegmentLength;
+            result.a = GrowBrunch(node, forward + node.Item.Position);
+
+            if (IsCanBrunch(node))
+            {
+                var left = Math.Rotate(forward, 90);
+                result.b = GrowBrunch(node, left + node.Item.Position);
+
+                var right = Math.Rotate(forward, -90);
+                result.c = GrowBrunch(node, right + node.Item.Position);
+            }
+
+            return result;
         }
 
         private bool IsGoalAchievable(Node<Sucessor> node)
@@ -133,6 +153,24 @@ namespace RoadNetworkGenerator
             return mainSucessor;
         }
 
+        private Sucessor CreateBrunch(Node<Sucessor> node, Vector2 position) => new()
+        {
+            SucessorType = SucessorType.Branch,
+            Time = 1000 + 1, // TODO: think about it...
+            Parent = node,
+            Goal = position, // TODO: and about it...
+            Position = position,
+        };
+
+        private Sucessor GrowBrunch(Node<Sucessor> node, Vector2 position) => new()
+        {
+            SucessorType = SucessorType.Branch,
+            Time = node.Item.Time + 1,
+            Parent = node,
+            Goal = position, // TODO: and about it...
+            Position = position,
+        };
+
         private IEnumerable<Vector2> GetOneTransitReachablePivots(Node<Sucessor> node)
         {
             var pivots = new List<Vector2> { node.Item.Position };
@@ -185,6 +223,21 @@ namespace RoadNetworkGenerator
             
             return Vector2.Distance(node.Item.Position, influencer.Value) <= Constants.InfluenceRadius
                 && Vector2.Dot(node.Item.Position - node.Item.Parent!.Item.Position, influencer.Value - node.Item.Position) > 0;
+        }
+
+        private bool IsCanBrunch(Node<Sucessor> node)
+        {
+            for (int i = 0; i < Constants.BrunchingDistance; i++)
+            {
+                if (node.Neighbours.Count > 2 || node.Item.Parent == null)
+                {
+                    return false;                    
+                }
+
+                node = node.Item.Parent;
+            }
+
+            return true;
         }
 
         //private Sucessor BrunchMain(Sucessor sucessor, RoadSegment segment, float angle)
