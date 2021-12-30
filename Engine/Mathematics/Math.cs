@@ -183,12 +183,6 @@ namespace GameEngine.Mathematics
             => thisPolygon.Any(p => IsPointInConvexPolygon(p, otherPolygon))
                || otherPolygon.Any(p => IsPointInConvexPolygon(p, thisPolygon));
 
-        public static float Cos(float radians)
-            => (float) System.Math.Cos(radians);
-
-        public static float Acos(float cos) 
-            => (float)System.Math.Acos(cos);
-
         /// <summary>
         /// Calculate cross production for 2d vectors.
         /// </summary>
@@ -205,7 +199,7 @@ namespace GameEngine.Mathematics
         /// <param name="b">Vector b.</param>
         /// <returns>Angle between a and b in radians.</returns>
         public static float Angle(Vector2 a, Vector2 b)
-            => Acos(System.Math.Clamp(Vector2.Dot(a, b) / (a.Length * b.Length), -1, 1));
+            => MathF.Acos(System.Math.Clamp(Vector2.Dot(a, b) / (a.Length * b.Length), -1, 1));
         
         public static Vector2 Rotate(Vector2 vector, float angle)
         {
@@ -246,6 +240,15 @@ namespace GameEngine.Mathematics
             Vector2 position2, float width2, float height2) 
             => System.Math.Abs(position1.X - position2.X) * 2 < (width1 + width2)
                && System.Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
+
+        public static bool TryFindProjectionPoint(Vector2 p, Vector2 a, Vector2 b, out Vector2 projection)
+        {
+            var k = (b.Y - a.Y) / (b.X - a.X);
+            var n = new Vector2(k, 1);
+
+
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// Method find intersection point between two segments.

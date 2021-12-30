@@ -66,10 +66,10 @@ namespace RoadNetworkGenerator
 
                 if (IsCanBrunch(node))
                 {
-                    var left = Math.Rotate(forward, 90);
+                    var left = Math.Rotate(forward, Constants.BruncingAngle);
                     result.b = CreateBrunch(node, left + node.Item.Position);
 
-                    var right = Math.Rotate(forward, -90);
+                    var right = Math.Rotate(forward, -Constants.BruncingAngle);
                     result.c = CreateBrunch(node, right + node.Item.Position);
                 }
             }
@@ -87,10 +87,10 @@ namespace RoadNetworkGenerator
 
             if (IsCanBrunch(node))
             {
-                var left = Math.Rotate(forward, 90);
+                var left = Math.Rotate(forward, Constants.BruncingAngle);
                 result.b = GrowBrunch(node, left + node.Item.Position);
 
-                var right = Math.Rotate(forward, -90);
+                var right = Math.Rotate(forward, -Constants.BruncingAngle);
                 result.c = GrowBrunch(node, right + node.Item.Position);
             }
 

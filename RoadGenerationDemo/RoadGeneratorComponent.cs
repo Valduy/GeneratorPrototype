@@ -2,6 +2,7 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
+using Graph;
 using Net;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -62,13 +63,19 @@ namespace RoadGenerationDemo
 
         private void OnConnected(object? source, ConnectionEventArgs<Sucessor> args)
         {
+            var color = IsMain(args.Node1, args.Node2) ? Colors.Red : Colors.White;
+
             var roadGo = GameObject!.Engine.CreateGameObject();
             roadGo.Add(() => new RenderComponent(_renderer)
             {
-                Color = Colors.White,
+                Color =  color,
                 Shape = Shape.Line(args.Node1.Item.Position, args.Node2.Item.Position)
             });
         }
+
+        private bool IsMain(Node<Sucessor> node1, Node<Sucessor> node2) 
+            => (node1.Item.SucessorType == SucessorType.Main || node1.Item.SucessorType == SucessorType.Pivot) 
+            && (node2.Item.SucessorType == SucessorType.Main || node2.Item.SucessorType == SucessorType.Pivot);        
 
         private void CreateTriangle(Vector2 position, Vector3 color)
         {
@@ -91,7 +98,7 @@ namespace RoadGenerationDemo
                 new Vector2(700.0f, 700.0f),
                 new Vector2(150.0f, 800.0f)
             },
-            ImportantPoints = new []
+            ImportantPoints = new[]
             {
                 new Vector2(500, 300),
                 new Vector2(600, 800),

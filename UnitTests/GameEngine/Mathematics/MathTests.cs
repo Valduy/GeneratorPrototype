@@ -1,8 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using GameEngine.Mathematics;
 using OpenTK.Mathematics;
 using Xunit;
+using Math = GameEngine.Mathematics.Math;
 
 namespace UnitTests.GameEngine.Mathematics
 {
@@ -18,7 +19,7 @@ namespace UnitTests.GameEngine.Mathematics
                 };
                 yield return new object[]
                 {
-                    new Vector2(2, 4 * Math.Cos(MathHelper.DegreesToRadians(30))), new Vector2(2, 0), 60
+                    new Vector2(2, 4 * MathF.Cos(MathHelper.DegreesToRadians(30))), new Vector2(2, 0), 60
                 };
             }
         }

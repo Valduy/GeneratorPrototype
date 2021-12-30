@@ -99,8 +99,12 @@ namespace GameEngine.Graphics
         }
 
         // TODO: Fix zoom!!!
-        private Matrix4 GetProjectionMatrix() 
-            => Matrix4.CreateOrthographic(_window.Size.X + Camera.Zoom, _window.Size.Y + Camera.Zoom, 0.1f, 100.0f);
+        private Matrix4 GetProjectionMatrix()
+        {
+            var widht = _window.Size.X + Camera.Zoom;
+            var height = _window.Size.Y + _window.Size.X / _window.Size.Y * Camera.Zoom;
+            return Matrix4.CreateOrthographic(widht, height, 0.1f, 100.0f);
+        }
 
         private void Render(RenderContext context)
         {
