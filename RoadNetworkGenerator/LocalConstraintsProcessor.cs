@@ -17,12 +17,17 @@ namespace RoadNetworkGenerator
 
         public Node<Sucessor>? Process(Sucessor sucessor)
         {
-            // now, just fail
-            if (sucessor.SucessorType == SucessorType.Branch)
+            //// now, just fail
+            //if (sucessor.SucessorType == SucessorType.Branch)
+            //{
+            //    return null;
+            //}
+            
+            if (sucessor.Parent != null && sucessor.Parent.Neighbours.Count >= 4)
             {
                 return null;
             }
-            
+
             if (Vector2.Distance(sucessor.Goal, sucessor.Position) <= Constants.SegmentLength)
             {
                 sucessor.Position = sucessor.Goal;
@@ -34,6 +39,10 @@ namespace RoadNetworkGenerator
             if (destinations.Any())
             {
                 var destination = destinations.First();
+
+                // TODO: now, but lately should do something smarter...
+                if (destination.Neighbours.Count >= 4) return null;
+
                 sucessor.Position = destination.Item.Position;
                 Net.Connect(sucessor.Parent!, destination);
                 return null;
@@ -66,7 +75,7 @@ namespace RoadNetworkGenerator
 
         private bool IsValidDestination(Sucessor sucessor, Node<Sucessor> destination) 
             => destination != sucessor.Parent
-               && destination.Item.SucessorType is SucessorType.Main or SucessorType.Pivot
+               //&& destination.Item.SucessorType is SucessorType.Main or SucessorType.Pivot
                && IsDestinationInPerceptionRadius(sucessor, destination)
                && IsDestinationInFrontArc(sucessor, destination);
 
