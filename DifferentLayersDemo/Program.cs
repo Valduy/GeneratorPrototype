@@ -12,22 +12,23 @@ namespace DifferentLayersDemo
             using var game = new Game();
 
             var triangle1Go = game.Engine.CreateGameObject();
-            triangle1Go.Add(() => new RenderComponent(game.Window.Renderer)
+            float distanceFromCamera1 = -10.0f;
+            triangle1Go.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Yellow,
-                Layer = -10, // Further from camera.
-                Shape = Shape.Triangle(100)
+                Shape = Shape2D.Triangle(100)
             });
+            triangle1Go.Position = Vector3.UnitZ * distanceFromCamera1;
 
             var triangle2Go = game.Engine.CreateGameObject();
-            triangle2Go.Add(() => new RenderComponent(game.Window.Renderer)
+            float distanceFromCamera2 = -9.0f;
+            triangle2Go.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Red,
-                Layer = -9, // Closer to camera.
-                Shape = Shape.Triangle(100)
+                Shape = Shape2D.Triangle(100)
             });
-            triangle2Go.Rotation = 180;
-            triangle2Go.Position = -Vector2.UnitY * 50;
+            triangle2Go.Rotation = new Vector3(0.0f, 0.0f, 180);
+            triangle2Go.Position = new Vector3(0.0f, -50, distanceFromCamera2);
 
             game.Run();
         }

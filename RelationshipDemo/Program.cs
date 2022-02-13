@@ -9,11 +9,12 @@ namespace RelationshipDemo
 {
     public class RotationComponent : Component
     {
-        public float RotationSpeed { get; set; } = 10;
+        public float RotationSpeed { get; set; } = 1;
 
         public override void GameUpdate(FrameEventArgs args)
         {
-            GameObject!.Rotation += (float) (RotationSpeed * args.Time);
+            float angle = (float)(RotationSpeed * args.Time);
+            GameObject!.Rotation += new Vector3(GameObject.Rotation.X, GameObject.Rotation.Y, angle);
         }
     }
 
@@ -34,9 +35,12 @@ namespace RelationshipDemo
                 _factor = -1;
             }
 
-            GameObject.LocalPosition = new Vector2(
-                GameObject.LocalPosition.X + (float) (_factor * Speed * args.Time), 
-                GameObject.LocalPosition.Y);
+            float offset = (float) (_factor * Speed * args.Time);
+
+            GameObject.LocalPosition = new Vector3(
+                GameObject.LocalPosition.X + offset, 
+                GameObject.LocalPosition.Y,
+                GameObject.LocalPosition.Z);
         }
     }
 
@@ -45,32 +49,33 @@ namespace RelationshipDemo
         public static void Main(string[] args)
         {
             using var game = new Game();
+            float distanceFromCamera = -10.0f;
 
             var centerGo = game.Engine.CreateGameObject();
-            centerGo.Add(() => new RenderComponent(game.Window.Renderer)
+            centerGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Lime,
-                Shape = Shape.Square(10),
+                Shape = Shape2D.Square(10),
             });
-            centerGo.Position = Vector2.Zero;
+            centerGo.Position = Vector3.UnitZ * distanceFromCamera;
 
             var axisGo = game.Engine.CreateGameObject();
-            axisGo.Add(() => new RenderComponent(game.Window.Renderer)
+            axisGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Red,
-                Shape = Shape.Line(new Vector2(0, 0), new Vector2(200, 0)),
+                Shape = Shape2D.Line(new Vector2(0, 0), new Vector2(200, 0)),
             });
             axisGo.Add<RotationComponent>();
-            axisGo.Position = new Vector2(50);
+            axisGo.Position = new Vector3(50.0f, 50.0f, distanceFromCamera);
 
             var squareGo = game.Engine.CreateGameObject();
-            squareGo.Add(() => new RenderComponent(game.Window.Renderer)
+            squareGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Magenta,
-                Shape = Shape.Square(20),
+                Shape = Shape2D.Square(20),
             });
             squareGo.Add<ZigZagComponent>();
-            squareGo.Position = Vector2.Zero;
+            squareGo.Position = Vector3.UnitZ * distanceFromCamera;
 
             axisGo.AddChild(squareGo);
 

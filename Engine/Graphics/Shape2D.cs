@@ -3,14 +3,14 @@ using OpenTK.Mathematics;
 
 namespace GameEngine.Graphics
 {
-    public class Shape : IReadOnlyList<Vector2>
+    public class Shape2D : IReadOnlyList<Vector2>
     {
         private readonly List<Vector2> _vertices;
 
         public int Count => _vertices.Count;
 
         // TODO: simple/complex polygon check
-        public Shape(IEnumerable<Vector2> vertices)
+        public Shape2D(IEnumerable<Vector2> vertices)
         {
             _vertices = new List<Vector2>(vertices);
 
@@ -34,14 +34,14 @@ namespace GameEngine.Graphics
         IEnumerator IEnumerable.GetEnumerator() 
             => GetEnumerator();
 
-        public static Shape Line(Vector2 a, Vector2 b) 
+        public static Shape2D Line(Vector2 a, Vector2 b) 
             => new(new[] {a, b});
 
-        public static Shape Triangle(float side)
+        public static Shape2D Triangle(float side)
         {
             var leg = side / 2;
 
-            return new Shape(new[]
+            return new Shape2D(new[]
             {
                 new Vector2(-leg, -leg),
                 new Vector2(leg, -leg),
@@ -49,11 +49,11 @@ namespace GameEngine.Graphics
             });
         }
 
-        public static Shape Square(float side)
+        public static Shape2D Square(float side)
         {
             var half = side / 2;
 
-            return new Shape(new[]
+            return new Shape2D(new[]
             {
                 new Vector2(-half, -half),
                 new Vector2(half, -half),
@@ -62,12 +62,12 @@ namespace GameEngine.Graphics
             });
         }
 
-        public static Shape Rectangle(float width, float height)
+        public static Shape2D Rectangle(float width, float height)
         {
             var halfWidth = width / 2;
             var halfHeight = height / 2;
 
-            return new Shape(new[]
+            return new Shape2D(new[]
             {
                 new Vector2(-halfWidth, -halfHeight),
                 new Vector2(halfWidth, -halfHeight),

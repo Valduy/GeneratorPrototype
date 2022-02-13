@@ -90,7 +90,7 @@ namespace RoadNetworkGenerator
         {
             var vector = sucessor.Position - sucessor.Parent!.Item.Position;
             var toOther = destination.Item.Position - sucessor.Parent.Item.Position;
-            return System.Math.Abs(MathHelper.RadiansToDegrees(Mathematics.Angle(vector, toOther))) <= Constants.FrontArc / 2;
+            return Math.Abs(MathHelper.RadiansToDegrees(Mathematics.Angle(vector, toOther))) <= Constants.FrontArc / 2;
         }
     }
 }

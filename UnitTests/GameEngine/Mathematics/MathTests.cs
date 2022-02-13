@@ -25,7 +25,7 @@ namespace UnitTests.GameEngine.Mathematics
 
         [Theory]
         [ClassData(typeof(NotIntersectedGenerator))]
-        public void IsAABBIntersects_NotIntersectedAABBs_False(Vector2 position1, Vector2 size1, Vector2 position2, Vector2 size2)
+        public void IsBoundingBoxesIntersects_NotIntersectedBoundingBoxes_False(Vector2 position1, Vector2 size1, Vector2 position2, Vector2 size2)
         {
             var result = global::GameEngine.Mathematics.Mathematics.IsBoundingBoxesIntersects(position1, size1.X, size1.Y, position2, size2.X, size2.Y);
 
@@ -34,7 +34,7 @@ namespace UnitTests.GameEngine.Mathematics
 
         [Theory]
         [ClassData(typeof(IntersectedGenerator))]
-        public void IsAABBIntersects_IntersectedAABBs_True(Vector2 position1, Vector2 size1, Vector2 position2, Vector2 size2)
+        public void IsBoundingBoxesIntersects_IntersectedBoundingBoxes_True(Vector2 position1, Vector2 size1, Vector2 position2, Vector2 size2)
         {
             var result = global::GameEngine.Mathematics.Mathematics.IsBoundingBoxesIntersects(position1, size1.X, size1.Y, position2, size2.X, size2.Y);
 

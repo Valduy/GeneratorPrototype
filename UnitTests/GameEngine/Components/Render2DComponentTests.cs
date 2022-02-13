@@ -9,13 +9,13 @@ using Xunit;
 
 namespace UnitTests.GameEngine.Components
 {
-    public class RenderComponentTests
+    public class Render2DComponentTests
     {
         [Theory]
         [ClassData(typeof(GameObjectWithRenderComponentsGenerator))]
         public void Points_GameObjectHasSomeScaleRotationAndTranslation_PointsHaveCorrectCoords(GameObject go, Vector2[] expected)
         {
-            var result = go.Get<RenderComponent>()!.Points;
+            var result = go.Get<Render2DComponent>()!.Points;
 
             Assert.Equal(result, expected);
         }
@@ -28,13 +28,13 @@ namespace UnitTests.GameEngine.Components
             var game = new Game();
 
             var go = game.Engine.CreateGameObject();
-            go.Add(() => new RenderComponent(game.Window.Renderer)
+            go.Add(() => new Render2DComponent(game.Window.Renderer)
             {
-                Shape = Shape.Square(2)
+                Shape = Shape2D.Square(2)
             });
-            go.Scale = new Vector2(2.0f, 2.0f);
-            go.Rotation = 90;
-            go.Position = new Vector2(4.0f, 4.0f);
+            go.Scale = new Vector3(2.0f, 2.0f, 1.0f);
+            go.Rotation = new Vector3(0.0f, 0.0f, MathHelper.Pi / 2);
+            go.Position = new Vector3(4.0f, 4.0f, 0.0f);
 
             var expected = new[]
             {

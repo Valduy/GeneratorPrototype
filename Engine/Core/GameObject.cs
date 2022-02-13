@@ -28,95 +28,69 @@ namespace GameEngine.Core
         public IReadOnlyList<GameObject> Children => _children;
 
         /// <summary>
-        /// Local rotation relative to <see cref="Parent"/>.
+        /// Local rotation in radians relative to <see cref="Parent"/>.
         /// </summary>
-        public float LocalRotation { get; set; } = 0;
+        public Vector3 LocalRotation { get; set; } = new(0);
 
         /// <summary>
         /// Local scale relative to <see cref="Parent"/>.
         /// </summary>
-        public Vector2 LocalScale { get; set; } = new(1);
+        public Vector3 LocalScale { get; set; } = new(1);
 
         /// <summary>
         /// Local position relative to <see cref="Parent"/>.
         /// </summary>
-        public Vector2 LocalPosition { get; set; } = new(0);
+        public Vector3 LocalPosition { get; set; } = new(0);
 
         /// <summary>
-        /// World rotation.
+        /// World rotation in radians.
         /// </summary>
-        public float Rotation
+        public Vector3 Rotation
         {
-            get
-            {
-                if (Parent != null)
-                {
-                    return Parent.Rotation + LocalRotation;
-                }
-
-                return LocalRotation;
-            }
-            set
-            {
-                if (Parent != null)
-                {
-                    LocalRotation = Parent.Rotation - value;
-                }
-                else
-                {
-                    LocalRotation = value;
-                }
-            }
+            get => Parent != null 
+                ? Parent.Rotation + LocalRotation 
+                : LocalRotation;
+            set => LocalRotation = Parent != null 
+                ? Parent.Rotation - value 
+                : value;
         }
 
         /// <summary>
         /// World scale.
         /// </summary>
-        public Vector2 Scale
+        public Vector3 Scale
         {
-            get
-            {
-                if (Parent != null)
-                {
-                    return Parent.Scale * LocalScale;
-                }
-
-                return LocalScale;
-            }
-            set
-            {
-                if (Parent != null)
-                {
-                    LocalScale = new Vector2(Parent.Scale.X / value.X, Parent.Scale.Y / value.Y);
-                }
-
-                LocalScale = value;
-            }
+            get => Parent != null 
+                ? Parent.Scale * LocalScale 
+                : LocalScale;
+            set => LocalScale = Parent != null 
+                ? new Vector3(value.X / Parent.Scale.X, value.Y / Parent.Scale.Y, value.Z / Parent.Scale.Z)
+                : value;
         }
 
         /// <summary>
         /// World position.
         /// </summary>
-        public Vector2 Position
+        public Vector3 Position
         {
             get
             {
-                if (Parent != null)
-                {
-                    var offset = new Vector3(LocalPosition.X, LocalPosition.Y, 1);
-                    offset *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(Parent.Rotation));
-                    return new Vector2(Parent.Position.X + offset.X, Parent.Position.Y + offset.Y);
-                }
+                if (Parent == null) return LocalPosition;
+                var offset = new Vector4(LocalPosition, 1);
+                var rotation = new Quaternion(Rotation.X, Rotation.Y, Rotation.Z);
+                offset *= Matrix4.CreateFromQuaternion(rotation);
+                offset *= Matrix4.CreateTranslation(Parent.Position);
+                return offset.Xyz;
 
-                return LocalPosition;
             }
             set
             {
                 if (Parent != null)
                 {
-                    var offset = new Vector3(value.X - Parent.Position.X, value.Y - Parent.Position.Y, 1);
-                    offset *= Matrix3.CreateRotationZ(-MathHelper.DegreesToRadians(Parent.Rotation));
-                    LocalPosition = new Vector2(offset.X, offset.Y);
+                    var offset = new Vector4(value.X - Parent.Position.X, value.Y - Parent.Position.Y, value.Z - Parent.Position.Z, 1);
+                    var rotation = new Quaternion(-Rotation.X, -Rotation.Y, -Rotation.Z);
+                    offset *= Matrix4.CreateFromQuaternion(rotation);
+                    LocalPosition = new Vector3(offset.X, offset.Y, offset.Z);
                 }
                 else
                 {

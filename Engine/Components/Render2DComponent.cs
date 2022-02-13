@@ -1,18 +1,20 @@
 ﻿using GameEngine.Core;
 using GameEngine.Graphics;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
 namespace GameEngine.Components
 {
-    public class RenderComponent : Component
+    public class Render2DComponent : Component
     {
+        private readonly Shader _shader = new("Shaders/shader.vert", "Shaders/shader.frag");
         private readonly Renderer _renderer;
 
-        private Shape _shape = new(Enumerable.Empty<Vector2>());
+        private Shape2D _shape = new(Enumerable.Empty<Vector2>());
         private RenderContext _context;
 
-        public Shape Shape
+        public Shape2D Shape
         {
             get => _shape;
             set
@@ -24,33 +26,18 @@ namespace GameEngine.Components
             }
         }
 
-        /// <summary>
-        /// Define render layer. Object on lower layer render behind object on higher layer.
-        /// </summary>
-        public int Layer { get; set; } = -10;
-
         public Vector3 Color { get; set; } = Colors.Gray;
 
         public List<Vector2> Points
         {
             get
             {
-                var result = new List<Vector2>();
-                var model = Matrix3.CreateScale(GameObject!.Scale.X, GameObject.Scale.Y, 1);
-                model *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(GameObject.Rotation));
-
-                foreach (var p in Shape)
-                {
-                    var temp = new Vector3(p.X, p.Y, 1);
-                    temp *= model;
-                    result.Add(new Vector2(GameObject.Position.X + temp.X, GameObject.Position.Y + temp.Y));
-                }
-
-                return result;
+                var model = GetModelMatrix();
+                return Shape.Select(p => (new Vector4(p.X, p.Y, 0.0f , 1.0f) * model).Xy).ToList();
             }
         }
 
-        public RenderComponent(Renderer renderer)
+        public Render2DComponent(Renderer renderer)
         {
             _renderer = renderer;
             _context = _renderer.Register(GetVertices());
@@ -58,7 +45,14 @@ namespace GameEngine.Components
 
         public override void RenderUpdate(FrameEventArgs args)
         {
-            _renderer.Render(_context, Color, GameObject!.Scale, GameObject.Rotation, GameObject.Position, Layer);
+            SetupShader();
+            _renderer.Render(_context);
+        }
+
+        public override void Stop()
+        {
+            GL.UseProgram(0);
+            GL.DeleteProgram(_shader.Handle);
         }
 
         private float[] GetVertices()
@@ -96,6 +90,24 @@ namespace GameEngine.Components
             segment[0] = vertex.X;
             segment[1] = vertex.Y;
             segment[2] = 0;
+        }
+
+        private void SetupShader()
+        {
+            _shader.Use();
+            _shader.SetMatrix4("model", GetModelMatrix());
+            _shader.SetMatrix4("view", _renderer.Camera.GetViewMatrix());
+            _shader.SetMatrix4("projection", _renderer.Camera.GetProjectionMatrix());
+            _shader.SetVector3("color", Color);
+        }
+
+        private Matrix4 GetModelMatrix()
+        {
+            var model = Matrix4.Identity;
+            model *= Matrix4.CreateScale(GameObject!.Scale.X, GameObject!.Scale.Y, 1.0f);
+            model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(GameObject!.Rotation));
+            model *= Matrix4.CreateTranslation(GameObject.Position);
+            return model;
         }
     }
 }

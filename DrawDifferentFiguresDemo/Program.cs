@@ -1,4 +1,5 @@
 ﻿using GameEngine.Components;
+using GameEngine.Core;
 using GameEngine.Game;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
@@ -12,36 +13,37 @@ namespace DrawDifferentFiguresDemo
             using var game = new Game();
             float leftTopCornerX = -Game.WindowWidth / 2;
             float leftTopCornerY = Game.WindowHeight / 2;
+            float distanceFromCamera = -10.0f;
 
             var lineGo = game.Engine.CreateGameObject();
-            lineGo.Add(() => new RenderComponent(game.Window.Renderer)
+            lineGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Yellow,
-                Shape = Shape.Line(new Vector2(-50, 0), new Vector2(50, 0))
+                Shape = Shape2D.Line(new Vector2(-50, 0), new Vector2(50, 0))
             });
-            lineGo.Position = new Vector2(leftTopCornerX + 100, leftTopCornerY - 100);
+            lineGo.Position = new Vector3(leftTopCornerX + 100, leftTopCornerY - 100, distanceFromCamera);
 
             var triangleGo = game.Engine.CreateGameObject();
-            triangleGo.Add(() => new RenderComponent(game.Window.Renderer)
+            triangleGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Red,
-                Shape = Shape.Triangle(100)
+                Shape = Shape2D.Triangle(100)
             });
-            triangleGo.Position = new Vector2(leftTopCornerX + 250, leftTopCornerY - 100);
+            triangleGo.Position = new Vector3(leftTopCornerX + 250, leftTopCornerY - 100, distanceFromCamera);
 
             var squareGo = game.Engine.CreateGameObject();
-            squareGo.Add(() => new RenderComponent(game.Window.Renderer)
+            squareGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Lime,
-                Shape = Shape.Square(100)
+                Shape = Shape2D.Square(100)
             });
-            squareGo.Position = new Vector2(leftTopCornerX + 400, leftTopCornerY - 100);
+            squareGo.Position = new Vector3(leftTopCornerX + 400, leftTopCornerY - 100, distanceFromCamera);
 
             var convexGo = game.Engine.CreateGameObject();
-            convexGo.Add(() => new RenderComponent(game.Window.Renderer)
+            convexGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Blue,
-                Shape = new Shape(new[]
+                Shape = new Shape2D(new[]
                 {
                     new Vector2(-25, -50),
                     new Vector2(25, -50),
@@ -53,13 +55,13 @@ namespace DrawDifferentFiguresDemo
                     new Vector2(-50, -25),
                 })
             });
-            convexGo.Position = new Vector2(leftTopCornerX + 550, leftTopCornerY - 100);
+            convexGo.Position = new Vector3(leftTopCornerX + 550, leftTopCornerY - 100, distanceFromCamera);
 
             var nonConvexGo = game.Engine.CreateGameObject();
-            nonConvexGo.Add(() => new RenderComponent(game.Window.Renderer)
+            nonConvexGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Cyan,
-                Shape = new Shape(new[]
+                Shape = new Shape2D(new[]
                 {
                     new Vector2(-25, -50),
                     new Vector2(0, -50),
@@ -72,13 +74,13 @@ namespace DrawDifferentFiguresDemo
                     new Vector2(-50, -25),
                 })
             });
-            nonConvexGo.Position = new Vector2(leftTopCornerX + 700, leftTopCornerY - 100);
+            nonConvexGo.Position = new Vector3(leftTopCornerX + 700, leftTopCornerY - 100, distanceFromCamera);
 
             var complexGo = game.Engine.CreateGameObject();
-            complexGo.Add(() => new RenderComponent(game.Window.Renderer)
+            complexGo.Add(() => new Render2DComponent(game.Window.Renderer)
             {
                 Color = Colors.Green,
-                Shape = new Shape(new[]
+                Shape = new Shape2D(new[]
                 {
                     new Vector2(-20, 10),
                     new Vector2(-60, 0),

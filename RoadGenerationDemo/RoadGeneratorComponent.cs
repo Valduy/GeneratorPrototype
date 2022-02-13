@@ -66,27 +66,27 @@ namespace RoadGenerationDemo
             var color = IsMain(args.Node1, args.Node2) ? Colors.Red : Colors.White;
 
             var roadGo = GameObject!.Engine.CreateGameObject();
-            roadGo.Add(() => new RenderComponent(_renderer)
+            roadGo.Add(() => new Render2DComponent(_renderer)
             {
                 Color =  color,
-                Shape = Shape.Line(args.Node1.Item.Position, args.Node2.Item.Position)
+                Shape = Shape2D.Line(args.Node1.Item.Position, args.Node2.Item.Position)
             });
+            roadGo.Position = Vector3.UnitZ * -10;
         }
 
         private bool IsMain(Node<Sucessor> node1, Node<Sucessor> node2) 
-            => (node1.Item.SucessorType == SucessorType.Main || node1.Item.SucessorType == SucessorType.Pivot) 
-            && (node2.Item.SucessorType == SucessorType.Main || node2.Item.SucessorType == SucessorType.Pivot);        
+            => node1.Item.SucessorType is SucessorType.Main or SucessorType.Pivot 
+            && node2.Item.SucessorType is SucessorType.Main or SucessorType.Pivot;        
 
         private void CreateTriangle(Vector2 position, Vector3 color)
         {
             var triangleGo = GameObject!.Engine.CreateGameObject();
-            triangleGo.Add(() => new RenderComponent(_renderer)
+            triangleGo.Add(() => new Render2DComponent(_renderer)
             {
-                Shape = Shape.Triangle(20),
+                Shape = Shape2D.Triangle(20),
                 Color = color,
-                Layer = -9,
             });
-            triangleGo.Position = position;
+            triangleGo.Position = new Vector3(position.X, position.Y, -9.0f);
         }
 
         private static InputData CreateInputData() => new()
