@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GeneratorPrototype", "GeneratorPrototype\GeneratorPrototype.csproj", "{A6BF5E84-D2E3-4A56-B543-5F754F582A62}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameEngine", "Engine\GameEngine.csproj", "{4E44CA06-D3A1-4449-94F6-7AC2B97E1603}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\UnitTests.csproj", "{F90963F3-165A-46DF-871E-0C5E0967C597}"
@@ -23,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoadGenerationDemo", "RoadG
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BuildingFoundamentDemo", "BuildingFoundamentDemo\BuildingFoundamentDemo.csproj", "{945D78E4-73E7-48B8-9086-2B682C35085C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Net", "Graph\Net.csproj", "{6DD182B4-C0C1-4556-B1FF-41037E4314A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net", "Graph\Net.csproj", "{6DD182B4-C0C1-4556-B1FF-41037E4314A1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +29,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A6BF5E84-D2E3-4A56-B543-5F754F582A62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A6BF5E84-D2E3-4A56-B543-5F754F582A62}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A6BF5E84-D2E3-4A56-B543-5F754F582A62}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A6BF5E84-D2E3-4A56-B543-5F754F582A62}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4E44CA06-D3A1-4449-94F6-7AC2B97E1603}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4E44CA06-D3A1-4449-94F6-7AC2B97E1603}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E44CA06-D3A1-4449-94F6-7AC2B97E1603}.Release|Any CPU.ActiveCfg = Release|Any CPU

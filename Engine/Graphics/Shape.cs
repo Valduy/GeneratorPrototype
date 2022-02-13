@@ -14,12 +14,12 @@ namespace GameEngine.Graphics
         {
             _vertices = new List<Vector2>(vertices);
 
-            if (Count > 3 && !Mathematics.Math.IsCounterClockWise(_vertices))
+            if (Count > 3 && !Mathematics.Mathematics.IsCounterClockWise(_vertices))
             {
                 throw new ArgumentException("Vertices should be counter clock wise.");
             }
 
-            if (Count > 4 && Mathematics.Math.IsContainsCollinearNeighboringEdges(_vertices))
+            if (Count > 4 && Mathematics.Mathematics.IsContainsCollinearNeighboringEdges(_vertices))
             {
                 throw new ArgumentException("Poly should not contain collinear neighboring edges.");
             }

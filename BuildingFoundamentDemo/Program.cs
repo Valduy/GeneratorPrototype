@@ -2,10 +2,10 @@
 using GameEngine.Core;
 using GameEngine.Game;
 using GameEngine.Graphics;
+using GameEngine.Mathematics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Math = GameEngine.Mathematics.Math;
 
 
 namespace DrawDifferentFiguresDemo
@@ -111,7 +111,7 @@ namespace DrawDifferentFiguresDemo
 
                             blocks.Insert(blocks.Count, block);
 
-                            if(!Math.IsPolygonInsideConvexPolygon(bound.Get<RenderComponent>().Points, block.Get<RenderComponent>().Points))
+                            if(!Mathematics.IsPolygonInsideConvexPolygon(bound.Get<RenderComponent>().Points, block.Get<RenderComponent>().Points))
                             {
                                 //cxn--;
                                 //cxn--;
@@ -299,11 +299,11 @@ namespace DrawDifferentFiguresDemo
             //}));
             //squareGo_1.Position = new Vector2(leftTopCornerX + 301, leftTopCornerY - 100);
 
-            //Console.WriteLine(Math.IsAABBIntersects(squareGo.Get<BoundsComponent>().Position, squareGo.Get<BoundsComponent>().Width, squareGo.Get<BoundsComponent>().Height, squareGo_1.Get<BoundsComponent>().Position, squareGo_1.Get<BoundsComponent>().Width, squareGo_1.Get<BoundsComponent>().Height));
+            //Console.WriteLine(Mathematics.IsBoundingBoxesIntersects(squareGo.Get<BoundsComponent>().Position, squareGo.Get<BoundsComponent>().Width, squareGo.Get<BoundsComponent>().Height, squareGo_1.Get<BoundsComponent>().Position, squareGo_1.Get<BoundsComponent>().Width, squareGo_1.Get<BoundsComponent>().Height));
 
-            //Console.WriteLine(Math.IsPolygonInsideConvexPolygon(squareGo_1.Get<RenderComponent>().Points, squareGo.Get<RenderComponent>().Points));
+            //Console.WriteLine(Mathematics.IsPolygonInsideConvexPolygon(squareGo_1.Get<RenderComponent>().Points, squareGo.Get<RenderComponent>().Points));
 
-            //Console.WriteLine(Math.IsConvexPolygonsIntersects(squareGo_1.Get<RenderComponent>().Points, squareGo.Get<RenderComponent>().Points));
+            //Console.WriteLine(Mathematics.IsConvexPolygonsIntersects(squareGo_1.Get<RenderComponent>().Points, squareGo.Get<RenderComponent>().Points));
 
 
 

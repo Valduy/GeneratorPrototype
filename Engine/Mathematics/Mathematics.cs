@@ -4,11 +4,9 @@ using OpenTK.Mathematics;
 
 namespace GameEngine.Mathematics
 {
-    public static class Math
+    public static class Mathematics
     {
         // NOTE: I use words "shape" and "polygon" as synonyms.
-
-        public const float FloatEpsilon = 0.1f;
 
         /// <summary>
         /// Method triangulate <see cref="Shape"/>.
@@ -199,8 +197,10 @@ namespace GameEngine.Mathematics
         /// <param name="b">Vector b.</param>
         /// <returns>Angle between a and b in radians.</returns>
         public static float Angle(Vector2 a, Vector2 b)
-            => MathF.Acos(System.Math.Clamp(Vector2.Dot(a, b) / (a.Length * b.Length), -1, 1));
-        
+        {
+            return MathF.Acos(Math.Clamp(Vector2.Dot(a, b) / (a.Length * b.Length), -1, 1));
+        }
+
         public static Vector2 Rotate(Vector2 vector, float angle)
         {
             var vector3d = new Vector3(vector.X, vector.Y, 1);
@@ -208,59 +208,18 @@ namespace GameEngine.Mathematics
             return new Vector2(vector3d.X, vector3d.Y);
         }
 
-        public static bool Equal(Vector2 a, Vector2 b, float epsilon) 
-            => Equal(a.X, b.X, epsilon) && Equal(a.Y, b.Y, epsilon);
-
-        public static bool Equal(float a, float b, float epsilon)
+        public static bool Equal(Vector2 a, Vector2 b, float epsilon)
         {
-            const float floatNormal = (1 << 23) * float.Epsilon;
-            float absA = System.Math.Abs(a);
-            float absB = System.Math.Abs(b);
-            float diff = System.Math.Abs(a - b);
-
-            if (a == b)
-            {
-                // Shortcut, handles infinities
-                return true;
-            }
-
-            if (a == 0.0f || b == 0.0f || diff < floatNormal)
-            {
-                // a or b is zero, or both are extremely close to it.
-                // relative error is less meaningful here
-                return diff < (epsilon * floatNormal);
-            }
-
-            // use relative error
-            return diff / System.Math.Min((absA + absB), float.MaxValue) < epsilon;
+            return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon) 
+                   && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
         }
 
-        public static bool IsAABBIntersects(
+        public static bool IsBoundingBoxesIntersects(
             Vector2 position1, float width1, float height1,
-            Vector2 position2, float width2, float height2) 
-            => System.Math.Abs(position1.X - position2.X) * 2 < (width1 + width2)
-               && System.Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
-
-        public static bool TryFindProjectionPoint(Vector2 p, Vector2 a, Vector2 b, out Vector2 projection)
+            Vector2 position2, float width2, float height2)
         {
-            var k = (b.Y - a.Y) / (b.X - a.X);
-            var n = new Vector2(k, 1);
-
-
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Method find intersection point between two segments.
-        /// </summary>
-        /// <param name="a1">First segment, first point.</param>
-        /// <param name="a2">First segment second point.</param>
-        /// <param name="b1">Second segment, first point.</param>
-        /// <param name="b2">Second segment, second point.</param>
-        /// <returns>True, if lines intersects, false in other case.</returns>
-        public static bool IsLineSegmentsIntersects(Vector2 a1, Vector2 a2, Vector2 b1, Vector2 b2, out Vector2 intersection)
-        {
-            throw new NotImplementedException();
+            return Math.Abs(position1.X - position2.X) * 2 < (width1 + width2)
+                   && Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
         }
     }
 }

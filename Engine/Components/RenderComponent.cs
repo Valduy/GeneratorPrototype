@@ -2,7 +2,6 @@
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
-using Math = GameEngine.Mathematics.Math;
 
 namespace GameEngine.Components
 {
@@ -66,7 +65,7 @@ namespace GameEngine.Components
         {
             if (Shape.Count > 3)
             {
-                var triangles = Math.Triangulate(Shape);
+                var triangles = Mathematics.Mathematics.Triangulate(Shape);
                 var result = new float[triangles.Length * 9];
 
                 for (int i = 0; i < triangles.Length; i += 3)

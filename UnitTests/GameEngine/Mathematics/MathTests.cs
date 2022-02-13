@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Xunit;
-using Math = GameEngine.Mathematics.Math;
 
 namespace UnitTests.GameEngine.Mathematics
 {
@@ -28,7 +27,7 @@ namespace UnitTests.GameEngine.Mathematics
         [ClassData(typeof(NotIntersectedGenerator))]
         public void IsAABBIntersects_NotIntersectedAABBs_False(Vector2 position1, Vector2 size1, Vector2 position2, Vector2 size2)
         {
-            var result = Math.IsAABBIntersects(position1, size1.X, size1.Y, position2, size2.X, size2.Y);
+            var result = global::GameEngine.Mathematics.Mathematics.IsBoundingBoxesIntersects(position1, size1.X, size1.Y, position2, size2.X, size2.Y);
 
             Assert.False(result);
         }
@@ -37,7 +36,7 @@ namespace UnitTests.GameEngine.Mathematics
         [ClassData(typeof(IntersectedGenerator))]
         public void IsAABBIntersects_IntersectedAABBs_True(Vector2 position1, Vector2 size1, Vector2 position2, Vector2 size2)
         {
-            var result = Math.IsAABBIntersects(position1, size1.X, size1.Y, position2, size2.X, size2.Y);
+            var result = global::GameEngine.Mathematics.Mathematics.IsBoundingBoxesIntersects(position1, size1.X, size1.Y, position2, size2.X, size2.Y);
 
             Assert.True(result);
         }
@@ -46,7 +45,7 @@ namespace UnitTests.GameEngine.Mathematics
         [ClassData(typeof(PointOutsidePolygonGenerator))]
         public void IsPointInConvexPolygon_PointNotInsidePolygon_False(Vector2 point, Vector2[] polygon)
         {
-            var result = Math.IsPointInConvexPolygon(point, polygon);
+            var result = global::GameEngine.Mathematics.Mathematics.IsPointInConvexPolygon(point, polygon);
 
             Assert.False(result);
         }
@@ -55,7 +54,7 @@ namespace UnitTests.GameEngine.Mathematics
         [ClassData(typeof(PointInsidePolygonGenerator))]
         public void IsPointInConvexPolygon_PointInsidePolygon_True(Vector2 point, Vector2[] polygons)
         {
-            var result = Math.IsPointInConvexPolygon(point, polygons);
+            var result = global::GameEngine.Mathematics.Mathematics.IsPointInConvexPolygon(point, polygons);
 
             Assert.True(result);
         }
@@ -64,7 +63,7 @@ namespace UnitTests.GameEngine.Mathematics
         [MemberData(nameof(VectorsAndAnglesGenerator))]
         public void Angle_Vectors_CorrectAngle(Vector2 a, Vector2 b, float angle)
         {
-            var result = MathHelper.RadiansToDegrees(Math.Angle(a, b));
+            var result = MathHelper.RadiansToDegrees(global::GameEngine.Mathematics.Mathematics.Angle(a, b));
 
             Assert.Equal(result, angle, 2);
         }
