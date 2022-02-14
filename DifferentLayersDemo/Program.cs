@@ -10,11 +10,11 @@ namespace DifferentLayersDemo
         public static void Main(string[] args)
         {
             using var game = new Game();
-            game.Window.Renderer.Camera.Projection = Projection.Orthographic;
+            game.Camera.Projection = Projection.Orthographic;
 
             var triangle1Go = game.Engine.CreateGameObject();
             float distanceFromCamera1 = -10.0f;
-            triangle1Go.Add(() => new Render2DComponent(game.Window.Renderer)
+            triangle1Go.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Yellow,
                 Shape = Shape2D.Triangle(100)
@@ -23,7 +23,7 @@ namespace DifferentLayersDemo
 
             var triangle2Go = game.Engine.CreateGameObject();
             float distanceFromCamera2 = -9.0f;
-            triangle2Go.Add(() => new Render2DComponent(game.Window.Renderer)
+            triangle2Go.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Red,
                 Shape = Shape2D.Triangle(100)

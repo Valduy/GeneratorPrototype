@@ -6,24 +6,24 @@ using Window = GameEngine.Game.Window;
 
 namespace GameEngine.Components
 {
-    public class OperatorComponent : Component
+    public class Operator2DComponent : Component
     {
-        private readonly Window _window;
-
-        public Camera Camera => _window.Renderer.Camera;
-        public KeyboardState Inputs => _window.KeyboardState;
+        public readonly Game.Game Game;
+        public Window Window => Game.Window;
+        public Camera Camera => Game.Camera;
+        public KeyboardState Inputs => Window.KeyboardState;
         public float CameraSpeed { get; set; } = 200f;
-        public float ZoomScale { get; set; } = 10f;
+        public float ZoomScale { get; set; } = 0.2f;
 
-        public OperatorComponent(Window window)
+        public Operator2DComponent(Game.Game game)
         {
-            _window = window;
-            _window.MouseWheel += OnWindowMouseWheel;
+            Game = game;
+            Window.MouseWheel += OnWindowMouseWheel;
         }
 
         public override void GameUpdate(FrameEventArgs args)
         {
-            if (!_window.IsFocused)
+            if (!Window.IsFocused)
             {
                 return;
             }
@@ -50,9 +50,7 @@ namespace GameEngine.Components
 
         private void OnWindowMouseWheel(MouseWheelEventArgs args)
         {
-            //Camera.Position += Camera.Front * ZoomScale * args.OffsetY;
-            Camera.Zoom += ZoomScale * args.OffsetY * 0.2f;
-            //_window.Renderer.Camera.Zoom -= ZoomScale * args.OffsetY;
+            Camera.Zoom += ZoomScale * args.OffsetY * ZoomScale;
         }
     }
 }

@@ -28,7 +28,7 @@ namespace GameEngine.Core
         public IReadOnlyList<GameObject> Children => _children;
 
         /// <summary>
-        /// Local rotation in radians relative to <see cref="Parent"/>.
+        /// Local rotation in degrees relative to <see cref="Parent"/>.
         /// </summary>
         public Vector3 LocalRotation { get; set; } = new(0);
 
@@ -43,7 +43,7 @@ namespace GameEngine.Core
         public Vector3 LocalPosition { get; set; } = new(0);
 
         /// <summary>
-        /// World rotation in radians.
+        /// World rotation in degrees.
         /// </summary>
         public Vector3 Rotation
         {
@@ -77,7 +77,7 @@ namespace GameEngine.Core
             {
                 if (Parent == null) return LocalPosition;
                 var offset = new Vector4(LocalPosition, 1);
-                var rotation = new Quaternion(Rotation.X, Rotation.Y, Rotation.Z);
+                var rotation = new Quaternion(Rotation * MathHelper.Pi / 180);
                 offset *= Matrix4.CreateFromQuaternion(rotation);
                 offset *= Matrix4.CreateTranslation(Parent.Position);
                 return offset.Xyz;
@@ -87,10 +87,10 @@ namespace GameEngine.Core
             {
                 if (Parent != null)
                 {
-                    var offset = new Vector4(value.X - Parent.Position.X, value.Y - Parent.Position.Y, value.Z - Parent.Position.Z, 1);
-                    var rotation = new Quaternion(-Rotation.X, -Rotation.Y, -Rotation.Z);
-                    offset *= Matrix4.CreateFromQuaternion(rotation);
-                    LocalPosition = new Vector3(offset.X, offset.Y, offset.Z);
+                    var offset = new Vector4(value, 1);
+                    offset *= Matrix4.CreateTranslation(-Parent.Position);
+                    offset *= Matrix4.CreateFromQuaternion(new Quaternion(-Rotation * MathHelper.Pi / 180));
+                    LocalPosition = new Vector3(offset);
                 }
                 else
                 {

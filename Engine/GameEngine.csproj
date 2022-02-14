@@ -24,4 +24,13 @@
     <PackageReference Include="OpenTK" Version="4.6.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Shaders\shader3d.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\shader3d.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

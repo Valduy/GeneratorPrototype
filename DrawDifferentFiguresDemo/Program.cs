@@ -11,13 +11,13 @@ namespace DrawDifferentFiguresDemo
         public static void Main(string[] args)
         {
             using var game = new Game();
-            game.Window.Renderer.Camera.Projection = Projection.Orthographic;
+            game.Camera.Projection = Projection.Orthographic;
             float leftTopCornerX = -Game.WindowWidth / 2;
             float leftTopCornerY = Game.WindowHeight / 2;
             float distanceFromCamera = -10.0f;
 
             var lineGo = game.Engine.CreateGameObject();
-            lineGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            lineGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Yellow,
                 Shape = Shape2D.Line(new Vector2(-50, 0), new Vector2(50, 0))
@@ -25,7 +25,7 @@ namespace DrawDifferentFiguresDemo
             lineGo.Position = new Vector3(leftTopCornerX + 100, leftTopCornerY - 100, distanceFromCamera);
 
             var triangleGo = game.Engine.CreateGameObject();
-            triangleGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            triangleGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Red,
                 Shape = Shape2D.Triangle(100)
@@ -33,7 +33,7 @@ namespace DrawDifferentFiguresDemo
             triangleGo.Position = new Vector3(leftTopCornerX + 250, leftTopCornerY - 100, distanceFromCamera);
 
             var squareGo = game.Engine.CreateGameObject();
-            squareGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            squareGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Lime,
                 Shape = Shape2D.Square(100)
@@ -41,7 +41,7 @@ namespace DrawDifferentFiguresDemo
             squareGo.Position = new Vector3(leftTopCornerX + 400, leftTopCornerY - 100, distanceFromCamera);
 
             var convexGo = game.Engine.CreateGameObject();
-            convexGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            convexGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Blue,
                 Shape = new Shape2D(new[]
@@ -59,7 +59,7 @@ namespace DrawDifferentFiguresDemo
             convexGo.Position = new Vector3(leftTopCornerX + 550, leftTopCornerY - 100, distanceFromCamera);
 
             var nonConvexGo = game.Engine.CreateGameObject();
-            nonConvexGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            nonConvexGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Cyan,
                 Shape = new Shape2D(new[]
@@ -78,7 +78,7 @@ namespace DrawDifferentFiguresDemo
             nonConvexGo.Position = new Vector3(leftTopCornerX + 700, leftTopCornerY - 100, distanceFromCamera);
 
             var complexGo = game.Engine.CreateGameObject();
-            complexGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            complexGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Green,
                 Shape = new Shape2D(new[]

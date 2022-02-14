@@ -9,10 +9,14 @@ namespace GameEngine.Components
     public class Render2DComponent : Component
     {
         private readonly Shader _shader = new("Shaders/shader2d.vert", "Shaders/shader2d.frag");
-        private readonly Renderer _renderer;
+        
+        private int _vertexArrayObject;
+        private int _vertexBufferObject;
+        private int _count;
 
         private Shape2D _shape = new(Enumerable.Empty<Vector2>());
-        private RenderContext _context;
+
+        public readonly Game.Game Game;
 
         public Shape2D Shape
         {
@@ -21,11 +25,11 @@ namespace GameEngine.Components
             {
                 if (_shape == value) return;
                 _shape = value;
-                _renderer.Unregister(_context);
-                _context = _renderer.Register(GetVertices());
+                Unregister();
+                Register(GetVertices());
             }
         }
-
+        
         public Vector3 Color { get; set; } = Colors.Gray;
 
         public List<Vector2> Points
@@ -37,16 +41,16 @@ namespace GameEngine.Components
             }
         }
 
-        public Render2DComponent(Renderer renderer)
+        public Render2DComponent(Game.Game game)
         {
-            _renderer = renderer;
-            _context = _renderer.Register(GetVertices());
+            Game = game;
+            Register(GetVertices());
         }
 
         public override void RenderUpdate(FrameEventArgs args)
         {
             SetupShader();
-            _renderer.Render(_context);
+            Render();
         }
 
         public override void Stop()
@@ -96,8 +100,8 @@ namespace GameEngine.Components
         {
             _shader.Use();
             _shader.SetMatrix4("model", GetModelMatrix());
-            _shader.SetMatrix4("view", _renderer.Camera.GetViewMatrix());
-            _shader.SetMatrix4("projection", _renderer.Camera.GetProjectionMatrix());
+            _shader.SetMatrix4("view", Game.Camera.GetViewMatrix());
+            _shader.SetMatrix4("projection", Game.Camera.GetProjectionMatrix());
             _shader.SetVector3("color", Color);
         }
 
@@ -105,9 +109,53 @@ namespace GameEngine.Components
         {
             var model = Matrix4.Identity;
             model *= Matrix4.CreateScale(GameObject!.Scale.X, GameObject!.Scale.Y, 1.0f);
-            model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(GameObject!.Rotation));
+            model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(GameObject!.Rotation * MathHelper.Pi / 180));
             model *= Matrix4.CreateTranslation(GameObject.Position);
             return model;
+        }
+
+        private void Register(float[] vertices)
+        {
+            _vertexArrayObject = GL.GenVertexArray();
+            GL.BindVertexArray(_vertexArrayObject);
+
+            _vertexBufferObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            
+            _count = vertices.Length / 3;
+        }
+
+        private void Unregister()
+        {
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindVertexArray(0);
+
+            GL.DeleteBuffer(_vertexBufferObject);
+            GL.DeleteVertexArray(_vertexArrayObject);
+        }
+
+        private void Render()
+        {
+            GL.BindVertexArray(_vertexArrayObject);
+
+            switch (_count)
+            {
+                case 0:
+                case 1:
+                    return;
+                case 2:
+                    GL.DrawArrays(PrimitiveType.Lines, 0, _count);
+                    break;
+                default:
+                    GL.DrawArrays(PrimitiveType.Triangles, 0, _count);
+                    break;
+            }
+
+            GL.BindVertexArray(0);
         }
     }
 }

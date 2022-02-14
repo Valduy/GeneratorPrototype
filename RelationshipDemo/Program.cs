@@ -49,11 +49,11 @@ namespace RelationshipDemo
         public static void Main(string[] args)
         {
             using var game = new Game();
-            game.Window.Renderer.Camera.Projection = Projection.Orthographic;
+            game.Camera.Projection = Projection.Orthographic;
             float distanceFromCamera = -10.0f;
 
             var centerGo = game.Engine.CreateGameObject();
-            centerGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            centerGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Lime,
                 Shape = Shape2D.Square(10),
@@ -61,7 +61,7 @@ namespace RelationshipDemo
             centerGo.Position = Vector3.UnitZ * distanceFromCamera;
 
             var axisGo = game.Engine.CreateGameObject();
-            axisGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            axisGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Red,
                 Shape = Shape2D.Line(new Vector2(0, 0), new Vector2(200, 0)),
@@ -70,7 +70,7 @@ namespace RelationshipDemo
             axisGo.Position = new Vector3(50.0f, 50.0f, distanceFromCamera);
 
             var squareGo = game.Engine.CreateGameObject();
-            squareGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            squareGo.Add(() => new Render2DComponent(game)
             {
                 Color = Colors.Magenta,
                 Shape = Shape2D.Square(20),

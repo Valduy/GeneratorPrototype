@@ -1,7 +1,7 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
+using GameEngine.Game;
 using GameEngine.Graphics;
-using GameEngine.Mathematics;
 using Graph;
 using Net;
 using OpenTK.Mathematics;
@@ -13,7 +13,7 @@ namespace RoadGenerationDemo
 {
     public class RoadGeneratorComponent : Component
     {
-        private readonly Renderer _renderer;
+        private readonly Camera _camera;
         private readonly KeyboardState _keyboardState;
 
         private RoadGenerator _roadGenerator;
@@ -21,10 +21,13 @@ namespace RoadGenerationDemo
 
         private bool _isKeyPressed = false;
 
-        public RoadGeneratorComponent(Renderer renderer, KeyboardState keyboardState)
+        public readonly Game Game;
+
+        public RoadGeneratorComponent(Game game)
         {
-            _renderer = renderer;
-            _keyboardState = keyboardState;
+            Game = game;
+            _camera = game.Camera;
+            _keyboardState = game.Window.KeyboardState;
             _inputData = CreateInputData();
             _roadGenerator = new RoadGenerator(_inputData);
             _roadGenerator.Net.Connected += OnConnected;
@@ -66,7 +69,7 @@ namespace RoadGenerationDemo
             var color = IsMain(args.Node1, args.Node2) ? Colors.Red : Colors.White;
 
             var roadGo = GameObject!.Engine.CreateGameObject();
-            roadGo.Add(() => new Render2DComponent(_renderer)
+            roadGo.Add(() => new Render2DComponent(Game)
             {
                 Color =  color,
                 Shape = Shape2D.Line(args.Node1.Item.Position, args.Node2.Item.Position)
@@ -81,7 +84,7 @@ namespace RoadGenerationDemo
         private void CreateTriangle(Vector2 position, Vector3 color)
         {
             var triangleGo = GameObject!.Engine.CreateGameObject();
-            triangleGo.Add(() => new Render2DComponent(_renderer)
+            triangleGo.Add(() => new Render2DComponent(Game)
             {
                 Shape = Shape2D.Triangle(20),
                 Color = color,
