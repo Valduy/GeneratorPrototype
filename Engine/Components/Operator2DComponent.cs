@@ -2,22 +2,21 @@
 using GameEngine.Graphics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Window = GameEngine.Game.Window;
+using Window = GameEngine.Core.Window;
 
 namespace GameEngine.Components
 {
     public class Operator2DComponent : Component
     {
-        public readonly Game.Game Game;
-        public Window Window => Game.Window;
-        public Camera Camera => Game.Camera;
-        public KeyboardState Inputs => Window.KeyboardState;
         public float CameraSpeed { get; set; } = 200f;
         public float ZoomScale { get; set; } = 0.2f;
 
-        public Operator2DComponent(Game.Game game)
+        private Window Window => GameObject!.Engine.Window;
+        private Camera Camera => GameObject!.Engine.Camera;
+        private KeyboardState Inputs => Window.KeyboardState;
+
+        public override void Start()
         {
-            Game = game;
             Window.MouseWheel += OnWindowMouseWheel;
         }
 

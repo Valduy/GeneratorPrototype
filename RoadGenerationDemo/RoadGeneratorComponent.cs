@@ -1,6 +1,5 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
-using GameEngine.Game;
 using GameEngine.Graphics;
 using Graph;
 using Net;
@@ -13,21 +12,16 @@ namespace RoadGenerationDemo
 {
     public class RoadGeneratorComponent : Component
     {
-        private readonly Camera _camera;
-        private readonly KeyboardState _keyboardState;
-
         private RoadGenerator _roadGenerator;
         private InputData _inputData;
 
         private bool _isKeyPressed = false;
 
-        public readonly Game Game;
+        private Engine Engine => GameObject!.Engine;
+        private KeyboardState Inputs => Engine.Window.KeyboardState;
 
-        public RoadGeneratorComponent(Game game)
+        public RoadGeneratorComponent()
         {
-            Game = game;
-            _camera = game.Camera;
-            _keyboardState = game.Window.KeyboardState;
             _inputData = CreateInputData();
             _roadGenerator = new RoadGenerator(_inputData);
             _roadGenerator.Net.Connected += OnConnected;
@@ -48,7 +42,7 @@ namespace RoadGenerationDemo
 
         public override void GameUpdate(FrameEventArgs args)
         {
-            if (_keyboardState.IsKeyDown(Keys.Space) /*&& !_isKeyPressed*/)
+            if (Inputs.IsKeyDown(Keys.Space) /*&& !_isKeyPressed*/)
             {
                 //_isKeyPressed = true;
 
@@ -66,14 +60,10 @@ namespace RoadGenerationDemo
 
         private void OnConnected(object? source, ConnectionEventArgs<Sucessor> args)
         {
-            var color = IsMain(args.Node1, args.Node2) ? Colors.Red : Colors.White;
-
             var roadGo = GameObject!.Engine.CreateGameObject();
-            roadGo.Add(() => new Render2DComponent(Game)
-            {
-                Color =  color,
-                Shape = Shape2D.Line(args.Node1.Item.Position, args.Node2.Item.Position)
-            });
+            var roadRender = roadGo.Add<Render2DComponent>();
+            roadRender.Color = IsMain(args.Node1, args.Node2) ? Colors.Red : Colors.White;
+            roadRender.Shape = Shape2D.Line(args.Node1.Item.Position, args.Node2.Item.Position);
             roadGo.Position = Vector3.UnitZ * -10;
         }
 
@@ -84,11 +74,9 @@ namespace RoadGenerationDemo
         private void CreateTriangle(Vector2 position, Vector3 color)
         {
             var triangleGo = GameObject!.Engine.CreateGameObject();
-            triangleGo.Add(() => new Render2DComponent(Game)
-            {
-                Shape = Shape2D.Triangle(20),
-                Color = color,
-            });
+            var render = triangleGo.Add<Render2DComponent>();
+            render.Color = color;
+            render.Shape = Shape2D.Triangle(20);
             triangleGo.Position = new Vector3(position.X, position.Y, -9.0f);
         }
 

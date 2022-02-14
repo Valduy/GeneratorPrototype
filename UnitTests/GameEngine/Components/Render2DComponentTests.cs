@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using GameEngine.Components;
 using GameEngine.Core;
-using GameEngine.Game;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 using Xunit;
@@ -25,7 +24,7 @@ namespace UnitTests.GameEngine.Components
     {
         public IEnumerator<object[]> GetEnumerator()
         {
-            var game = new Game();
+            var game = new Engine();
 
             var go = game.Engine.CreateGameObject();
             go.Add(() => new Render2DComponent(game.Window.Renderer)

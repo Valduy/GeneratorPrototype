@@ -1,5 +1,5 @@
 ﻿using GameEngine.Components;
-using GameEngine.Game;
+using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 
@@ -99,26 +99,26 @@ namespace Scene3DDemo
 
         public static void Main(string[] args)
         {
-            using var game = new Game();
+            using var game = new Engine();
   
-            var operatorGo = game.Engine.CreateGameObject();
-            operatorGo.Add(() => new Operator3DComponent(game));
+            var operatorGo = game.CreateGameObject();
+            operatorGo.Add<Operator3DComponent>();
             operatorGo.Position = new Vector3(0, 1, 1);
 
-            var cubeGo1 = game.Engine.CreateGameObject();
+            var cubeGo1 = game.CreateGameObject();
             cubeGo1.Position = new Vector3(0, 0, 0);
             cubeGo1.Scale = new Vector3(1);
             cubeGo1.Rotation = Vector3.UnitY * 45;
 
-            var renderComponent1 = cubeGo1.Add(() => new Render3DComponent(game));
+            var renderComponent1 = cubeGo1.Add<Render3DComponent>();
             renderComponent1.Shape = new Shape3D(FromFloatsToVectors(Vertices), FromFloatsToVectors(Normals));
 
 
-            var cubeGo2 = game.Engine.CreateGameObject();
+            var cubeGo2 = game.CreateGameObject();
             cubeGo2.Position = new Vector3(2, 0, 0);
             cubeGo2.Scale = new Vector3(1);
 
-            var renderComponent2 = cubeGo2.Add(() => new Render3DComponent(game));
+            var renderComponent2 = cubeGo2.Add<Render3DComponent>();
             renderComponent2.Shape = new Shape3D(FromFloatsToVectors(Vertices), FromFloatsToVectors(Normals));
 
             game.Run();

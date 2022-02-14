@@ -1,5 +1,5 @@
 ﻿using GameEngine.Components;
-using GameEngine.Game;
+using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 
@@ -9,29 +9,26 @@ namespace DifferentLayersDemo
     {
         public static void Main(string[] args)
         {
-            using var game = new Game();
-            game.Camera.Projection = Projection.Orthographic;
+            using var engine = new Engine();
+            engine.Camera.Projection = Projection.Orthographic;
 
-            var triangle1Go = game.Engine.CreateGameObject();
-            float distanceFromCamera1 = -10.0f;
-            triangle1Go.Add(() => new Render2DComponent(game)
-            {
-                Color = Colors.Yellow,
-                Shape = Shape2D.Triangle(100)
-            });
-            triangle1Go.Position = Vector3.UnitZ * distanceFromCamera1;
+            CreateTriangle(engine, new Vector2(0), 0, 100, -10, Colors.Yellow);
+            CreateTriangle(engine, new Vector2(0, -50), 180, 100, -9, Colors.Red);
 
-            var triangle2Go = game.Engine.CreateGameObject();
-            float distanceFromCamera2 = -9.0f;
-            triangle2Go.Add(() => new Render2DComponent(game)
-            {
-                Color = Colors.Red,
-                Shape = Shape2D.Triangle(100)
-            });
-            triangle2Go.Rotation = new Vector3(0.0f, 0.0f, 180);
-            triangle2Go.Position = new Vector3(0.0f, -50, distanceFromCamera2);
+            engine.Run();
+        }
 
-            game.Run();
+        public static GameObject CreateTriangle(Engine engine, Vector2 position, float rotation, float size, float distance, Vector3 color)
+        {
+            var go = engine.CreateGameObject();
+            
+            var render2d = go.Add<Render2DComponent>();
+            render2d.Color = color;
+            render2d.Shape = Shape2D.Triangle(size);
+
+            go.Position = new Vector3(position.X, position.Y, distance);
+            go.Rotation = new Vector3(0, 0, rotation);
+            return go;
         }
     }
 }

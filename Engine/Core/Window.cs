@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 
-namespace GameEngine.Game
+namespace GameEngine.Core
 {
     public class Window : GameWindow
     {

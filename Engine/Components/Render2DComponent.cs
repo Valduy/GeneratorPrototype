@@ -16,8 +16,6 @@ namespace GameEngine.Components
 
         private Shape2D _shape = new(Enumerable.Empty<Vector2>());
 
-        public readonly Game.Game Game;
-
         public Shape2D Shape
         {
             get => _shape;
@@ -41,9 +39,8 @@ namespace GameEngine.Components
             }
         }
 
-        public Render2DComponent(Game.Game game)
+        public Render2DComponent()
         {
-            Game = game;
             Register(GetVertices());
         }
 
@@ -100,8 +97,8 @@ namespace GameEngine.Components
         {
             _shader.Use();
             _shader.SetMatrix4("model", GetModelMatrix());
-            _shader.SetMatrix4("view", Game.Camera.GetViewMatrix());
-            _shader.SetMatrix4("projection", Game.Camera.GetProjectionMatrix());
+            _shader.SetMatrix4("view", GameObject!.Engine.Camera.GetViewMatrix());
+            _shader.SetMatrix4("projection", GameObject!.Engine.Camera.GetProjectionMatrix());
             _shader.SetVector3("color", Color);
         }
 

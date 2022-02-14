@@ -1,6 +1,5 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
-using GameEngine.Game;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
 using OpenTK.Mathematics;
@@ -265,17 +264,17 @@ namespace DrawDifferentFiguresDemo
 
             Dictionary<int, DNA> el;
 
-            using var game = new Game();
-            float leftTopCornerX = -Game.WindowWidth / 2;
-            float leftTopCornerY = Game.WindowHeight / 2;
+            using var game = new Engine();
+            float leftTopCornerX = -Engine.WindowWidth / 2;
+            float leftTopCornerY = Engine.WindowHeight / 2;
 
             var genetator = game.Engine.CreateGameObject();
             genetator.Add(() => new FoundamentGenerator(game.Window.Renderer, game.Window.KeyboardState)
             {
             });
 
-            //var squareGo = game.Engine.CreateGameObject();
-            //squareGo.Add(() => new Render2DComponent(game.Window.Renderer)
+            //var squareGo = engine.Engine.CreateGameObject();
+            //squareGo.Add(() => new Render2DComponent(engine.Window.Renderer)
             //{
             //    Color = Colors.Lime,
             //    Shape = Shape.Square(100)
@@ -286,8 +285,8 @@ namespace DrawDifferentFiguresDemo
             //}));
             //squareGo.Position = new Vector2(leftTopCornerX + 400, leftTopCornerY - 100);
 
-            //var squareGo_1 = game.Engine.CreateGameObject();
-            //squareGo_1.Add(() => new Render2DComponent(game.Window.Renderer)
+            //var squareGo_1 = engine.Engine.CreateGameObject();
+            //squareGo_1.Add(() => new Render2DComponent(engine.Window.Renderer)
             //{
             //    Color = Colors.Magenta,
             //    Shape = Shape.Square(100),
@@ -313,8 +312,8 @@ namespace DrawDifferentFiguresDemo
             //{
             //    for (int j = 0; j < 4; j++)
             //    {
-            //        var block = game.Engine.CreateGameObject();
-            //        block.Add(() => new Render2DComponent(game.Window.Renderer)
+            //        var block = engine.Engine.CreateGameObject();
+            //        block.Add(() => new Render2DComponent(engine.Window.Renderer)
             //        {
             //            Color = Colors.Lime,
             //            Shape = Shape.Square(100)

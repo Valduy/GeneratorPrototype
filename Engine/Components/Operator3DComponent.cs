@@ -1,7 +1,9 @@
 ﻿using GameEngine.Core;
+using GameEngine.Graphics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using Window = GameEngine.Core.Window;
 
 namespace GameEngine.Components
 {
@@ -13,21 +15,19 @@ namespace GameEngine.Components
         public float CameraSpeed { get; set; } = 1.5f;
         public float Sensitivity { get; set; } = 0.2f;
 
-        public readonly Game.Game Game;
-
-        public Operator3DComponent(Game.Game game)
-        {
-            Game = game;
-        }
+        private Window Window => GameObject!.Engine.Window;
+        private KeyboardState Inputs => Window.KeyboardState;
+        private MouseState Mouse => Window.MouseState;
+        private Camera Camera => GameObject!.Engine.Camera;
 
         public override void Start()
         {
-            Game.Camera.Position = GameObject!.Position;
+            GameObject!.Engine.Camera.Position = GameObject!.Position;
         }
 
         public override void GameUpdate(FrameEventArgs args)
         {
-            if (!Game.Window.IsFocused)
+            if (!GameObject!.Engine.Window.IsFocused)
             {
                 return;
             }
@@ -38,51 +38,47 @@ namespace GameEngine.Components
 
         private void ProcessKeyboardInputs(float dt)
         {
-            var input = Game.Window.KeyboardState;
-
-            if (input.IsKeyDown(Keys.W))
+            if (Inputs.IsKeyDown(Keys.W))
             {
-                Game.Camera.Position += Game.Camera.Front * CameraSpeed * dt; // Forward
+                Camera.Position += Camera.Front * CameraSpeed * dt; // Forward
             }
-            if (input.IsKeyDown(Keys.S))
+            if (Inputs.IsKeyDown(Keys.S))
             {
-                Game.Camera.Position -= Game.Camera.Front * CameraSpeed * dt; // Backwards
+                Camera.Position -= Camera.Front * CameraSpeed * dt; // Backwards
             }
-            if (input.IsKeyDown(Keys.A))
+            if (Inputs.IsKeyDown(Keys.A))
             {
-                Game.Camera.Position -= Game.Camera.Right * CameraSpeed * dt; // Left
+                Camera.Position -= Camera.Right * CameraSpeed * dt; // Left
             }
-            if (input.IsKeyDown(Keys.D))
+            if (Inputs.IsKeyDown(Keys.D))
             {
-                Game.Camera.Position += Game.Camera.Right * CameraSpeed * dt; // Right
+                Camera.Position += Camera.Right * CameraSpeed * dt; // Right
             }
-            if (input.IsKeyDown(Keys.Space))
+            if (Inputs.IsKeyDown(Keys.Space))
             {
-                Game.Camera.Position += Game.Camera.Up * CameraSpeed * dt; // Up
+                Camera.Position += Camera.Up * CameraSpeed * dt; // Up
             }
-            if (input.IsKeyDown(Keys.LeftShift))
+            if (Inputs.IsKeyDown(Keys.LeftShift))
             {
-                Game.Camera.Position -= Game.Camera.Up * CameraSpeed * dt; // Down
+                Camera.Position -= Camera.Up * CameraSpeed * dt; // Down
             }
         }
 
         private void ProcessMouseInputs()
         {
-            var mouse = Game.Window.MouseState;
-
             if (_firstMove)
             {
-                _lastPos = new Vector2(mouse.X, mouse.Y);
+                _lastPos = new Vector2(Mouse.X, Mouse.Y);
                 _firstMove = false;
             }
             else
             {
-                var deltaX = mouse.X - _lastPos.X;
-                var deltaY = mouse.Y - _lastPos.Y;
-                _lastPos = new Vector2(mouse.X, mouse.Y);
+                var deltaX = Mouse.X - _lastPos.X;
+                var deltaY = Mouse.Y - _lastPos.Y;
+                _lastPos = new Vector2(Mouse.X, Mouse.Y);
 
-                Game.Camera.Yaw += deltaX * Sensitivity;
-                Game.Camera.Pitch -= deltaY * Sensitivity;
+                Camera.Yaw += deltaX * Sensitivity;
+                Camera.Pitch -= deltaY * Sensitivity;
             }
         }
     }

@@ -4,8 +4,8 @@ using OpenTK.Windowing.Common;
 namespace GameEngine.Core
 {
     /// <summary>
-    /// Class implement game object. Game object is container for components.
-    /// Components declare properties and behaviour of game object.
+    /// Class implement engine object. Engine object is container for components.
+    /// Components declare properties and behaviour of engine object.
     /// </summary>
     public class GameObject
     {
@@ -143,15 +143,6 @@ namespace GameEngine.Core
         /// <summary>
         /// Method add new <see cref="Component"/> to <see cref="GameObject"/>.
         /// </summary>
-        /// <typeparam name="T">Type of <see cref="Component"/>.</typeparam>
-        /// <param name="factory"><see cref="Component"/> factory.</param>
-        /// <returns><see cref="Component"/>, added to <see cref="GameObject"/>.</returns>
-        public T Add<T>(Func<T> factory) where T : Component
-            => (T) Add(() => factory() as Component);
-
-        /// <summary>
-        /// Method add new <see cref="Component"/> to <see cref="GameObject"/>.
-        /// </summary>
         /// <param name="componentType">Type of <see cref="Component"/>.</param>
         /// <returns><see cref="Component"/>, added to <see cref="GameObject"/>.</returns>
         /// <exception cref="ArgumentException"></exception>
@@ -168,32 +159,6 @@ namespace GameEngine.Core
                 Remove(component.GetType());
             }
             
-            _componentsMap[instance.GetType()] = instance;
-            instance.GameObject = this;
-
-            if (Engine.IsRun)
-            {
-                instance.Start();
-            }
-
-            ComponentAdded?.Invoke(this, instance);
-            return instance;
-        }
-
-        /// <summary>
-        /// Method add new <see cref="Component"/> to <see cref="GameObject"/>.
-        /// </summary>
-        /// <param name="factory"><see cref="Component"/> factory.</param>
-        /// <returns><see cref="Component"/>, added to <see cref="GameObject"/>.</returns>
-        public Component Add(Func<Component> factory)
-        {
-            var instance = factory();
-
-            if (_componentsMap.TryGetValue(instance.GetType(), out var component))
-            {
-                Remove(component.GetType());
-            }
-
             _componentsMap[instance.GetType()] = instance;
             instance.GameObject = this;
 

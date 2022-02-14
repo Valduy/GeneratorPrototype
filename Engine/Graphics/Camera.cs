@@ -1,4 +1,4 @@
-﻿using GameEngine.Game;
+﻿using GameEngine.Core;
 using OpenTK.Mathematics;
 
 namespace GameEngine.Graphics

@@ -16,8 +16,6 @@ namespace GameEngine.Components
 
         private Shape3D _shape = new(Enumerable.Empty<Vector3>(), Enumerable.Empty<Vector3>());
 
-        public readonly Game.Game Game;
-
         public Shape3D Shape
         {
             get => _shape;
@@ -30,9 +28,8 @@ namespace GameEngine.Components
             }
         }
 
-        public Render3DComponent(Game.Game game)
+        public Render3DComponent()
         {
-            Game = game;
             Register(EnumerateShape().ToArray());
         }
 
@@ -46,9 +43,9 @@ namespace GameEngine.Components
         {
             _shader.Use();
             _shader.SetMatrix4("model", GetModelMatrix());
-            _shader.SetMatrix4("view", Game.Camera.GetViewMatrix());
-            _shader.SetMatrix4("projection", Game.Camera.GetProjectionMatrix());
-            _shader.SetVector3("viewPos", Game.Camera.Position);
+            _shader.SetMatrix4("view", GameObject!.Engine.Camera.GetViewMatrix());
+            _shader.SetMatrix4("projection", GameObject!.Engine.Camera.GetProjectionMatrix());
+            _shader.SetVector3("viewPos", GameObject!.Engine.Camera.Position);
 
             _shader.SetVector3("material.ambient", new Vector3(1.0f, 0.5f, 0.31f));
             _shader.SetVector3("material.diffuse", new Vector3(1.0f, 0.5f, 0.31f));
