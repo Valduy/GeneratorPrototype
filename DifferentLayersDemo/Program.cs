@@ -10,6 +10,7 @@ namespace DifferentLayersDemo
         public static void Main(string[] args)
         {
             using var game = new Game();
+            game.Window.Renderer.Camera.Projection = Projection.Orthographic;
 
             var triangle1Go = game.Engine.CreateGameObject();
             float distanceFromCamera1 = -10.0f;

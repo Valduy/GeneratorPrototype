@@ -1,5 +1,6 @@
 ﻿using GameEngine.Components;
 using GameEngine.Game;
+using GameEngine.Graphics;
 
 namespace RoadGenerationDemo
 {
@@ -8,6 +9,7 @@ namespace RoadGenerationDemo
         public static void Main(string[] args)
         {
             using var game = new Game();
+            game.Window.Renderer.Camera.Projection = Projection.Orthographic;
 
             var operatorGo = game.Engine.CreateGameObject();
             operatorGo.Add(() => new OperatorComponent(game.Window));

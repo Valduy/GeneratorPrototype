@@ -11,6 +11,7 @@ namespace DrawDifferentFiguresDemo
         public static void Main(string[] args)
         {
             using var game = new Game();
+            game.Window.Renderer.Camera.Projection = Projection.Orthographic;
             float leftTopCornerX = -Game.WindowWidth / 2;
             float leftTopCornerY = Game.WindowHeight / 2;
             float distanceFromCamera = -10.0f;

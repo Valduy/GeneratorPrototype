@@ -8,7 +8,7 @@ namespace GameEngine.Components
 {
     public class Render2DComponent : Component
     {
-        private readonly Shader _shader = new("Shaders/shader.vert", "Shaders/shader.frag");
+        private readonly Shader _shader = new("Shaders/shader2d.vert", "Shaders/shader2d.frag");
         private readonly Renderer _renderer;
 
         private Shape2D _shape = new(Enumerable.Empty<Vector2>());

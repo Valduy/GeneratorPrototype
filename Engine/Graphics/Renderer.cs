@@ -1,5 +1,6 @@
 ﻿using GameEngine.Game;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
 namespace GameEngine.Graphics
@@ -12,7 +13,7 @@ namespace GameEngine.Graphics
         internal Renderer(Window window)
         {
             _window = window;
-            Camera = new Camera(_window);
+            Camera = new Camera(_window, new Vector3());
             _window.Resize += OnWindowResized;
         }
 

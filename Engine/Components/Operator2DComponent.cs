@@ -1,5 +1,5 @@
 ﻿using GameEngine.Core;
-using OpenTK.Mathematics;
+using GameEngine.Graphics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Window = GameEngine.Game.Window;
@@ -9,9 +9,11 @@ namespace GameEngine.Components
     public class OperatorComponent : Component
     {
         private readonly Window _window;
- 
+
+        public Camera Camera => _window.Renderer.Camera;
+        public KeyboardState Inputs => _window.KeyboardState;
         public float CameraSpeed { get; set; } = 200f;
-        public float ZoomScale { get; set; } = 100f;
+        public float ZoomScale { get; set; } = 10f;
 
         public OperatorComponent(Window window)
         {
@@ -27,30 +29,30 @@ namespace GameEngine.Components
             }
 
             var dt = (float) args.Time;
-            var input = _window.KeyboardState;
-            var camera = _window.Renderer.Camera;
 
-            if (input.IsKeyDown(Keys.W))
+            if (Inputs.IsKeyDown(Keys.W))
             {
-                camera.Position += Vector2.UnitY * CameraSpeed * dt;
+                Camera.Position += Camera.Up * CameraSpeed * dt;
             }
-            if (input.IsKeyDown(Keys.S))
+            if (Inputs.IsKeyDown(Keys.S))
             {
-                camera.Position -= Vector2.UnitY * CameraSpeed * dt;
+                Camera.Position -= Camera.Up * CameraSpeed * dt;
             }
-            if (input.IsKeyDown(Keys.A))
+            if (Inputs.IsKeyDown(Keys.A))
             {
-                camera.Position -= Vector2.UnitX * CameraSpeed * dt;
+                Camera.Position -= Camera.Right * CameraSpeed * dt;
             }
-            if (input.IsKeyDown(Keys.D))
+            if (Inputs.IsKeyDown(Keys.D))
             {
-                camera.Position += Vector2.UnitX * CameraSpeed * dt;
+                Camera.Position += Camera.Right * CameraSpeed * dt;
             }
         }
 
         private void OnWindowMouseWheel(MouseWheelEventArgs args)
         {
-            _window.Renderer.Camera.Zoom -= ZoomScale * args.OffsetY;
+            //Camera.Position += Camera.Front * ZoomScale * args.OffsetY;
+            Camera.Zoom += ZoomScale * args.OffsetY * 0.2f;
+            //_window.Renderer.Camera.Zoom -= ZoomScale * args.OffsetY;
         }
     }
 }

@@ -7,15 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Shaders\shader.frag" />
-    <None Remove="Shaders\shader.vert" />
+    <None Remove="Shaders\shader2d.frag" />
+    <None Remove="Shaders\shader2d.vert" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Shaders\shader.frag">
+    <Content Include="Shaders\shader2d.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Shaders\shader.vert">
+    <Content Include="Shaders\shader2d.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

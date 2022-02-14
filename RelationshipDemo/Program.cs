@@ -49,6 +49,7 @@ namespace RelationshipDemo
         public static void Main(string[] args)
         {
             using var game = new Game();
+            game.Window.Renderer.Camera.Projection = Projection.Orthographic;
             float distanceFromCamera = -10.0f;
 
             var centerGo = game.Engine.CreateGameObject();
