@@ -1,11 +1,12 @@
-﻿using GameEngine.Components;
+﻿using System.Drawing;
+using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 
-namespace Scene3DDemo
+namespace PipesDemo
 {
-    public class Program
+    public class BuilderComponent : Component
     {
         public static readonly float[] Vertices =
         {
@@ -53,33 +54,44 @@ namespace Scene3DDemo
             -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
         };
 
-        public static void Main(string[] args)
+        public const int InWidth = 8;
+        public const int InHeight = 8;
+        public const int FloorWidth = 16;
+        public const int FloorHeight = 16;
+
+        public string MapPath;
+
+        public override void Start()
         {
-            using var engine = new Engine();
-  
-            var operatorGo = engine.CreateGameObject();
-            operatorGo.Add<Operator3DComponent>();
-            operatorGo.Add<LightComponent>();
-            operatorGo.Position = new Vector3(0, 1, 1);
+            using var reader = new StreamReader(MapPath);
+            var bmp = new Bitmap(reader.BaseStream);
 
-            CreateCube(engine, new Vector3(0), Vector3.UnitY * 45, 1);
-            CreateCube(engine, new Vector3(2, 0, 0), Vector3.Zero, 1);
-            CreateCube(engine, new Vector3(2, 0, 2), Vector3.Zero, 1);
-
-            engine.Run();
+            for (int x = 0; x < InWidth; x++)
+            {
+                for (int y = 0; y < InHeight; y++)
+                {
+                    CreateLevel(bmp, FloorWidth * x, FloorHeight * y);
+                }
+            }
         }
 
-        public static GameObject CreateCube(Engine engine, Vector3 position, Vector3 rotation, float scale)
+        private void CreateLevel(Bitmap bmp, int pivotX, int pivotY)
         {
-            var go = engine.CreateGameObject();
-            go.Position = position;
-            go.Rotation = rotation;
-            go.Scale = new Vector3(scale);
-
-            var render = go.Add<Render3DComponent>();
-            render.Shape = new Mesh(Vertices);
-
-            return go;
+            for (int x = 0; x < FloorWidth; x++)
+            {
+                for (int y = 0; y < FloorHeight; y++)
+                {
+                    if (bmp.GetPixel(pivotX + x, pivotY + y).A != 0)
+                    {
+                        var cellGo = GameObject!.Engine.CreateGameObject();
+                        var render = cellGo.Add<Render3DComponent>();
+                        render.Shape = new Mesh(Vertices);
+                        //GameObject!.AddChild(cellGo);
+                        int height = InWidth * (pivotY / FloorHeight) + pivotX / FloorWidth; 
+                        cellGo.Position = new Vector3(x, height, y);
+                    }
+                }
+            }
         }
     }
 }

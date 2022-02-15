@@ -8,7 +8,7 @@ namespace GameEngine.Components
 {
     public class Render3DComponent : Component
     {
-        private readonly Shader _shader = new("Shaders/shader3d.vert", "Shaders/shader3d.frag");
+        private static readonly Shader _shader = new("Shaders/shader3d.vert", "Shaders/shader3d.frag");
 
         private int _vertexArrayObject;
         private int _vertexBufferObject;

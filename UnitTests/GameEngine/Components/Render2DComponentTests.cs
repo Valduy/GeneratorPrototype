@@ -26,13 +26,11 @@ namespace UnitTests.GameEngine.Components
         {
             var game = new Engine();
 
-            var go = game.Engine.CreateGameObject();
-            go.Add(() => new Render2DComponent(game.Window.Renderer)
-            {
-                Shape = Shape2D.Square(2)
-            });
+            var go = game.CreateGameObject();
+            var render = go.Add<Render2DComponent>();
+            render.Shape = Shape2D.Square(2);
             go.Scale = new Vector3(2.0f, 2.0f, 1.0f);
-            go.Rotation = new Vector3(0.0f, 0.0f, MathHelper.Pi / 2);
+            go.Rotation = new Vector3(0.0f, 0.0f, 90);
             go.Position = new Vector3(4.0f, 4.0f, 0.0f);
 
             var expected = new[]
