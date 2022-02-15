@@ -1,9 +1,11 @@
-﻿using System.Drawing;
+﻿using System.Collections;
+using System.Drawing;
 using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace PipesDemo
 {
@@ -14,39 +16,50 @@ namespace PipesDemo
         public const int FloorWidth = 16;
         public const int FloorHeight = 16;
 
-        public string MapPath { get; set; }
+        private BuildingModel buildingModel = new();
+        private IEnumerator pipeGenerator;
 
+        public string MapPath { get; set; }
+        
         public override void Start()
         {
-            using var reader = new StreamReader(MapPath);
-            var bmp = new Bitmap(reader.BaseStream);
+            buildingModel.WallCreated += OnWallCreated;
+            buildingModel.PipeCreated += OnPipeCreated;
+            buildingModel.Load(MapPath);
+            pipeGenerator = buildingModel.GeneratePipes(
+                new Vector3i(1, 1, 0), 
+                new Vector3i(buildingModel.Width - 1, buildingModel.Height -1, buildingModel.Depth - 1))
+                .GetEnumerator();
+        }
 
-            for (int x = 0; x < InWidth; x++)
+        public override void GameUpdate(FrameEventArgs args)
+        {
+            if (GameObject!.Engine.Window.KeyboardState.IsKeyDown(Keys.Enter))
             {
-                for (int y = 0; y < InHeight; y++)
-                {
-                    CreateLevel(bmp, FloorWidth * x, FloorHeight * y);
-                }
+                pipeGenerator.MoveNext();
             }
         }
 
-        private void CreateLevel(Bitmap bmp, int pivotX, int pivotY)
+        private void OnWallCreated(Cell cell)
         {
-            for (int x = 0; x < FloorWidth; x++)
-            {
-                for (int y = 0; y < FloorHeight; y++)
-                {
-                    if (bmp.GetPixel(pivotX + x, pivotY + y).A != 0)
-                    {
-                        var cellGo = GameObject!.Engine.CreateGameObject();
-                        var render = cellGo.Add<Render3DComponent>();
-                        render.Shape = new Mesh(Mesh.Cube);
-                        GameObject!.AddChild(cellGo);
-                        int height = InWidth * (pivotY / FloorHeight) + pivotX / FloorWidth; 
-                        cellGo.Position = new Vector3(x, height, y);
-                    }
-                }
-            }
+            var cellGo = GameObject!.Engine.CreateGameObject();
+            var render = cellGo.Add<Render3DComponent>();
+            render.Shape = new Mesh(Mesh.Cube);
+            GameObject!.AddChild(cellGo);
+            cellGo.Position = cell.Position;
+        }
+
+        private void OnPipeCreated(Cell cell)
+        {
+            var cellGo = GameObject!.Engine.CreateGameObject();
+            var render = cellGo.Add<Render3DComponent>();
+            render.Shape = new Mesh(Mesh.Cube);
+            render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
+            render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
+            render.Material.Specular = new Vector3(0.5f, 0.5f, 0.5f);
+            render.Material.Shininess = 32.0f;
+            GameObject!.AddChild(cellGo);
+            cellGo.Position = cell.Position;
         }
     }
 }
