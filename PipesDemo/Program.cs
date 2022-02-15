@@ -19,7 +19,7 @@ namespace PipesDemo
 
             var builderGo = engine.CreateGameObject();
             var builder = builderGo.Add<BuilderComponent>();
-            builder.MapPath = "Sample/House.bmp"; // TODO not absolute.
+            builder.MapPath = "Sample/House.bmp";
 
             engine.Run();
         }
