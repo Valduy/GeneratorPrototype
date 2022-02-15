@@ -15,15 +15,17 @@ namespace GameEngine.Core
 
         public readonly Window Window;
         public readonly Camera Camera;
+        public readonly Light Light;
 
         public bool IsRun { get; private set; }
 
-        public IEnumerable<GameObject> GameObjects;
+        public IEnumerable<GameObject> GameObjects => _gameObjects;
 
         public Engine()
         {
             Window = new Window(WindowWidth, WindowHeight, WindowTitle);
             Camera = new Camera(Window, Vector3.Zero);
+            Light = new Light();
 
             Window.Load += OnWindowLoaded;
             Window.UpdateFrame += OnWindowUpdateFrame;
@@ -43,7 +45,7 @@ namespace GameEngine.Core
         /// <returns>New <see cref="GameObject"/>.</returns>
         public GameObject CreateGameObject()
         {
-            var go = new GameObject(this); // TODO: this
+            var go = new GameObject(this);
             _gameObjects.Add(go);
             return go;
         }

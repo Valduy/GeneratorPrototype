@@ -14,9 +14,9 @@ namespace GameEngine.Components
         private int _vertexBufferObject;
         private int _count;
 
-        private Shape3D _shape = new(Enumerable.Empty<Vector3>(), Enumerable.Empty<Vector3>());
+        private Mesh _shape = new(Array.Empty<float>());
 
-        public Shape3D Shape
+        public Mesh Shape
         {
             get => _shape;
             set
@@ -24,13 +24,15 @@ namespace GameEngine.Components
                 if (_shape == value) return;
                 _shape = value;
                 Unregister();
-                Register(EnumerateShape().ToArray());
+                Register(Shape.ToArray());
             }
         }
 
+        public Material Material { get; set; } = new();
+
         public Render3DComponent()
         {
-            Register(EnumerateShape().ToArray());
+            Register(Shape.ToArray());
         }
 
         public override void RenderUpdate(FrameEventArgs args)
@@ -47,15 +49,15 @@ namespace GameEngine.Components
             _shader.SetMatrix4("projection", GameObject!.Engine.Camera.GetProjectionMatrix());
             _shader.SetVector3("viewPos", GameObject!.Engine.Camera.Position);
 
-            _shader.SetVector3("material.ambient", new Vector3(1.0f, 0.5f, 0.31f));
-            _shader.SetVector3("material.diffuse", new Vector3(1.0f, 0.5f, 0.31f));
-            _shader.SetVector3("material.specular", new Vector3(0.5f, 0.5f, 0.5f));
-            _shader.SetFloat("material.shininess", 32.0f);
+            _shader.SetVector3("material.ambient", Material.Ambient);
+            _shader.SetVector3("material.diffuse", Material.Diffuse);
+            _shader.SetVector3("material.specular", Material.Specular);
+            _shader.SetFloat("material.shininess", Material.Shininess);
 
-            _shader.SetVector3("light.position", new Vector3(0, 10, 0));
-            _shader.SetVector3("light.ambient", new Vector3(0.2f));
-            _shader.SetVector3("light.diffuse", new Vector3(0.5f));
-            _shader.SetVector3("light.specular", new Vector3(1.0f, 1.0f, 1.0f));
+            _shader.SetVector3("light.position", GameObject!.Engine.Light.Position);
+            _shader.SetVector3("light.ambient", GameObject!.Engine.Light.Ambient);
+            _shader.SetVector3("light.diffuse", GameObject!.Engine.Light.Diffuse);
+            _shader.SetVector3("light.specular", GameObject!.Engine.Light.Specular);
         }
 
         private Matrix4 GetModelMatrix()
@@ -65,22 +67,6 @@ namespace GameEngine.Components
             model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(GameObject!.Rotation * MathHelper.Pi / 180));
             model *= Matrix4.CreateTranslation(GameObject.Position);
             return model;
-        }
-
-        private IEnumerable<float> EnumerateShape()
-        {
-            for (int i = 0; i < Shape.Count; i++)
-            {
-                var vertex = Shape.Vertices[i];
-                yield return vertex.X;
-                yield return vertex.Y;
-                yield return vertex.Z;
-
-                var normal = Shape.Normals[i];
-                yield return normal.X;
-                yield return normal.Y;
-                yield return normal.Z;
-            }
         }
 
         private void Register(float[] vertices)
@@ -104,7 +90,7 @@ namespace GameEngine.Components
             _count = vertices.Length / 6;
         }
 
-        public void Unregister()
+        private void Unregister()
         {
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);

@@ -25,16 +25,6 @@ namespace UnitTests.GameEngine.Core
             Assert.NotNull(go.Get<TestComponent>());
         }
 
-        [Fact]
-        public void Add_ComponentFactory_ComponentAdded()
-        {
-            var engine = new Engine();
-            var go = engine.CreateGameObject();
-
-            go.Add(() => new TestComponent());
-
-            Assert.NotNull(go.Get<TestComponent>());
-        }
 
         [Fact]
         public void Remove_RemoveNotExistingComponent_Null()
@@ -68,19 +58,6 @@ namespace UnitTests.GameEngine.Core
 
             go.ComponentAdded += (g, c) => isFired = true;
             go.Add<TestComponent>();
-
-            Assert.True(isFired);
-        }
-
-        [Fact]
-        public void Add_ComponentFactory_FiredComponentAddedEvent()
-        {
-            var isFired = false;
-            var engine = new Engine();
-            var go = engine.CreateGameObject();
-
-            go.ComponentAdded += (g, c) => isFired = true;
-            go.Add(() => new TestComponent());
 
             Assert.True(isFired);
         }
