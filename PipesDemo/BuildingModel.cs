@@ -4,14 +4,15 @@ using OpenTK.Mathematics;
 
 namespace PipesDemo
 {
-    public class BuildingModel
+    public class BuildingModel : IEnumerable<Cell>
     {
         public const int FloorsInRow = 8;
-        public const int FloorsInColumn = 8;
+        //public const int FloorsInColumn = 8;
+        public const int FloorsInColumn = 2;
 
         public const int FloorWidth = 16;
         public const int FloorDepth = 16;
-        public const int BuildingHeight = 64;
+        public const int BuildingHeight = FloorsInRow * FloorsInColumn;
 
         public const int WallSpacing = 1;
 
@@ -28,7 +29,7 @@ namespace PipesDemo
         public int Depth => _cells.GetLength(2);
 
         public event Action<Cell> WallCreated;
-        public event Action<Cell> TemperatureChanged;
+        public event Action TemperatureCalculated;
         public event Action<Cell> PipeCreated;
 
         public BuildingModel()
@@ -71,6 +72,7 @@ namespace PipesDemo
             }
 
             CalculateWarm(to.X, to.Y, to.Z);
+            TemperatureCalculated?.Invoke();
             return BuildPipe(from, to);
         }
 
@@ -100,7 +102,6 @@ namespace PipesDemo
         {
             var cell = _cells[x, y, z];
             cell.Temperature = MaxTemperature;
-            TemperatureChanged?.Invoke(cell);
             var stack = new Stack<Cell>();
             stack.Push(cell);
             
@@ -121,10 +122,8 @@ namespace PipesDemo
                     else
                     {
                         neigbour.Temperature = temperature;
+                        stack.Push(neigbour);
                     }
-
-                    stack.Push(neigbour);
-                    TemperatureChanged?.Invoke(cell);
                 }
             }
         }
@@ -178,5 +177,16 @@ namespace PipesDemo
                 yield return _cells[x, y, z + 1];
             }
         }
+
+        public IEnumerator<Cell> GetEnumerator()
+        {
+            foreach (var cell in _cells)
+            {
+                yield return cell;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() 
+            => GetEnumerator();
     }
 }

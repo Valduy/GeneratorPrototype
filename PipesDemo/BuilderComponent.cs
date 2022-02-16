@@ -24,6 +24,7 @@ namespace PipesDemo
         public override void Start()
         {
             buildingModel.WallCreated += OnWallCreated;
+            buildingModel.TemperatureCalculated += OnTemperatureCalculated;
             buildingModel.PipeCreated += OnPipeCreated;
             buildingModel.Load(MapPath);
             pipeGenerator = buildingModel.GeneratePipes(
@@ -45,8 +46,38 @@ namespace PipesDemo
             var cellGo = GameObject!.Engine.CreateGameObject();
             var render = cellGo.Add<Render3DComponent>();
             render.Shape = new Mesh(Mesh.Cube);
-            GameObject!.AddChild(cellGo);
+            //GameObject!.AddChild(cellGo);
             cellGo.Position = cell.Position;
+        }
+
+        private void OnTemperatureCalculated()
+        {
+            var minTemperature = buildingModel
+                .Where(c => c.Type is CellType.Empty)
+                .OrderBy(c => c.Temperature)
+                .First().Temperature;
+
+            foreach (var cell in buildingModel)
+            {
+                if (cell.Type == CellType.Empty)
+                {
+                    var cellGo = GameObject!.Engine.CreateGameObject();
+                    var render = cellGo.Add<Render3DComponent>();
+                    render.Shape = new Mesh(Mesh.Cube);
+                    var percent = GetPercent(BuildingModel.MaxTemperature, minTemperature, cell.Temperature);
+                    render.Material.Ambient = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
+                    render.Material.Diffuse = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
+                    //GameObject!.AddChild(cellGo);
+                    cellGo.Position = cell.Position;
+                    cellGo.Scale = new Vector3(0.1f);
+                    cellGo.Rotation = new Vector3(45, 45, 45);
+                }
+            }
+        }
+
+        private float GetPercent(float max, float min, float value)
+        {
+            return (value - min) / (max - min);
         }
 
         private void OnPipeCreated(Cell cell)
@@ -56,9 +87,9 @@ namespace PipesDemo
             render.Shape = new Mesh(Mesh.Cube);
             render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
-            render.Material.Specular = new Vector3(0.5f, 0.5f, 0.5f);
+            render.Material.Specular = new Vector3(0.0f);
             render.Material.Shininess = 32.0f;
-            GameObject!.AddChild(cellGo);
+            //GameObject!.AddChild(cellGo);
             cellGo.Position = cell.Position;
         }
     }
