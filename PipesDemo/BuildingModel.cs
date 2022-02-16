@@ -28,6 +28,7 @@ namespace PipesDemo
         public int Depth => _cells.GetLength(2);
 
         public event Action<Cell> WallCreated;
+        public event Action<Cell> TemperatureChanged;
         public event Action<Cell> PipeCreated;
 
         public BuildingModel()
@@ -99,28 +100,31 @@ namespace PipesDemo
         {
             var cell = _cells[x, y, z];
             cell.Temperature = MaxTemperature;
+            TemperatureChanged?.Invoke(cell);
             var stack = new Stack<Cell>();
             stack.Push(cell);
             
             while (stack.Any())
             {
                 var temp = stack.Pop();
+                var temperature = temp.Temperature - TemperatureStep;
                 var neigbours = GetNeigbours(temp)
-                    .Where(c => float.IsNaN(c.Temperature))
+                    .Where(c => float.IsNaN(c.Temperature) || (c.Temperature < temperature && c.Type is CellType.Empty))
                     .ToList();
 
                 foreach (var neigbour in neigbours)
                 {
                     if (neigbour.Type == CellType.Wall)
                     {
-                        neigbour.Temperature = 0;
+                        neigbour.Temperature = float.NegativeInfinity;
                     }
                     else
                     {
-                        neigbour.Temperature = temp.Temperature - TemperatureStep;
+                        neigbour.Temperature = temperature;
                     }
 
                     stack.Push(neigbour);
+                    TemperatureChanged?.Invoke(cell);
                 }
             }
         }
@@ -143,6 +147,7 @@ namespace PipesDemo
 
             Console.WriteLine("Pipe generation end.");
         }
+
         private IEnumerable<Cell> GetNeigbours(Cell cell) =>
             GetNeigbours(cell.Position.X, cell.Position.Y, cell.Position.Z);
 
