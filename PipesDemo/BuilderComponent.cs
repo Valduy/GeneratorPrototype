@@ -20,7 +20,7 @@ namespace PipesDemo
         private IEnumerator pipeGenerator;
 
         public string MapPath { get; set; }
-        
+
         public override void Start()
         {
             buildingModel.WallCreated += OnWallCreated;
@@ -29,7 +29,9 @@ namespace PipesDemo
             buildingModel.Load(MapPath);
             pipeGenerator = buildingModel.GeneratePipes(
                 new Vector3i(1, 1, 0), 
-                new Vector3i(buildingModel.Width - 1, buildingModel.Height -1, buildingModel.Depth - 1))
+                new Vector3i(buildingModel.Width - 1, buildingModel.Height -1, buildingModel.Depth - 1)
+                //new Vector3i(buildingModel.Width - 10, buildingModel.Height -7, buildingModel.Depth - 10)
+                )
                 .GetEnumerator();
         }
 

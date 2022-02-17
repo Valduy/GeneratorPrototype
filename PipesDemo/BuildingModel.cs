@@ -17,6 +17,7 @@ namespace PipesDemo
         public const int WallSpacing = 1;
 
         public const float MaxTemperature = 100000;
+        public const float WallFactor = 5;
         public const float TemperatureStep = 10;
 
         private Cell[,,] _cells = new Cell[
@@ -108,7 +109,9 @@ namespace PipesDemo
             while (stack.Any())
             {
                 var temp = stack.Pop();
+                bool isWallNear = GetNeigbours(temp).Any(c => c.Type == CellType.Wall);
                 var temperature = temp.Temperature - TemperatureStep;
+                
                 var neigbours = GetNeigbours(temp)
                     .Where(c => float.IsNaN(c.Temperature) || (c.Temperature < temperature && c.Type is CellType.Empty))
                     .ToList();
@@ -125,6 +128,16 @@ namespace PipesDemo
                         stack.Push(neigbour);
                     }
                 }
+            }
+
+            foreach (var c in _cells)
+            {
+                if (GetNeigbours(c).Any(c => c.Type == CellType.Wall))
+                {
+                    c.Temperature += WallFactor;
+                }
+
+                c.Temperature -= WallFactor;
             }
         }
 

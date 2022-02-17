@@ -15,7 +15,7 @@ namespace PipesDemo
             var operatorGo = engine.CreateGameObject();
             operatorGo.Add<Operator3DComponent>();
             operatorGo.Add<LightComponent>();
-            operatorGo.Position = new Vector3(4, 0, 4);
+            operatorGo.Position = new Vector3(0, 20, 0);
 
             var builderGo = engine.CreateGameObject();
             var builder = builderGo.Add<BuilderComponent>();
