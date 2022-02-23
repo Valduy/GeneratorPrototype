@@ -95,13 +95,13 @@ namespace PipesDemo
                     var cellGo = GameObject!.Engine.CreateGameObject();
                     var render = cellGo.Add<Render3DComponent>();
                     render.Shape = new Mesh(Mesh.Pyramid);
-                    render.Material.Ambient = cell.Direction;
-                    render.Material.Diffuse = cell.Direction;
+                    render.Material.Ambient = cell.Direction!.Value;
+                    render.Material.Diffuse = cell.Direction!.Value;
                     render.Material.Specular = new Vector3(0.0f);
                     //GameObject!.AddChild(cellGo);
                     cellGo.Position = cell.Position;
                     cellGo.Scale = new Vector3(0.05f, 0.5f, 0.05f);
-                    cellGo.Rotation = GetRotation(Vector3.UnitY, cell.Direction.Normalized()) * 180 / MathHelper.Pi;
+                    cellGo.Rotation = GetRotation(Vector3.UnitY, new Vector3(cell.Direction.Value).Normalized()) * 180 / MathHelper.Pi;
                 }
             }
         }
@@ -128,6 +128,9 @@ namespace PipesDemo
         {
             from.Normalize();
             to.Normalize();
+
+            if (from == to) return new Vector3(0);
+
             float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
             var axis = Vector3.Cross(from, to);
             float angle = MathF.Acos(cosa);

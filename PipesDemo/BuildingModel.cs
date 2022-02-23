@@ -92,7 +92,7 @@ namespace PipesDemo
             CalculateWarm(to.X, to.Y, to.Z);
             CalculateVectors();
             VectorsCalculated?.Invoke();
-            return BuildPipe(from, to);
+            return BuildSpline(from, to);
         }
 
         private static bool IsNotEmpty(Color color) => color.A != 0;
@@ -174,10 +174,10 @@ namespace PipesDemo
 
                 temp.Direction = next.Temperature >= temp.Temperature 
                     ? next.Position - temp.Position 
-                    : Vector3.Zero;
+                    : new Vector3i(0);
 
                 var neighbours = GetCube(temp)
-                    .Where(c => c.Type is CellType.Empty && c.Direction == Vector3.NegativeInfinity);
+                    .Where(c => c.Type is CellType.Empty && c.Direction == null);
 
                 foreach (var neighbour in neighbours)
                 {
@@ -198,6 +198,23 @@ namespace PipesDemo
                     .Where(c => c.Type == CellType.Empty)
                     .OrderByDescending(c => c.Temperature)
                     .First().Position;
+
+                yield return null;
+            }
+
+            Console.WriteLine("Pipe generation end.");
+        }
+
+        private IEnumerable BuildSpline(Vector3i from, Vector3i to)
+        {
+            var current = from;
+
+            while (current != to)
+            {
+                var cell = _cells[current.X, current.Y, current.Z];
+                cell.Type = CellType.Pipe;
+                PipeCreated?.Invoke(_cells[current.X, current.Y, current.Z]);
+                current = cell.Position + cell.Direction!.Value;
 
                 yield return null;
             }
