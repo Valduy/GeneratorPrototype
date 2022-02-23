@@ -30,8 +30,9 @@ namespace PipesDemo
         public int Depth => _cells.GetLength(2);
 
         public event Action<Cell> WallCreated;
-        public event Action TemperatureCalculated;
         public event Action<Cell> PipeCreated;
+        public event Action TemperatureCalculated;
+        public event Action VectorsCalculated;
 
         public BuildingModel()
         {
@@ -77,6 +78,23 @@ namespace PipesDemo
             return BuildPipe(from, to);
         }
 
+        public IEnumerable GenerateSpline(Vector3i from, Vector3i to)
+        {
+            if (_cells[from.X, from.Y, from.Z].Type != CellType.Empty)
+            {
+                throw new ArgumentException("Cell is not empty.");
+            }
+            if (_cells[to.X, to.Y, to.Z].Type != CellType.Empty)
+            {
+                throw new ArgumentException("Cell is not empty.");
+            }
+
+            CalculateWarm(to.X, to.Y, to.Z);
+            CalculateVectors();
+            VectorsCalculated?.Invoke();
+            return BuildPipe(from, to);
+        }
+
         private static bool IsNotEmpty(Color color) => color.A != 0;
 
         private void BuildFloor(Bitmap bmp, int i, int j)
@@ -109,10 +127,9 @@ namespace PipesDemo
             while (stack.Any())
             {
                 var temp = stack.Pop();
-                bool isWallNear = GetNeigbours(temp).Any(c => c.Type == CellType.Wall);
                 var temperature = temp.Temperature - TemperatureStep;
                 
-                var neigbours = GetNeigbours(temp)
+                var neigbours = GetCross(temp)
                     .Where(c => float.IsNaN(c.Temperature) || (c.Temperature < temperature && c.Type is CellType.Empty))
                     .ToList();
 
@@ -132,12 +149,40 @@ namespace PipesDemo
 
             foreach (var c in _cells)
             {
-                if (GetNeigbours(c).Any(c => c.Type == CellType.Wall))
+                if (GetCross(c).Any(c => c.Type == CellType.Wall))
                 {
                     c.Temperature += WallFactor;
                 }
 
                 c.Temperature -= WallFactor;
+            }
+        }
+
+        private void CalculateVectors()
+        {
+            var initial = _cells[0, 0, 0];
+            var stack = new Stack<Cell>();
+            stack.Push(initial);
+
+            while (stack.Any())
+            {
+                var temp = stack.Pop();
+                var next = GetCube(temp)
+                    .Where(c => c.Type is CellType.Empty)
+                    .OrderByDescending(c => c.Temperature)
+                    .First();
+
+                temp.Direction = next.Temperature >= temp.Temperature 
+                    ? next.Position - temp.Position 
+                    : Vector3.Zero;
+
+                var neighbours = GetCube(temp)
+                    .Where(c => c.Type is CellType.Empty && c.Direction == Vector3.NegativeInfinity);
+
+                foreach (var neighbour in neighbours)
+                {
+                    stack.Push(neighbour);
+                }
             }
         }
 
@@ -149,7 +194,7 @@ namespace PipesDemo
             {
                 _cells[current.X, current.Y, current.Z].Type = CellType.Pipe;
                 PipeCreated?.Invoke(_cells[current.X, current.Y, current.Z]);
-                current = GetNeigbours(current.X, current.Y, current.Z)
+                current = GetCross(current)
                     .Where(c => c.Type == CellType.Empty)
                     .OrderByDescending(c => c.Temperature)
                     .First().Position;
@@ -160,34 +205,66 @@ namespace PipesDemo
             Console.WriteLine("Pipe generation end.");
         }
 
-        private IEnumerable<Cell> GetNeigbours(Cell cell) =>
-            GetNeigbours(cell.Position.X, cell.Position.Y, cell.Position.Z);
+        private IEnumerable<Cell> GetCross(Cell cell) =>
+            GetCross(cell.Position);
 
-        private IEnumerable<Cell> GetNeigbours(int x, int y, int z)
+        private IEnumerable<Cell> GetCross(Vector3i position)
         {
-            if (x - 1 >= 0)
+            if (position.X - 1 >= 0)
             {
-                yield return _cells[x - 1, y, z];
+                yield return _cells[position.X - 1, position.Y, position.Z];
             }
-            if (x + 1 < Width)
+            if (position.X + 1 < Width)
             {
-                yield return _cells[x + 1, y, z];
+                yield return _cells[position.X + 1, position.Y, position.Z];
             }
-            if (y - 1 >= 0)
+            if (position.Y - 1 >= 0)
             {
-                yield return _cells[x, y - 1, z];
+                yield return _cells[position.X, position.Y - 1, position.Z];
             }
-            if (y + 1 < Height)
+            if (position.Y + 1 < Height)
             {
-                yield return _cells[x, y + 1, z];
+                yield return _cells[position.X, position.Y + 1, position.Z];
             }
-            if (z - 1 >= 0)
+            if (position.Z - 1 >= 0)
             {
-                yield return _cells[x, y, z - 1];
+                yield return _cells[position.X, position.Y, position.Z - 1];
             }
-            if (z + 1 < Depth)
+            if (position.Z + 1 < Depth)
             {
-                yield return _cells[x, y, z + 1];
+                yield return _cells[position.X, position.Y, position.Z + 1];
+            }
+        }
+
+        private IEnumerable<Cell> GetCube(Cell cell) 
+            => GetCube(cell.Position);
+
+        private IEnumerable<Cell> GetCube(Vector3i position)
+        {
+            var start = new Vector3i(
+                Math.Max(0, position.X - 1),
+                Math.Max(0, position.Y - 1),
+                Math.Max(0, position.Z - 1));
+
+            var end = new Vector3i(
+                Math.Min(Width - 1, position.X + 1),
+                Math.Min(Height - 1, position.Y + 1),
+                Math.Min(Depth - 1, position.Z + 1));
+
+            for (int x = start.X; x <= end.X; x++)
+            {
+                for (int y = start.Y; y <= end.Y; y++)
+                {
+                    for (int z = start.Z; z <= end.Z; z++)
+                    {
+                        if (new Vector3i(x, y, z) == position)
+                        {
+                            continue;
+                        }
+
+                        yield return _cells[x, y, z];
+                    }
+                }
             }
         }
 

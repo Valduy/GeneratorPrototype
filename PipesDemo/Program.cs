@@ -1,5 +1,6 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
+using GameEngine.Graphics;
 using OpenTK.Mathematics;
 
 namespace PipesDemo

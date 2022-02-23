@@ -24,14 +24,21 @@ namespace PipesDemo
         public override void Start()
         {
             buildingModel.WallCreated += OnWallCreated;
-            buildingModel.TemperatureCalculated += OnTemperatureCalculated;
+            //buildingModel.TemperatureCalculated += OnTemperatureCalculated;
+            buildingModel.VectorsCalculated += OnVectorsCalculate;
             buildingModel.PipeCreated += OnPipeCreated;
             buildingModel.Load(MapPath);
-            pipeGenerator = buildingModel.GeneratePipes(
-                new Vector3i(1, 1, 0), 
-                new Vector3i(buildingModel.Width - 1, buildingModel.Height -1, buildingModel.Depth - 1)
-                //new Vector3i(buildingModel.Width - 10, buildingModel.Height -7, buildingModel.Depth - 10)
-                )
+
+            //pipeGenerator = buildingModel.GeneratePipes(
+            //    new Vector3i(1, 1, 0), 
+            //    new Vector3i(buildingModel.Width - 1, buildingModel.Height -1, buildingModel.Depth - 1)
+            //    //new Vector3i(buildingModel.Width - 10, buildingModel.Height -7, buildingModel.Depth - 10)
+            //    )
+            //    .GetEnumerator();
+
+            pipeGenerator = buildingModel.GenerateSpline(
+                new Vector3i(1, 1, 0),
+                new Vector3i(buildingModel.Width - 1, buildingModel.Height - 1, buildingModel.Depth - 1))
                 .GetEnumerator();
         }
 
@@ -71,8 +78,30 @@ namespace PipesDemo
                     render.Material.Diffuse = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
                     //GameObject!.AddChild(cellGo);
                     cellGo.Position = cell.Position;
-                    cellGo.Scale = new Vector3(0.1f);
-                    cellGo.Rotation = new Vector3(45, 45, 45);
+                    cellGo.Scale = new Vector3(0.05f);
+                    cellGo.Rotation = new Vector3(45);
+                }
+            }
+        }
+
+        private void OnVectorsCalculate()
+        {
+            OnTemperatureCalculated();
+
+            foreach (var cell in buildingModel)
+            {
+                if (cell.Type == CellType.Empty)
+                {
+                    var cellGo = GameObject!.Engine.CreateGameObject();
+                    var render = cellGo.Add<Render3DComponent>();
+                    render.Shape = new Mesh(Mesh.Pyramid);
+                    render.Material.Ambient = cell.Direction;
+                    render.Material.Diffuse = cell.Direction;
+                    render.Material.Specular = new Vector3(0.0f);
+                    //GameObject!.AddChild(cellGo);
+                    cellGo.Position = cell.Position;
+                    cellGo.Scale = new Vector3(0.05f, 0.5f, 0.05f);
+                    cellGo.Rotation = GetRotation(Vector3.UnitY, cell.Direction.Normalized()) * 180 / MathHelper.Pi;
                 }
             }
         }
@@ -93,6 +122,16 @@ namespace PipesDemo
             render.Material.Shininess = 32.0f;
             //GameObject!.AddChild(cellGo);
             cellGo.Position = cell.Position;
+        }
+
+        private Vector3 GetRotation(Vector3 from, Vector3 to)
+        {
+            from.Normalize();
+            to.Normalize();
+            float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
+            var axis = Vector3.Cross(from, to);
+            float angle = MathF.Acos(cosa);
+            return Matrix4.CreateFromAxisAngle(axis, angle).ExtractRotation().ToEulerAngles();
         }
     }
 }

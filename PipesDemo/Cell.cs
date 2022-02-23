@@ -14,6 +14,7 @@ namespace PipesDemo
         public Vector3i Position { get; }
         public CellType Type { get; set; } = CellType.Empty;
         public float Temperature { get; set; } = float.NaN;
+        public Vector3 Direction { get; set; } = Vector3.NegativeInfinity;
 
         public Cell(int x, int y, int z)
             : this(new Vector3i(x, y, z))
