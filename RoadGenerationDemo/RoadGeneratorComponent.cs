@@ -63,7 +63,7 @@ namespace RoadGenerationDemo
             var roadGo = GameObject!.Engine.CreateGameObject();
             var roadRender = roadGo.Add<Render2DComponent>();
             roadRender.Color = IsMain(args.Node1, args.Node2) ? Colors.Red : Colors.White;
-            roadRender.Shape = Shape2D.Line(args.Node1.Item.Position, args.Node2.Item.Position);
+            roadRender.Shape = Shape.Line(args.Node1.Item.Position, args.Node2.Item.Position);
             roadGo.Position = Vector3.UnitZ * -10;
         }
 
@@ -76,7 +76,7 @@ namespace RoadGenerationDemo
             var triangleGo = GameObject!.Engine.CreateGameObject();
             var render = triangleGo.Add<Render2DComponent>();
             render.Color = color;
-            render.Shape = Shape2D.Triangle(20);
+            render.Shape = Shape.Triangle(20);
             triangleGo.Position = new Vector3(position.X, position.Y, -9.0f);
         }
 

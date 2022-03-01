@@ -31,7 +31,7 @@ namespace Scene3DDemo
             go.Scale = new Vector3(scale);
 
             var render = go.Add<Render3DComponent>();
-            render.Shape = new Mesh(Mesh.Cube);
+            render.Shape = Mesh.Cube;
 
             return go;
         }

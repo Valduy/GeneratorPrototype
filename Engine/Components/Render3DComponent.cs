@@ -63,7 +63,7 @@ namespace GameEngine.Components
         private Matrix4 GetModelMatrix()
         {
             var model = Matrix4.Identity;
-            model *= Matrix4.CreateScale(GameObject!.Scale.X, GameObject!.Scale.Y, GameObject.Scale.Z);
+            model *= Matrix4.CreateScale(GameObject!.Scale.X, GameObject!.Scale.Y, GameObject!.Scale.Z);
             model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(GameObject!.Rotation * MathHelper.Pi / 180));
             model *= Matrix4.CreateTranslation(GameObject.Position);
             return model;

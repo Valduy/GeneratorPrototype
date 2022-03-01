@@ -24,7 +24,7 @@ namespace DifferentLayersDemo
             
             var render2d = go.Add<Render2DComponent>();
             render2d.Color = color;
-            render2d.Shape = Shape2D.Triangle(size);
+            render2d.Shape = Shape.Triangle(size);
 
             go.Position = new Vector3(position.X, position.Y, distance);
             go.Rotation = new Vector3(0, 0, rotation);

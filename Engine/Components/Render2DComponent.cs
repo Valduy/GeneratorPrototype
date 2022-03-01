@@ -14,9 +14,9 @@ namespace GameEngine.Components
         private int _vertexBufferObject;
         private int _count;
 
-        private Shape2D _shape = new(Enumerable.Empty<Vector2>());
+        private Shape _shape = new(Enumerable.Empty<float>());
 
-        public Shape2D Shape
+        public Shape Shape
         {
             get => _shape;
             set
@@ -24,24 +24,15 @@ namespace GameEngine.Components
                 if (_shape == value) return;
                 _shape = value;
                 Unregister();
-                Register(GetVertices());
+                Register(_shape.ToArray());
             }
         }
         
         public Vector3 Color { get; set; } = Colors.Gray;
 
-        public List<Vector2> Points
-        {
-            get
-            {
-                var model = GetModelMatrix();
-                return Shape.Select(p => (new Vector4(p.X, p.Y, 0.0f , 1.0f) * model).Xy).ToList();
-            }
-        }
-
         public Render2DComponent()
         {
-            Register(GetVertices());
+            Register(Shape.ToArray());
         }
 
         public override void RenderUpdate(FrameEventArgs args)
@@ -56,43 +47,6 @@ namespace GameEngine.Components
             GL.DeleteProgram(_shader.Handle);
         }
 
-        private float[] GetVertices()
-        {
-            if (Shape.Count > 3)
-            {
-                var triangles = Mathematics.Mathematics.Triangulate(Shape);
-                var result = new float[triangles.Length * 9];
-
-                for (int i = 0; i < triangles.Length; i += 3)
-                {
-                    var offset = i * 9;
-                    WriteVector2ToArray(new ArraySegment<float>(result, offset, 3), Shape[triangles[i]]);
-                    WriteVector2ToArray(new ArraySegment<float>(result, offset + 3, 3), Shape[triangles[i + 1]]);
-                    WriteVector2ToArray(new ArraySegment<float>(result, offset + 6, 3), Shape[triangles[i + 2]]);
-                }
-
-                return result;
-            }
-            else
-            {
-                var result = new float[Shape.Count * 3];
-
-                for (int i = 0; i < Shape.Count; i++)
-                {
-                    WriteVector2ToArray(new ArraySegment<float>(result, i * 3, 3), Shape[i]);
-                }
-
-                return result;
-            }
-        }
-
-        private void WriteVector2ToArray(ArraySegment<float> segment, Vector2 vertex)
-        {
-            segment[0] = vertex.X;
-            segment[1] = vertex.Y;
-            segment[2] = 0;
-        }
-
         private void SetupShader()
         {
             _shader.Use();
@@ -105,7 +59,7 @@ namespace GameEngine.Components
         private Matrix4 GetModelMatrix()
         {
             var model = Matrix4.Identity;
-            model *= Matrix4.CreateScale(GameObject!.Scale.X, GameObject!.Scale.Y, 1.0f);
+            model *= Matrix4.CreateScale(GameObject!.Scale.X, GameObject!.Scale.Y, GameObject!.Scale.Z);
             model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(GameObject!.Rotation * MathHelper.Pi / 180));
             model *= Matrix4.CreateTranslation(GameObject.Position);
             return model;

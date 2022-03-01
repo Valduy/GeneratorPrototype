@@ -6,23 +6,23 @@ namespace GameEngine.Mathematics
 {
     public static class Mathematics
     {
-        // NOTE: I use words "shape2D" and "polygon" as synonyms.
+        // NOTE: I use words "points" and "polygon" as synonyms.
 
         /// <summary>
-        /// Method triangulate <see cref="Shape2D"/>.
+        /// Method triangulate <see cref="Shape"/>.
         /// Use "Ear clipping" method (https://en.wikipedia.org/wiki/Polygon_triangulation).
         /// </summary>
-        /// <param name="shape2D"><see cref="Shape2D"/> for triangulation.</param>
-        /// <returns>Indices, which defines triangles vertexes in original shape2D vertexes.</returns>
-        /// <exception cref="ArgumentException">Trow, if shape2D has <= then three vertexes.</exception>
-        public static int[] Triangulate(Shape2D shape2D)
+        /// <param name="points"><see cref="Shape"/> for triangulation.</param>
+        /// <returns>Indices, which defines triangles vertexes in original points vertexes.</returns>
+        /// <exception cref="ArgumentException">Trow, if points has <= then three vertexes.</exception>
+        public static int[] Triangulate(IReadOnlyList<Vector2> points)
         {
-            if (shape2D.Count < 3)
+            if (points.Count < 3)
             {
                 throw new ArgumentException("Should have more then 3 vertexes.");
             }
 
-            var indexes = Enumerable.Range(0, shape2D.Count).ToList();
+            var indexes = Enumerable.Range(0, points.Count).ToList();
             int trianglesCount = indexes.Count - 2;
             var triangles = new int[trianglesCount * 3];
             int currentTriangleIndex = 0;
@@ -35,9 +35,9 @@ namespace GameEngine.Mathematics
                     int b = indexes.GetCircular(i - 1);
                     int c = indexes.GetCircular(i + 1);
 
-                    Vector2 va = shape2D[a];
-                    Vector2 vb = shape2D[b];
-                    Vector2 vc = shape2D[c];
+                    Vector2 va = points[a];
+                    Vector2 vb = points[b];
+                    Vector2 vc = points[c];
 
                     Vector2 vectorVaVb = vb - va;
                     Vector2 vectorVaVc = vc - va;
@@ -51,14 +51,14 @@ namespace GameEngine.Mathematics
                     bool isEar = true;
 
                     // Does potential ear contain any poly vertex?
-                    for (int j = 0; j < shape2D.Count; j++)
+                    for (int j = 0; j < points.Count; j++)
                     {
                         if (j == a || j == b || j == c)
                         {
                             continue;
                         }
 
-                        Vector2 p = shape2D[j];
+                        Vector2 p = points[j];
 
                         if (IsPointInConvexPolygon(p, new []{vb, va, vc}))
                         {
@@ -86,8 +86,8 @@ namespace GameEngine.Mathematics
         }
 
         /// <summary>
-        /// Method check, is shape2D has collinear neighboring edges.
-        /// This edges can be eliminated without effecting to original shape2D.
+        /// Method check, is points has collinear neighboring edges.
+        /// This edges can be eliminated without effecting to original points.
         /// You should avoid collinear neighboring edges, because they can break some algorithms...
         /// </summary>
         /// <param name="vertices">Vertexes.</param>

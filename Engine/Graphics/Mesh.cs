@@ -27,7 +27,7 @@ namespace GameEngine.Graphics
         
         public float this[int index] => _vertices[index];
 
-        public static float[] Cube => new[]         
+        public static Mesh Cube => new(new[]         
         {
              // Position          Normal
             -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, // Front face
@@ -71,9 +71,9 @@ namespace GameEngine.Graphics
              0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
             -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
             -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-        };
+        });
 
-        public static float[] Pyramid => new[]
+        public static Mesh Pyramid => new(new[]
         {
             -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
              0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -98,6 +98,6 @@ namespace GameEngine.Graphics
             -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
             -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-        };
+        });
     }
 }

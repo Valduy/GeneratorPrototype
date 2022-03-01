@@ -56,7 +56,7 @@ namespace DrawDifferentFiguresDemo
             bound.Add(() => new Render2DComponent(_renderer)
             {
                 Color = Colors.Magenta,
-                Shape = Shape2D.Square(600),
+                Shape = Shape.Square(600),
                 Layer = -99
             });
             bound.Position = new Vector2(0, 0);
@@ -104,7 +104,7 @@ namespace DrawDifferentFiguresDemo
                             block.Add(() => new Render2DComponent(_renderer)
                             {
                                 Color = Colors.Lime,
-                                Shape = Shape2D.Square(100)
+                                Shape = Shape.Square(100)
                             });
                             block.Position = new Vector2(x + i * 100, y - j * 100);
 
@@ -215,7 +215,7 @@ namespace DrawDifferentFiguresDemo
                         ff_block.Add(() => new Render2DComponent(_renderer)
                         {
                             Color = Colors.Lime,
-                            Shape = Shape2D.Square(100)
+                            Shape = Shape.Square(100)
                         });
                         ff_block.Position = new Vector2(x + 100 * i, y - 100 * j);
 

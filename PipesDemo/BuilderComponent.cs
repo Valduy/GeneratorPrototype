@@ -54,7 +54,7 @@ namespace PipesDemo
         {
             var cellGo = GameObject!.Engine.CreateGameObject();
             var render = cellGo.Add<Render3DComponent>();
-            render.Shape = new Mesh(Mesh.Cube);
+            render.Shape = Mesh.Cube;
             //GameObject!.AddChild(cellGo);
             cellGo.Position = cell.Position;
         }
@@ -72,7 +72,7 @@ namespace PipesDemo
                 {
                     var cellGo = GameObject!.Engine.CreateGameObject();
                     var render = cellGo.Add<Render3DComponent>();
-                    render.Shape = new Mesh(Mesh.Cube);
+                    render.Shape = Mesh.Cube;
                     var percent = GetPercent(BuildingModel.MaxTemperature, minTemperature, cell.Temperature);
                     render.Material.Ambient = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
                     render.Material.Diffuse = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
@@ -94,7 +94,7 @@ namespace PipesDemo
                 {
                     var cellGo = GameObject!.Engine.CreateGameObject();
                     var render = cellGo.Add<Render3DComponent>();
-                    render.Shape = new Mesh(Mesh.Pyramid);
+                    render.Shape = Mesh.Pyramid;
                     render.Material.Ambient = cell.Direction!.Value;
                     render.Material.Diffuse = cell.Direction!.Value;
                     render.Material.Specular = new Vector3(0.0f);
@@ -115,7 +115,7 @@ namespace PipesDemo
         {
             var cellGo = GameObject!.Engine.CreateGameObject();
             var render = cellGo.Add<Render3DComponent>();
-            render.Shape = new Mesh(Mesh.Cube);
+            render.Shape = Mesh.Cube;
             render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Specular = new Vector3(0.0f);
