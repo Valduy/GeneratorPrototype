@@ -20,6 +20,20 @@ namespace Scene3DDemo
             CreateCube(engine, new Vector3(2, 0, 0), Vector3.Zero, 1);
             CreateCube(engine, new Vector3(2, 0, 2), Vector3.Zero, 1);
 
+
+            var lineGo = engine.CreateGameObject();
+            var render = lineGo.Add<Render2DComponent>();
+            render.IsLinear = true;
+            render.Color = Colors.Green;
+            render.Shape = new Shape(new float[]
+            {
+                0, 0, 0,
+                5, 5, 5, 
+                10, 5, 5,
+                10, 5, 10,
+                10, 10, 10,
+            });
+
             engine.Run();
         }
 

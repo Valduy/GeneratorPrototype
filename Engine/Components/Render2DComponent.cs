@@ -30,6 +30,8 @@ namespace GameEngine.Components
         
         public Vector3 Color { get; set; } = Colors.Gray;
 
+        public bool IsLinear { get; set; }
+
         public Render2DComponent()
         {
             Register(Shape.ToArray());
@@ -104,7 +106,7 @@ namespace GameEngine.Components
                     GL.DrawArrays(PrimitiveType.Lines, 0, _count);
                     break;
                 default:
-                    GL.DrawArrays(PrimitiveType.Triangles, 0, _count);
+                    GL.DrawArrays(IsLinear ? PrimitiveType.LineStrip : PrimitiveType.Triangles, 0, _count);
                     break;
             }
 
