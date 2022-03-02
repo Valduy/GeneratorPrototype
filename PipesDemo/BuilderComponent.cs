@@ -53,7 +53,7 @@ namespace PipesDemo
         private void OnWallCreated(Cell cell)
         {
             var cellGo = GameObject!.Engine.CreateGameObject();
-            var render = cellGo.Add<Render3DComponent>();
+            var render = cellGo.Add<MeshRenderComponent>();
             render.Shape = Mesh.Cube;
             //GameObject!.AddChild(cellGo);
             cellGo.Position = cell.Position;
@@ -71,7 +71,7 @@ namespace PipesDemo
                 if (cell.Type == CellType.Empty)
                 {
                     var cellGo = GameObject!.Engine.CreateGameObject();
-                    var render = cellGo.Add<Render3DComponent>();
+                    var render = cellGo.Add<MeshRenderComponent>();
                     render.Shape = Mesh.Cube;
                     var percent = GetPercent(BuildingModel.MaxTemperature, minTemperature, cell.Temperature);
                     render.Material.Ambient = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
@@ -93,7 +93,7 @@ namespace PipesDemo
                 if (cell.Type == CellType.Empty)
                 {
                     var cellGo = GameObject!.Engine.CreateGameObject();
-                    var render = cellGo.Add<Render3DComponent>();
+                    var render = cellGo.Add<MeshRenderComponent>();
                     render.Shape = Mesh.Pyramid;
                     render.Material.Ambient = cell.Direction!.Value;
                     render.Material.Diffuse = cell.Direction!.Value;
@@ -114,7 +114,7 @@ namespace PipesDemo
         private void OnPipeCreated(Cell cell)
         {
             var cellGo = GameObject!.Engine.CreateGameObject();
-            var render = cellGo.Add<Render3DComponent>();
+            var render = cellGo.Add<MeshRenderComponent>();
             render.Shape = Mesh.Cube;
             render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);

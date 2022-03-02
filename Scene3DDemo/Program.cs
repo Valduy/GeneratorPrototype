@@ -22,7 +22,7 @@ namespace Scene3DDemo
 
 
             var lineGo = engine.CreateGameObject();
-            var render = lineGo.Add<Render2DComponent>();
+            var render = lineGo.Add<ShapeRenderComponent>();
             render.IsLinear = true;
             render.Color = Colors.Green;
             render.Shape = new Shape(new float[]
@@ -44,7 +44,7 @@ namespace Scene3DDemo
             go.Rotation = rotation;
             go.Scale = new Vector3(scale);
 
-            var render = go.Add<Render3DComponent>();
+            var render = go.Add<MeshRenderComponent>();
             render.Shape = Mesh.Cube;
 
             return go;

@@ -53,7 +53,7 @@ namespace DrawDifferentFiguresDemo
         public override void Start()
         {
             bound = GameObject.Engine.CreateGameObject();
-            bound.Add(() => new Render2DComponent(_renderer)
+            bound.Add(() => new ShapeRenderComponent(_renderer)
             {
                 Color = Colors.Magenta,
                 Shape = Shape.Square(600),
@@ -101,7 +101,7 @@ namespace DrawDifferentFiguresDemo
                         for (int j = 0; j < yn; j++)
                         {
                             var block = GameObject.Engine.CreateGameObject();
-                            block.Add(() => new Render2DComponent(_renderer)
+                            block.Add(() => new ShapeRenderComponent(_renderer)
                             {
                                 Color = Colors.Lime,
                                 Shape = Shape.Square(100)
@@ -110,7 +110,7 @@ namespace DrawDifferentFiguresDemo
 
                             blocks.Insert(blocks.Count, block);
 
-                            if(!Mathematics.IsPolygonInsideConvexPolygon(bound.Get<Render2DComponent>().Points, block.Get<Render2DComponent>().Points))
+                            if(!Mathematics.IsPolygonInsideConvexPolygon(bound.Get<ShapeRenderComponent>().Points, block.Get<ShapeRenderComponent>().Points))
                             {
                                 //cxn--;
                                 //cxn--;
@@ -212,7 +212,7 @@ namespace DrawDifferentFiguresDemo
                     for (int j = 0; j < yn; j++)
                     {
                         var ff_block = GameObject.Engine.CreateGameObject();
-                        ff_block.Add(() => new Render2DComponent(_renderer)
+                        ff_block.Add(() => new ShapeRenderComponent(_renderer)
                         {
                             Color = Colors.Lime,
                             Shape = Shape.Square(100)
@@ -274,7 +274,7 @@ namespace DrawDifferentFiguresDemo
             });
 
             //var squareGo = engine.Engine.CreateGameObject();
-            //squareGo.Add(() => new Render2DComponent(engine.Window.Renderer)
+            //squareGo.Add(() => new ShapeRenderComponent(engine.Window.Renderer)
             //{
             //    Color = Colors.Lime,
             //    Shape = Shape.Square(100)
@@ -286,7 +286,7 @@ namespace DrawDifferentFiguresDemo
             //squareGo.Position = new Vector2(leftTopCornerX + 400, leftTopCornerY - 100);
 
             //var squareGo_1 = engine.Engine.CreateGameObject();
-            //squareGo_1.Add(() => new Render2DComponent(engine.Window.Renderer)
+            //squareGo_1.Add(() => new ShapeRenderComponent(engine.Window.Renderer)
             //{
             //    Color = Colors.Magenta,
             //    Shape = Shape.Square(100),
@@ -300,9 +300,9 @@ namespace DrawDifferentFiguresDemo
 
             //Console.WriteLine(Mathematics.IsBoundingBoxesIntersects(squareGo.Get<BoundsComponent>().Position, squareGo.Get<BoundsComponent>().Width, squareGo.Get<BoundsComponent>().Height, squareGo_1.Get<BoundsComponent>().Position, squareGo_1.Get<BoundsComponent>().Width, squareGo_1.Get<BoundsComponent>().Height));
 
-            //Console.WriteLine(Mathematics.IsPolygonInsideConvexPolygon(squareGo_1.Get<Render2DComponent>().Points, squareGo.Get<Render2DComponent>().Points));
+            //Console.WriteLine(Mathematics.IsPolygonInsideConvexPolygon(squareGo_1.Get<ShapeRenderComponent>().Points, squareGo.Get<ShapeRenderComponent>().Points));
 
-            //Console.WriteLine(Mathematics.IsConvexPolygonsIntersects(squareGo_1.Get<Render2DComponent>().Points, squareGo.Get<Render2DComponent>().Points));
+            //Console.WriteLine(Mathematics.IsConvexPolygonsIntersects(squareGo_1.Get<ShapeRenderComponent>().Points, squareGo.Get<ShapeRenderComponent>().Points));
 
 
 
@@ -313,7 +313,7 @@ namespace DrawDifferentFiguresDemo
             //    for (int j = 0; j < 4; j++)
             //    {
             //        var block = engine.Engine.CreateGameObject();
-            //        block.Add(() => new Render2DComponent(engine.Window.Renderer)
+            //        block.Add(() => new ShapeRenderComponent(engine.Window.Renderer)
             //        {
             //            Color = Colors.Lime,
             //            Shape = Shape.Square(100)

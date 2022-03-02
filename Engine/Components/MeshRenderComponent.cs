@@ -1,22 +1,22 @@
 ﻿using GameEngine.Core;
 using GameEngine.Graphics;
-using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 
 namespace GameEngine.Components
 {
-    public class Render2DComponent : Component
+    public class MeshRenderComponent : Component
     {
-        private static readonly Shader _shader = new("Shaders/shader2d.vert", "Shaders/shader2d.frag");
-        
+        private static readonly Shader _shader = new("Shaders/shader3d.vert", "Shaders/shader3d.frag");
+
         private int _vertexArrayObject;
         private int _vertexBufferObject;
         private int _count;
 
-        private Shape _shape = new(Enumerable.Empty<float>());
+        private Mesh _shape = new(Array.Empty<float>());
 
-        public Shape Shape
+        public Mesh Shape
         {
             get => _shape;
             set
@@ -24,15 +24,13 @@ namespace GameEngine.Components
                 if (_shape == value) return;
                 _shape = value;
                 Unregister();
-                Register(_shape.ToArray());
+                Register(Shape.ToArray());
             }
         }
-        
-        public Vector3 Color { get; set; } = Colors.Gray;
 
-        public bool IsLinear { get; set; }
+        public Material Material { get; set; } = new();
 
-        public Render2DComponent()
+        public MeshRenderComponent()
         {
             Register(Shape.ToArray());
         }
@@ -43,19 +41,23 @@ namespace GameEngine.Components
             Render();
         }
 
-        public override void Stop()
-        {
-            GL.UseProgram(0);
-            GL.DeleteProgram(_shader.Handle);
-        }
-
         private void SetupShader()
         {
             _shader.Use();
             _shader.SetMatrix4("model", GetModelMatrix());
             _shader.SetMatrix4("view", GameObject!.Engine.Camera.GetViewMatrix());
             _shader.SetMatrix4("projection", GameObject!.Engine.Camera.GetProjectionMatrix());
-            _shader.SetVector3("color", Color);
+            _shader.SetVector3("viewPos", GameObject!.Engine.Camera.Position);
+
+            _shader.SetVector3("material.ambient", Material.Ambient);
+            _shader.SetVector3("material.diffuse", Material.Diffuse);
+            _shader.SetVector3("material.specular", Material.Specular);
+            _shader.SetFloat("material.shininess", Material.Shininess);
+
+            _shader.SetVector3("light.position", GameObject!.Engine.Light.Position);
+            _shader.SetVector3("light.ambient", GameObject!.Engine.Light.Ambient);
+            _shader.SetVector3("light.diffuse", GameObject!.Engine.Light.Diffuse);
+            _shader.SetVector3("light.specular", GameObject!.Engine.Light.Specular);
         }
 
         private Matrix4 GetModelMatrix()
@@ -76,12 +78,16 @@ namespace GameEngine.Components
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
-            var location = _shader.GetAttribLocation("aPosition");
-            GL.EnableVertexAttribArray(location);
-            GL.VertexAttribPointer(location, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            var positionLocation = _shader.GetAttribLocation("aPos");
+            GL.EnableVertexAttribArray(positionLocation);
+            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+
+            var normalLocation = _shader.GetAttribLocation("aNormal");
+            GL.EnableVertexAttribArray(normalLocation);
+            GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
 
             GL.EnableVertexAttribArray(0);
-            _count = vertices.Length / 3;
+            _count = vertices.Length / 6;
         }
 
         private void Unregister()
@@ -97,18 +103,8 @@ namespace GameEngine.Components
         {
             GL.BindVertexArray(_vertexArrayObject);
 
-            switch (_count)
-            {
-                case 0:
-                case 1:
-                    return;
-                case 2:
-                    GL.DrawArrays(PrimitiveType.Lines, 0, _count);
-                    break;
-                default:
-                    GL.DrawArrays(IsLinear ? PrimitiveType.LineStrip : PrimitiveType.Triangles, 0, _count);
-                    break;
-            }
+            SetupShader();
+            GL.DrawArrays(PrimitiveType.Triangles, 0, _count);
 
             GL.BindVertexArray(0);
         }

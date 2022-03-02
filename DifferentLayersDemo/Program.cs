@@ -22,7 +22,7 @@ namespace DifferentLayersDemo
         {
             var go = engine.CreateGameObject();
             
-            var render2d = go.Add<Render2DComponent>();
+            var render2d = go.Add<ShapeRenderComponent>();
             render2d.Color = color;
             render2d.Shape = Shape.Triangle(size);
 

@@ -52,20 +52,20 @@ namespace RelationshipDemo
             float distanceFromCamera = -10.0f;
 
             var centerGo = engine.CreateGameObject();
-            var centerRender = centerGo.Add<Render2DComponent>();
+            var centerRender = centerGo.Add<ShapeRenderComponent>();
             centerRender.Color = Colors.Lime;
             centerRender.Shape = Shape.Square(10);
             centerGo.Position = Vector3.UnitZ * distanceFromCamera;
 
             var axisGo = engine.CreateGameObject();
-            var axisRender = axisGo.Add<Render2DComponent>();
+            var axisRender = axisGo.Add<ShapeRenderComponent>();
             axisRender.Color = Colors.Red;
             axisRender.Shape = Shape.Line(new Vector2(0, 0), new Vector2(200, 0));
             axisGo.Add<RotationComponent>();
             axisGo.Position = new Vector3(50.0f, 50.0f, distanceFromCamera);
 
             var squareGo = engine.CreateGameObject();
-            var squareRender = squareGo.Add<Render2DComponent>();
+            var squareRender = squareGo.Add<ShapeRenderComponent>();
             squareRender.Color = Colors.Magenta;
             squareRender.Shape = Shape.Square(20);
             squareGo.Add<ZigZagComponent>();

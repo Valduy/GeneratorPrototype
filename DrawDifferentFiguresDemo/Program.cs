@@ -16,25 +16,25 @@ namespace DrawDifferentFiguresDemo
             float distanceFromCamera = -10.0f;
 
             var lineGo = engine.CreateGameObject();
-            var lineRender = lineGo.Add<Render2DComponent>();
+            var lineRender = lineGo.Add<ShapeRenderComponent>();
             lineRender.Color = Colors.Yellow;
             lineRender.Shape = Shape.Line(new Vector2(-50, 0), new Vector2(50, 0));
             lineGo.Position = new Vector3(leftTopCornerX + 100, leftTopCornerY - 100, distanceFromCamera);
 
             var triangleGo = engine.CreateGameObject();
-            var triangleRender = triangleGo.Add<Render2DComponent>();
+            var triangleRender = triangleGo.Add<ShapeRenderComponent>();
             triangleRender.Color = Colors.Red;
             triangleRender.Shape = Shape.Triangle(100);
             triangleGo.Position = new Vector3(leftTopCornerX + 250, leftTopCornerY - 100, distanceFromCamera);
 
             var squareGo = engine.CreateGameObject();
-            var squareRender = squareGo.Add<Render2DComponent>();
+            var squareRender = squareGo.Add<ShapeRenderComponent>();
             squareRender.Color = Colors.Lime;
             squareRender.Shape = Shape.Square(100);
             squareGo.Position = new Vector3(leftTopCornerX + 400, leftTopCornerY - 100, distanceFromCamera);
 
             var convexGo = engine.CreateGameObject();
-            var convexRender = convexGo.Add<Render2DComponent>();
+            var convexRender = convexGo.Add<ShapeRenderComponent>();
             convexRender.Color = Colors.Blue;
             convexRender.Shape = new Shape(Shape.GetVertices(new List<Vector2>
             {
@@ -50,7 +50,7 @@ namespace DrawDifferentFiguresDemo
             convexGo.Position = new Vector3(leftTopCornerX + 550, leftTopCornerY - 100, distanceFromCamera);
 
             var nonConvexGo = engine.CreateGameObject();
-            var nonConvexRender = nonConvexGo.Add<Render2DComponent>();
+            var nonConvexRender = nonConvexGo.Add<ShapeRenderComponent>();
             nonConvexRender.Color = Colors.Cyan;
             nonConvexRender.Shape = new Shape(Shape.GetVertices(new List<Vector2>
             {
@@ -67,7 +67,7 @@ namespace DrawDifferentFiguresDemo
             nonConvexGo.Position = new Vector3(leftTopCornerX + 700, leftTopCornerY - 100, distanceFromCamera);
 
             var complexGo = engine.CreateGameObject();
-            var complexRender = complexGo.Add<Render2DComponent>();
+            var complexRender = complexGo.Add<ShapeRenderComponent>();
             complexRender.Color = Colors.Green;
             complexRender.Shape = new Shape(Shape.GetVertices(new List<Vector2>
             {
