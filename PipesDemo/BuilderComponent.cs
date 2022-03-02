@@ -3,6 +3,7 @@ using System.Drawing;
 using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
+using GameEngine.Mathematics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -16,29 +17,31 @@ namespace PipesDemo
         public const int FloorWidth = 16;
         public const int FloorHeight = 16;
 
-        private BuildingModel buildingModel = new();
-        private IEnumerator pipeGenerator;
+        private readonly BuildingModel _buildingModel = new();
+        private IEnumerator _pipeGenerator;
+        private Cell? _prev = null;
 
         public string MapPath { get; set; }
 
         public override void Start()
         {
-            buildingModel.WallCreated += OnWallCreated;
-            //buildingModel.TemperatureCalculated += OnTemperatureCalculated;
-            buildingModel.VectorsCalculated += OnVectorsCalculate;
-            buildingModel.PipeCreated += OnPipeCreated;
-            buildingModel.Load(MapPath);
+            _buildingModel.WallCreated += OnWallCreated;
+            //_buildingModel.TemperatureCalculated += OnTemperatureCalculated;
+            _buildingModel.VectorsCalculated += OnVectorsCalculate;
+            _buildingModel.PipeCreated += OnPipeCreated;
+            _buildingModel.SegmentCreated += OnSegmentCreated;
+            _buildingModel.Load(MapPath);
 
-            //pipeGenerator = buildingModel.GeneratePipes(
+            //_pipeGenerator = _buildingModel.GeneratePipes(
             //    new Vector3i(1, 1, 0), 
-            //    new Vector3i(buildingModel.Width - 1, buildingModel.Height -1, buildingModel.Depth - 1)
-            //    //new Vector3i(buildingModel.Width - 10, buildingModel.Height -7, buildingModel.Depth - 10)
+            //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height -1, _buildingModel.Depth - 1)
+            //    //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
             //    )
             //    .GetEnumerator();
 
-            pipeGenerator = buildingModel.GenerateSpline(
+            _pipeGenerator = _buildingModel.GenerateSpline(
                 new Vector3i(1, 1, 0),
-                new Vector3i(buildingModel.Width - 1, buildingModel.Height - 1, buildingModel.Depth - 1))
+                new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1))
                 .GetEnumerator();
         }
 
@@ -46,7 +49,7 @@ namespace PipesDemo
         {
             if (GameObject!.Engine.Window.KeyboardState.IsKeyDown(Keys.Enter))
             {
-                pipeGenerator.MoveNext();
+                _pipeGenerator.MoveNext();
             }
         }
 
@@ -61,12 +64,12 @@ namespace PipesDemo
 
         private void OnTemperatureCalculated()
         {
-            var minTemperature = buildingModel
+            var minTemperature = _buildingModel
                 .Where(c => c.Type is CellType.Empty)
                 .OrderBy(c => c.Temperature)
                 .First().Temperature;
 
-            foreach (var cell in buildingModel)
+            foreach (var cell in _buildingModel)
             {
                 if (cell.Type == CellType.Empty)
                 {
@@ -88,7 +91,7 @@ namespace PipesDemo
         {
             OnTemperatureCalculated();
 
-            foreach (var cell in buildingModel)
+            foreach (var cell in _buildingModel)
             {
                 if (cell.Type == CellType.Empty)
                 {
@@ -124,6 +127,16 @@ namespace PipesDemo
             cellGo.Position = cell.Position;
         }
 
+        private void OnSegmentCreated(Cell cell)
+        {
+            var lineGo = GameObject!.Engine.CreateGameObject();
+            var render = lineGo.Add<ShapeRenderComponent>();
+            render.IsLinear = true;
+            render.Color = Colors.Green;
+            render.Shape = new Shape(GetSegmentPoints(_prev ?? cell, cell));
+            _prev = cell;
+        }
+
         private Vector3 GetRotation(Vector3 from, Vector3 to)
         {
             from.Normalize();
@@ -135,6 +148,28 @@ namespace PipesDemo
             var axis = Vector3.Cross(from, to);
             float angle = MathF.Acos(cosa);
             return Matrix4.CreateFromAxisAngle(axis, angle).ExtractRotation().ToEulerAngles();
+        }
+
+        private float[] GetSegmentPoints(Cell prev, Cell current)
+        {
+            var result = new List<float>();
+            int pointsPerSegment = 10;
+
+            Vector3 p1 = current.Position;
+            Vector3 p2 = current.Position + current.Direction!.Value;
+            Vector3 t1 = prev.Direction!.Value;
+            Vector3 t2 = current.Direction!.Value;
+
+            for (int i = 0; i <= pointsPerSegment; i++)
+            {
+                var t = (float)i / pointsPerSegment;
+                var point = Curves.Hermite(p1, p2, t1, t2, t);
+                result.Add(point.X);
+                result.Add(point.Y);
+                result.Add(point.Z);
+            }
+
+            return result.ToArray();
         }
     }
 }

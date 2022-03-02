@@ -31,6 +31,7 @@ namespace PipesDemo
 
         public event Action<Cell> WallCreated;
         public event Action<Cell> PipeCreated;
+        public event Action<Cell> SegmentCreated;
         public event Action TemperatureCalculated;
         public event Action VectorsCalculated;
 
@@ -213,7 +214,7 @@ namespace PipesDemo
             {
                 var cell = _cells[current.X, current.Y, current.Z];
                 cell.Type = CellType.Pipe;
-                PipeCreated?.Invoke(_cells[current.X, current.Y, current.Z]);
+                SegmentCreated?.Invoke(_cells[current.X, current.Y, current.Z]);
                 current = cell.Position + cell.Direction!.Value;
 
                 yield return null;
