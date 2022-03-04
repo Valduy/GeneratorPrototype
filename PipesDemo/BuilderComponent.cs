@@ -18,7 +18,8 @@ namespace PipesDemo
         public const int FloorHeight = 16;
 
         private readonly BuildingModel _buildingModel = new();
-        private IEnumerator _pipeGenerator;
+        private IEnumerator _pipeGenerator1;
+        private IEnumerator _pipeGenerator2;
         private Cell? _prev = null;
 
         public string MapPath { get; set; }
@@ -32,24 +33,37 @@ namespace PipesDemo
             _buildingModel.SegmentCreated += OnSegmentCreated;
             _buildingModel.Load(MapPath);
 
-            //_pipeGenerator = _buildingModel.GeneratePipes(
-            //    new Vector3i(1, 1, 0), 
-            //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height -1, _buildingModel.Depth - 1)
+            //_pipeGenerator1 = _buildingModel.GeneratePipes(
+            //    new Vector3i(1, 1, 0),
+            //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1)
             //    //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
             //    )
             //    .GetEnumerator();
 
-            _pipeGenerator = _buildingModel.GenerateSpline(
+            //_pipeGenerator2 = _buildingModel.GeneratePipes(
+            //        new Vector3i(1, 3, 0),
+            //        new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1)
+            //        //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
+            //    )
+            //    .GetEnumerator();
+
+            _pipeGenerator1 = _buildingModel.GenerateSpline(
                 new Vector3i(1, 1, 0),
                 new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1))
                 .GetEnumerator();
+
+            //_pipeGenerator2 = _buildingModel.GenerateSpline(
+            //        new Vector3i(1, 3, 0),
+            //        new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1))
+            //    .GetEnumerator();
         }
 
         public override void GameUpdate(FrameEventArgs args)
         {
             if (GameObject!.Engine.Window.KeyboardState.IsKeyDown(Keys.Enter))
             {
-                _pipeGenerator.MoveNext();
+                _pipeGenerator1.MoveNext();
+                //_pipeGenerator2.MoveNext();
             }
         }
 
