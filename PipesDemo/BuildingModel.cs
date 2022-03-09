@@ -17,8 +17,10 @@ namespace PipesDemo
         public const int WallSpacing = 1;
 
         public const float MaxTemperature = 100000;
-        public const float WallFactor = 5;
+        public const float WallFactor = 20;
         public const float TemperatureStep = 10;
+
+        public const float SplineStep = 0.5f;
 
         private Cell[,,] _cells = new Cell[
             FloorWidth + WallSpacing * 2,
@@ -31,7 +33,7 @@ namespace PipesDemo
 
         public event Action<Cell> WallCreated;
         public event Action<Cell> PipeCreated;
-        public event Action<Cell> SegmentCreated;
+        public event Action<Vector3> SegmentCreated;
         public event Action TemperatureCalculated;
         public event Action VectorsCalculated;
 
@@ -121,7 +123,7 @@ namespace PipesDemo
         private void CalculateWarm(int x, int y, int z)
         {
             var cell = _cells[x, y, z];
-            cell.Temperature = MaxTemperature;
+            cell.Temperature = MaxTemperature - WallFactor;
             var stack = new Stack<Cell>();
             stack.Push(cell);
             
@@ -157,6 +159,8 @@ namespace PipesDemo
 
                 c.Temperature -= WallFactor;
             }
+
+            _cells[x, y, z].Temperature = MaxTemperature;
         }
 
         private void CalculateVectors()
@@ -208,14 +212,35 @@ namespace PipesDemo
 
         private IEnumerable BuildSpline(Vector3i from, Vector3i to)
         {
-            var current = from;
+            Vector3 current = from;
 
-            while (current != to)
+            while (new Vector3i((int)current.X, (int)current.Y, (int)current.Z) != to)
             {
-                var cell = _cells[current.X, current.Y, current.Z];
+                int xi = (int)MathF.Floor(current.X);
+                int yi = (int)MathF.Floor(current.Y);
+                int zi = (int)MathF.Floor(current.Z);
+                
+                float dx = current.X - xi;
+                float dy = current.Y - yi;
+                float dz = current.Z - zi;
+
+                var cell = _cells[xi, yi, zi];
                 cell.Type = CellType.Pipe;
-                SegmentCreated?.Invoke(_cells[current.X, current.Y, current.Z]);
-                current = cell.Position + cell.Direction!.Value;
+
+                Vector3 main = Vector3.Zero;
+
+                Vector3 direction =
+                    new Vector3(_cells[xi, yi, zi].Direction ?? main) * (1 - dx) * (1 - dy) * (1 - dz) +
+                    new Vector3(_cells[xi, yi, zi + 1].Direction ?? main) * (1 - dx) * (1 - dy) * (dz) +
+                    new Vector3(_cells[xi, yi + 1, zi].Direction ?? main) * (1 - dx) * (dy) * (1 - dz) +
+                    new Vector3(_cells[xi, yi + 1, zi + 1].Direction ?? main) * (1 - dx) * (dy) * (dz) +
+                    new Vector3(_cells[xi + 1, yi, zi].Direction ?? main) * (dx) * (1 - dy) * (1 - dz) +
+                    new Vector3(_cells[xi + 1, yi, zi + 1].Direction ?? main) * (dx) * (1 - dy) * (dz) +
+                    new Vector3(_cells[xi + 1, yi + 1, zi].Direction ?? main) * (dx) * (dy) * (1 - dz) +
+                    new Vector3(_cells[xi + 1, yi + 1, zi + 1].Direction ?? main) * (dx) * (dy) * (dz);
+
+                current += direction.Normalized() * SplineStep;
+                SegmentCreated?.Invoke(current);
 
                 yield return null;
             }

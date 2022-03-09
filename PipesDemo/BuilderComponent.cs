@@ -20,7 +20,8 @@ namespace PipesDemo
         private readonly BuildingModel _buildingModel = new();
         private IEnumerator _pipeGenerator1;
         private IEnumerator _pipeGenerator2;
-        private Cell? _prev = null;
+        private Vector3? _prevPosition = null;
+        private Vector3? _prevDirection = null;
 
         public string MapPath { get; set; }
 
@@ -141,14 +142,22 @@ namespace PipesDemo
             cellGo.Position = cell.Position;
         }
 
-        private void OnSegmentCreated(Cell cell)
+        private void OnSegmentCreated(Vector3 position)
         {
             var lineGo = GameObject!.Engine.CreateGameObject();
             var render = lineGo.Add<ShapeRenderComponent>();
             render.IsLinear = true;
             render.Color = Colors.Green;
-            render.Shape = new Shape(GetSegmentPoints(_prev ?? cell, cell));
-            _prev = cell;
+
+            Vector3 prevPosition = _prevPosition ?? position;
+            Vector3 prevDirection = _prevDirection ?? Vector3.Zero;
+            Vector3 currentDirection = position - prevPosition;
+
+            render.Shape = new Shape(GetSegmentPoints(
+                prevPosition, prevDirection, position, currentDirection));
+            
+            _prevDirection = currentDirection;
+            _prevPosition = position;
         }
 
         private Vector3 GetRotation(Vector3 from, Vector3 to)
@@ -164,15 +173,19 @@ namespace PipesDemo
             return Matrix4.CreateFromAxisAngle(axis, angle).ExtractRotation().ToEulerAngles();
         }
 
-        private float[] GetSegmentPoints(Cell prev, Cell current)
+        private float[] GetSegmentPoints(
+            Vector3 prevPosition, 
+            Vector3 prevDirection, 
+            Vector3 currentPosition,
+            Vector3 currentDirection)
         {
             var result = new List<float>();
             int pointsPerSegment = 10;
 
-            Vector3 p1 = current.Position;
-            Vector3 p2 = current.Position + current.Direction!.Value;
-            Vector3 t1 = prev.Direction!.Value;
-            Vector3 t2 = current.Direction!.Value;
+            Vector3 p1 = prevPosition;
+            Vector3 p2 = currentPosition;
+            Vector3 t1 = prevDirection;
+            Vector3 t2 = currentDirection;
 
             for (int i = 0; i <= pointsPerSegment; i++)
             {
