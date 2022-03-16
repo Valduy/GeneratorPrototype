@@ -43,10 +43,9 @@ namespace PipesDemo
             //    )
             //    .GetEnumerator();
 
-            //_pipeGenerator2 = _buildingModel.GeneratePipes(
-            //        new Vector3i(1, 3, 0),
-            //        new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1)
-            //        //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
+            //_pipeGenerator1 = _buildingModel.GeneratePipes(
+            //        new Vector3i(1, 1, 0),
+            //        new Vector3i(_buildingModel.Width - 7, _buildingModel.Height - 5, _buildingModel.Depth - 1)
             //    )
             //    .GetEnumerator();
 
@@ -61,11 +60,8 @@ namespace PipesDemo
             //    .GetEnumerator();
         }
 
-        private int x;
-        private int y;
-        private int z;
         private Vector3i _position;
-        private bool flag = false;
+        private bool _flag = false;
 
         public override void GameUpdate(FrameEventArgs args)
         {
@@ -87,7 +83,7 @@ namespace PipesDemo
             {
                 if (!_pipeGenerator1.MoveNext())
                 {
-                    //if (!flag)
+                    //if (!_flag)
                     //{
                     //    _thermometers.ForEach(t => Engine!.RemoveGameObject(t));
                     //    _thermometers.Clear();
@@ -100,7 +96,7 @@ namespace PipesDemo
                     //            new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1)
                     //        )
                     //        .GetEnumerator();
-                    //    flag = true;
+                    //    _flag = true;
                     //}
 
                     //_pipeGenerator2.MoveNext();

@@ -17,8 +17,8 @@ namespace PipesDemo
         public const int WallSpacing = 1;
 
         public const float MaxTemperature = 100000;
-        public const float WallFactor = 20;
-        public const float InsideFactor = 100;
+        public const float WallFactor = 100;
+        public const float InsideFactor = 1000;
         public const float PipeFactor = 1000;
         public const float TemperatureStep = 50;
 
@@ -175,7 +175,7 @@ namespace PipesDemo
                 }
             }
 
-            //foreach (var c in _cells)
+            //foreach (var c in this.Where(c => c.Type is CellType.Empty or CellType.Inside))
             //{
             //    if (IsInsideBuilding(c))
             //    {
@@ -184,7 +184,7 @@ namespace PipesDemo
             //    }
             //}
 
-            foreach (var c in this.Where(c => c.Type is CellType.Empty))
+            foreach (var c in this.Where(c => c.Type is CellType.Empty or CellType.Inside))
             {
                 if (!GetCube(c).Any(n => n.Type is CellType.Wall))
                 {
@@ -196,10 +196,10 @@ namespace PipesDemo
                 //    c.Temperature -= WallFactor;
                 //}
 
-                //if (GetCross(c).Any(n => n.Type is CellType.Pipe))
-                //{
-                //    c.Temperature -= PipeFactor;
-                //}
+                if (GetCross(c).Any(n => n.Type is CellType.Pipe))
+                {
+                    c.Temperature -= PipeFactor;
+                }
             }
         }
 
@@ -213,7 +213,6 @@ namespace PipesDemo
             {
                 var temp = stack.Pop();
                 var next = GetCube(temp)
-                    .Where(c => c.Type is CellType.Empty or CellType.Inside)
                     .OrderByDescending(c => c.Temperature)
                     .First();
 
@@ -223,7 +222,7 @@ namespace PipesDemo
                     temp.Direction = new Vector3i(0);
 
                 var neighbours = GetCube(temp)
-                    .Where(c => c.Type is CellType.Empty or CellType.Inside && c.Direction == null);
+                    .Where(c => c.Direction == null);
 
                 foreach (var neighbour in neighbours)
                 {
