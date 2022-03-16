@@ -14,6 +14,8 @@ namespace GameEngine.Core
         /// <see cref="Core.GameObject"/>, which own this component.
         /// </summary>
         public GameObject? GameObject { get; internal set; }
+        
+        public Engine? Engine => GameObject?.Engine;
 
         /// <summary>
         /// Method which called when component instantiated and/or <see cref="Engine"/> has started.

@@ -18,7 +18,9 @@ namespace PipesDemo
 
         public const float MaxTemperature = 100000;
         public const float WallFactor = 20;
-        public const float TemperatureStep = 10;
+        public const float InsideFactor = 100;
+        public const float PipeFactor = 1000;
+        public const float TemperatureStep = 50;
 
         public const float SplineStep = 0.5f;
 
@@ -45,7 +47,7 @@ namespace PipesDemo
                 {
                     for (int k = 0; k < _cells.GetLength(2); k++)
                     {
-                        _cells[i, j, k] = new Cell(i, j, k);
+                        _cells[i, j, k] = new Cell(this, i, j, k);
                     }
                 }
             }
@@ -76,8 +78,16 @@ namespace PipesDemo
                 throw new ArgumentException("Cell is not empty.");
             }
 
+            foreach (var cell in _cells)
+            {
+                cell.Temperature = float.NaN;
+                cell.Direction = null;
+            }
+
             CalculateWarm(to.X, to.Y, to.Z);
             TemperatureCalculated?.Invoke();
+            CalculateVectors();
+            VectorsCalculated?.Invoke();
             return BuildPipe(from, to);
         }
 
@@ -93,10 +103,25 @@ namespace PipesDemo
             }
 
             CalculateWarm(to.X, to.Y, to.Z);
+            TemperatureCalculated?.Invoke();
             CalculateVectors();
             VectorsCalculated?.Invoke();
             return BuildSpline(from, to);
         }
+
+        public Cell this[int x, int y, int z] => _cells[x, y, z];
+        public Cell this[Vector3i xyz] => _cells[xyz.X, xyz.Y, xyz.Z];
+
+        public IEnumerator<Cell> GetEnumerator()
+        {
+            foreach (var cell in _cells)
+            {
+                yield return cell;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+            => GetEnumerator();
 
         private static bool IsNotEmpty(Color color) => color.A != 0;
 
@@ -123,7 +148,7 @@ namespace PipesDemo
         private void CalculateWarm(int x, int y, int z)
         {
             var cell = _cells[x, y, z];
-            cell.Temperature = MaxTemperature - WallFactor;
+            cell.Temperature = MaxTemperature;
             var stack = new Stack<Cell>();
             stack.Push(cell);
             
@@ -133,12 +158,12 @@ namespace PipesDemo
                 var temperature = temp.Temperature - TemperatureStep;
                 
                 var neigbours = GetCross(temp)
-                    .Where(c => float.IsNaN(c.Temperature) || (c.Temperature < temperature && c.Type is CellType.Empty))
+                    .Where(c => float.IsNaN(c.Temperature) || (c.Temperature < temperature && c.Type is CellType.Empty or CellType.Inside))
                     .ToList();
 
                 foreach (var neigbour in neigbours)
                 {
-                    if (neigbour.Type == CellType.Wall)
+                    if (neigbour.Type is CellType.Wall or CellType.Pipe)
                     {
                         neigbour.Temperature = float.NegativeInfinity;
                     }
@@ -150,17 +175,32 @@ namespace PipesDemo
                 }
             }
 
-            foreach (var c in _cells)
+            //foreach (var c in _cells)
+            //{
+            //    if (IsInsideBuilding(c))
+            //    {
+            //        c.Type = CellType.Inside;
+            //        c.Temperature -= InsideFactor;
+            //    }
+            //}
+
+            foreach (var c in this.Where(c => c.Type is CellType.Empty))
             {
-                if (GetCross(c).Any(c => c.Type == CellType.Wall))
+                if (!GetCube(c).Any(n => n.Type is CellType.Wall))
                 {
-                    c.Temperature += WallFactor;
+                    c.Temperature -= WallFactor;
                 }
 
-                c.Temperature -= WallFactor;
-            }
+                //if (GetCross(c).Any(n => n.Type is CellType.Inside))
+                //{
+                //    c.Temperature -= WallFactor;
+                //}
 
-            _cells[x, y, z].Temperature = MaxTemperature;
+                //if (GetCross(c).Any(n => n.Type is CellType.Pipe))
+                //{
+                //    c.Temperature -= PipeFactor;
+                //}
+            }
         }
 
         private void CalculateVectors()
@@ -173,16 +213,17 @@ namespace PipesDemo
             {
                 var temp = stack.Pop();
                 var next = GetCube(temp)
-                    .Where(c => c.Type is CellType.Empty)
+                    .Where(c => c.Type is CellType.Empty or CellType.Inside)
                     .OrderByDescending(c => c.Temperature)
                     .First();
 
-                temp.Direction = next.Temperature >= temp.Temperature 
-                    ? next.Position - temp.Position 
-                    : new Vector3i(0);
+                if (next.Temperature >= temp.Temperature)
+                    temp.Direction = next.Position - temp.Position;
+                else
+                    temp.Direction = new Vector3i(0);
 
                 var neighbours = GetCube(temp)
-                    .Where(c => c.Type is CellType.Empty && c.Direction == null);
+                    .Where(c => c.Type is CellType.Empty or CellType.Inside && c.Direction == null);
 
                 foreach (var neighbour in neighbours)
                 {
@@ -200,7 +241,7 @@ namespace PipesDemo
                 _cells[current.X, current.Y, current.Z].Type = CellType.Pipe;
                 PipeCreated?.Invoke(_cells[current.X, current.Y, current.Z]);
                 current = GetCross(current)
-                    .Where(c => c.Type == CellType.Empty)
+                    .Where(c => c.Type is CellType.Empty or CellType.Inside)
                     .OrderByDescending(c => c.Temperature)
                     .First().Position;
 
@@ -216,10 +257,14 @@ namespace PipesDemo
 
             while (new Vector3i((int)current.X, (int)current.Y, (int)current.Z) != to)
             {
-                int xi = (int)MathF.Floor(current.X);
-                int yi = (int)MathF.Floor(current.Y);
-                int zi = (int)MathF.Floor(current.Z);
-                
+                int xi = Math.Clamp((int)MathF.Floor(current.X), 0, Width - 1);
+                int yi = Math.Clamp((int)MathF.Floor(current.Y), 0, Height - 1);
+                int zi = Math.Clamp((int)MathF.Floor(current.Z), 0, Depth - 1);
+
+                int xc = Math.Clamp(xi + 1, 0, Width - 1);
+                int yc = Math.Clamp(yi + 1, 0, Height - 1);
+                int zc = Math.Clamp(zi + 1, 0, Depth - 1);
+
                 float dx = current.X - xi;
                 float dy = current.Y - yi;
                 float dz = current.Z - zi;
@@ -229,15 +274,16 @@ namespace PipesDemo
 
                 Vector3 main = Vector3.Zero;
 
+                
                 Vector3 direction =
                     new Vector3(_cells[xi, yi, zi].Direction ?? main) * (1 - dx) * (1 - dy) * (1 - dz) +
-                    new Vector3(_cells[xi, yi, zi + 1].Direction ?? main) * (1 - dx) * (1 - dy) * (dz) +
-                    new Vector3(_cells[xi, yi + 1, zi].Direction ?? main) * (1 - dx) * (dy) * (1 - dz) +
-                    new Vector3(_cells[xi, yi + 1, zi + 1].Direction ?? main) * (1 - dx) * (dy) * (dz) +
-                    new Vector3(_cells[xi + 1, yi, zi].Direction ?? main) * (dx) * (1 - dy) * (1 - dz) +
-                    new Vector3(_cells[xi + 1, yi, zi + 1].Direction ?? main) * (dx) * (1 - dy) * (dz) +
-                    new Vector3(_cells[xi + 1, yi + 1, zi].Direction ?? main) * (dx) * (dy) * (1 - dz) +
-                    new Vector3(_cells[xi + 1, yi + 1, zi + 1].Direction ?? main) * (dx) * (dy) * (dz);
+                    new Vector3(_cells[xi, yi, zc].Direction ?? main) * (1 - dx) * (1 - dy) * (dz) +
+                    new Vector3(_cells[xi, yc, zi].Direction ?? main) * (1 - dx) * (dy)     * (1 - dz) +
+                    new Vector3(_cells[xi, yc, zc].Direction ?? main) * (1 - dx) * (dy)     * (dz) +
+                    new Vector3(_cells[xc, yi, zi].Direction ?? main) * (dx)     * (1 - dy) * (1 - dz) +
+                    new Vector3(_cells[xc, yi, zc].Direction ?? main) * (dx)     * (1 - dy) * (dz) +
+                    new Vector3(_cells[xc, yc, zi].Direction ?? main) * (dx)     * (dy)     * (1 - dz) +
+                    new Vector3(_cells[xc, yc, zc].Direction ?? main) * (dx)     * (dy)     * (dz);
 
                 current += direction.Normalized() * SplineStep;
                 SegmentCreated?.Invoke(current);
@@ -311,15 +357,68 @@ namespace PipesDemo
             }
         }
 
-        public IEnumerator<Cell> GetEnumerator()
-        {
-            foreach (var cell in _cells)
-            {
-                yield return cell;
-            }
-        }
+        private bool IsInsideBuilding(Cell cell) 
+            => IsInsideBuilding(cell.Position);
 
-        IEnumerator IEnumerable.GetEnumerator() 
-            => GetEnumerator();
+        private bool IsInsideBuilding(Vector3i position)
+        {
+            if (_cells[position.X, position.Y, position.Z].Type == CellType.Wall)
+            {
+                return false;
+            }
+
+            int wallsCount = 0;
+
+            for (int x = position.X; x < Width; x++)
+            {
+                if (_cells[x, position.Y, position.Z].Type == CellType.Wall)
+                {
+                    wallsCount++;
+                    break;
+                }
+            }
+            for (int x = 0; x < position.X; x++)
+            {
+                if (_cells[x, position.Y, position.Z].Type == CellType.Wall)
+                {
+                    wallsCount++;
+                    break;
+                }
+            }
+            for (int y = position.Y; y < Height; y++)
+            {
+                if (_cells[position.X, y, position.Z].Type == CellType.Wall)
+                {
+                    wallsCount++;
+                    break;
+                }
+            }
+            for (int y = 0; y < position.Y; y++)
+            {
+                if (_cells[position.X, y, position.Z].Type == CellType.Wall)
+                {
+                    wallsCount++;
+                    break;
+                }
+            }
+            for (int z = position.Z; z < Depth; z++)
+            {
+                if (_cells[position.X, position.Y, z].Type == CellType.Wall)
+                {
+                    wallsCount++;
+                    break;
+                }
+            }
+            for (int z = 0; z < position.Z; z++)
+            {
+                if (_cells[position.X, position.Y, z].Type == CellType.Wall)
+                {
+                    wallsCount++;
+                    break;
+                }
+            }
+
+            return wallsCount > 2;
+        }
     }
 }

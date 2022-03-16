@@ -22,13 +22,15 @@ namespace PipesDemo
         private IEnumerator _pipeGenerator2;
         private Vector3? _prevPosition = null;
         private Vector3? _prevDirection = null;
+        private List<GameObject> _thermometers = new();
+        private List<GameObject> _vectors = new();
 
         public string MapPath { get; set; }
 
         public override void Start()
         {
             _buildingModel.WallCreated += OnWallCreated;
-            //_buildingModel.TemperatureCalculated += OnTemperatureCalculated;
+            _buildingModel.TemperatureCalculated += OnTemperatureCalculated;
             _buildingModel.VectorsCalculated += OnVectorsCalculate;
             _buildingModel.PipeCreated += OnPipeCreated;
             _buildingModel.SegmentCreated += OnSegmentCreated;
@@ -50,7 +52,7 @@ namespace PipesDemo
 
             _pipeGenerator1 = _buildingModel.GenerateSpline(
                 new Vector3i(1, 1, 0),
-                new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1))
+                new Vector3i(_buildingModel.Width - 7, _buildingModel.Height - 5, _buildingModel.Depth - 1))
                 .GetEnumerator();
 
             //_pipeGenerator2 = _buildingModel.GenerateSpline(
@@ -59,18 +61,56 @@ namespace PipesDemo
             //    .GetEnumerator();
         }
 
+        private int x;
+        private int y;
+        private int z;
+        private Vector3i _position;
+        private bool flag = false;
+
         public override void GameUpdate(FrameEventArgs args)
         {
+            var newPosition = new Vector3i(
+                (int) Engine!.Camera.Position.X, 
+                (int)Engine!.Camera.Position.Y, 
+                (int)Engine!.Camera.Position.Z);
+
+            if (_position != newPosition 
+                && newPosition.X >= 0 && newPosition.X < _buildingModel.Width
+                && newPosition.Y >= 0 && newPosition.Y < _buildingModel.Height
+                && newPosition.Z >= 0 && newPosition.Z < _buildingModel.Depth)
+            {
+                Console.WriteLine($"Temperature: {_buildingModel[newPosition].Temperature}");
+                _position = newPosition;
+            }
+
             if (GameObject!.Engine.Window.KeyboardState.IsKeyDown(Keys.Enter))
             {
-                _pipeGenerator1.MoveNext();
-                //_pipeGenerator2.MoveNext();
+                if (!_pipeGenerator1.MoveNext())
+                {
+                    //if (!flag)
+                    //{
+                    //    _thermometers.ForEach(t => Engine!.RemoveGameObject(t));
+                    //    _thermometers.Clear();
+
+                    //    _vectors.ForEach(v => Engine!.RemoveGameObject(v));
+                    //    _vectors.Clear();
+
+                    //    _pipeGenerator2 = _buildingModel.GeneratePipes(
+                    //            new Vector3i(1, 3, 0),
+                    //            new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1)
+                    //        )
+                    //        .GetEnumerator();
+                    //    flag = true;
+                    //}
+
+                    //_pipeGenerator2.MoveNext();
+                }
             }
         }
 
         private void OnWallCreated(Cell cell)
         {
-            var cellGo = GameObject!.Engine.CreateGameObject();
+            var cellGo = Engine!.CreateGameObject();
             var render = cellGo.Add<MeshRenderComponent>();
             render.Shape = Mesh.Cube;
             //GameObject!.AddChild(cellGo);
@@ -80,46 +120,55 @@ namespace PipesDemo
         private void OnTemperatureCalculated()
         {
             var minTemperature = _buildingModel
-                .Where(c => c.Type is CellType.Empty)
+                .Where(c => c.Type is CellType.Empty or CellType.Inside)
                 .OrderBy(c => c.Temperature)
                 .First().Temperature;
 
             foreach (var cell in _buildingModel)
             {
-                if (cell.Type == CellType.Empty)
+                if (cell.Type is CellType.Empty or CellType.Inside)
                 {
-                    var cellGo = GameObject!.Engine.CreateGameObject();
-                    var render = cellGo.Add<MeshRenderComponent>();
+                    var thermometer = Engine!.CreateGameObject();
+                    var render = thermometer.Add<MeshRenderComponent>();
                     render.Shape = Mesh.Cube;
                     var percent = GetPercent(BuildingModel.MaxTemperature, minTemperature, cell.Temperature);
-                    render.Material.Ambient = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
-                    render.Material.Diffuse = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
-                    //GameObject!.AddChild(cellGo);
-                    cellGo.Position = cell.Position;
-                    cellGo.Scale = new Vector3(0.05f);
-                    cellGo.Rotation = new Vector3(45);
+                    var color = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
+                    render.Material.Ambient = color;
+                    render.Material.Diffuse = color;
+                    thermometer.Position = cell.Position;
+                    thermometer.Scale = new Vector3(0.05f);
+                    thermometer.Rotation = new Vector3(45);
+                    _thermometers.Add(thermometer);
                 }
             }
         }
 
         private void OnVectorsCalculate()
         {
-            OnTemperatureCalculated();
-
             foreach (var cell in _buildingModel)
             {
-                if (cell.Type == CellType.Empty)
+                if (cell.Type is CellType.Empty or CellType.Inside)
                 {
-                    var cellGo = GameObject!.Engine.CreateGameObject();
-                    var render = cellGo.Add<MeshRenderComponent>();
+                    var vector = Engine!.CreateGameObject();
+                    var render = vector.Add<MeshRenderComponent>();
                     render.Shape = Mesh.Pyramid;
-                    render.Material.Ambient = cell.Direction!.Value;
-                    render.Material.Diffuse = cell.Direction!.Value;
+                    render.Material.Ambient = Colors.Blue;
+                    render.Material.Diffuse = Colors.Blue;
                     render.Material.Specular = new Vector3(0.0f);
-                    //GameObject!.AddChild(cellGo);
-                    cellGo.Position = cell.Position;
-                    cellGo.Scale = new Vector3(0.05f, 0.5f, 0.05f);
-                    cellGo.Rotation = GetRotation(Vector3.UnitY, new Vector3(cell.Direction.Value).Normalized()) * 180 / MathHelper.Pi;
+                    vector.Position = cell.Position;
+                    vector.Scale = new Vector3(0.05f, 0.5f, 0.05f);
+                    
+                    // crutch for (0, -1, 0) case...
+                    if (cell.Direction!.Value == -Vector3i.UnitY)
+                    {
+                        vector.Rotation = new Vector3(180, 0, 0);
+                    }
+                    else
+                    {
+                        vector.Rotation = GetRotation(Vector3.UnitY, new Vector3(cell.Direction!.Value).Normalized()) * 180 / MathHelper.Pi;
+                    }
+
+                    _vectors.Add(vector);
                 }
             }
         }
@@ -138,7 +187,6 @@ namespace PipesDemo
             render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Specular = new Vector3(0.0f);
             render.Material.Shininess = 32.0f;
-            //GameObject!.AddChild(cellGo);
             cellGo.Position = cell.Position;
         }
 
