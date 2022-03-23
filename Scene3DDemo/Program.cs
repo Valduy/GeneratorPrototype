@@ -41,7 +41,7 @@ namespace Scene3DDemo
         {
             var go = engine.CreateGameObject();
             go.Position = position;
-            go.Rotation = rotation;
+            go.Euler = rotation;
             go.Scale = new Vector3(scale);
 
             var render = go.Add<MeshRenderComponent>();

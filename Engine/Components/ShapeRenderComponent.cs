@@ -53,19 +53,10 @@ namespace GameEngine.Components
         private void SetupShader()
         {
             _shader.Use();
-            _shader.SetMatrix4("model", GetModelMatrix());
+            _shader.SetMatrix4("model", GameObject!.GetModelMatrix());
             _shader.SetMatrix4("view", GameObject!.Engine.Camera.GetViewMatrix());
             _shader.SetMatrix4("projection", GameObject!.Engine.Camera.GetProjectionMatrix());
             _shader.SetVector3("color", Color);
-        }
-
-        private Matrix4 GetModelMatrix()
-        {
-            var model = Matrix4.Identity;
-            model *= Matrix4.CreateScale(GameObject!.Scale.X, GameObject!.Scale.Y, GameObject!.Scale.Z);
-            model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(GameObject!.Rotation * MathHelper.Pi / 180));
-            model *= Matrix4.CreateTranslation(GameObject.Position);
-            return model;
         }
 
         private void Register(float[] vertices)

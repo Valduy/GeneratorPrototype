@@ -13,7 +13,7 @@ namespace RelationshipDemo
         public override void GameUpdate(FrameEventArgs args)
         {
             float angle = (float)(RotationSpeed * args.Time);
-            GameObject!.Rotation += new Vector3(GameObject.Rotation.X, GameObject.Rotation.Y, angle);
+            GameObject!.Euler += new Vector3(GameObject.Euler.X, GameObject.Euler.Y, angle);
         }
     }
 

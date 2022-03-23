@@ -27,7 +27,7 @@ namespace DifferentLayersDemo
             render2d.Shape = Shape.Triangle(size);
 
             go.Position = new Vector3(position.X, position.Y, distance);
-            go.Rotation = new Vector3(0, 0, rotation);
+            go.Euler = new Vector3(0, 0, rotation);
             return go;
         }
     }

@@ -30,7 +30,7 @@ namespace GameEngine.Core
         /// <summary>
         /// Local rotation in degrees relative to <see cref="Parent"/>.
         /// </summary>
-        public Vector3 LocalRotation { get; set; } = new(0);
+        public Vector3 LocalEuler { get; set; } = new(0);
 
         /// <summary>
         /// Local scale relative to <see cref="Parent"/>.
@@ -45,13 +45,13 @@ namespace GameEngine.Core
         /// <summary>
         /// World rotation in degrees.
         /// </summary>
-        public Vector3 Rotation
+        public Vector3 Euler
         {
             get => Parent != null 
-                ? Parent.Rotation + LocalRotation 
-                : LocalRotation;
-            set => LocalRotation = Parent != null 
-                ? Parent.Rotation - value 
+                ? Parent.Euler + LocalEuler 
+                : LocalEuler;
+            set => LocalEuler = Parent != null 
+                ? Parent.Euler - value 
                 : value;
         }
 
@@ -77,9 +77,7 @@ namespace GameEngine.Core
             {
                 if (Parent == null) return LocalPosition;
                 var offset = new Vector4(LocalPosition, 1);
-                var rotation = new Quaternion(Rotation * MathHelper.Pi / 180);
-                offset *= Matrix4.CreateFromQuaternion(rotation);
-                offset *= Matrix4.CreateTranslation(Parent.Position);
+                offset *= Parent.GetModelMatrix();
                 return offset.Xyz;
 
             }
@@ -88,15 +86,24 @@ namespace GameEngine.Core
                 if (Parent != null)
                 {
                     var offset = new Vector4(value, 1);
-                    offset *= Matrix4.CreateTranslation(-Parent.Position);
-                    offset *= Matrix4.CreateFromQuaternion(new Quaternion(-Rotation * MathHelper.Pi / 180));
-                    LocalPosition = new Vector3(offset);
+                    offset *= Parent.GetModelMatrix().Inverted();
+                    LocalPosition = offset.Xyz;
                 }
                 else
                 {
                     LocalPosition = value;
                 }
             }
+        }
+
+        public Matrix4 GetModelMatrix()
+        {
+            var model = Matrix4.Identity;
+            model *= Matrix4.CreateScale(LocalScale.X, LocalScale.Y, LocalScale.Z);
+            model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(LocalEuler * MathHelper.Pi / 180));
+            model *= Matrix4.CreateTranslation(LocalPosition);
+            if (Parent != null) model *= Parent.GetModelMatrix();
+            return model;
         }
 
         /// <summary>

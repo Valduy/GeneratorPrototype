@@ -7,9 +7,20 @@ using ObjLoader.Loader.Loaders;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using static System.Single;
 
 namespace PipesDemo
 {
+    public class RotatorComponent : Component
+    {
+        public override void GameUpdate(FrameEventArgs args)
+        {
+            base.GameUpdate(args);
+            GameObject!.Euler += Vector3.UnitX * (float)args.Time * 10;
+            Console.WriteLine(GameObject!.Euler);
+        }
+    }
+
     public class DirectoryStreamProvider : IMaterialStreamProvider
     {
         public string Directory { get; }
@@ -42,6 +53,14 @@ namespace PipesDemo
         private Vector3? _prevDirection = null;
         private List<GameObject> _thermometers = new();
         private List<GameObject> _vectors = new();
+
+        #region Pipe generation.
+
+        private GameObject? _tail;
+        private GameObject? _prev;
+
+        #endregion
+
 
         public string MapPath { get; set; }
 
@@ -113,6 +132,9 @@ namespace PipesDemo
                         _vectors.ForEach(v => Engine!.RemoveGameObject(v));
                         _vectors.Clear();
 
+                        _tail = null;
+                        _prev = null;
+                        
                         _pipeGenerator2 = _buildingModel.GeneratePipes(
                                 new Vector3i(1, 3, 0),
                                 new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1)
@@ -155,7 +177,7 @@ namespace PipesDemo
                     render.Material.Diffuse = color;
                     thermometer.Position = cell.Position;
                     thermometer.Scale = new Vector3(0.05f);
-                    thermometer.Rotation = new Vector3(45);
+                    thermometer.Euler = new Vector3(45);
                     _thermometers.Add(thermometer);
                 }
             }
@@ -179,11 +201,11 @@ namespace PipesDemo
                     // crutch for (0, -1, 0) case...
                     if (cell.Direction!.Value == -Vector3i.UnitY)
                     {
-                        vector.Rotation = new Vector3(180, 0, 0);
+                        vector.Euler = new Vector3(180, 0, 0);
                     }
                     else
                     {
-                        vector.Rotation = GetRotation(Vector3.UnitY, new Vector3(cell.Direction!.Value).Normalized()) * 180 / MathHelper.Pi;
+                        vector.Euler = GetRotation(Vector3.UnitY, new Vector3(cell.Direction!.Value).Normalized()) * 180 / MathHelper.Pi;
                     }
 
                     _vectors.Add(vector);
@@ -195,15 +217,11 @@ namespace PipesDemo
         {
             return (value - min) / (max - min);
         }
-
-        private GameObject? _tail;
-        private GameObject? _prev;
-
+        
         private void OnPipeCreated(Cell cell)
         {
             var pipeGo = GameObject!.Engine.CreateGameObject();
             var render = pipeGo.Add<MeshRenderComponent>();
-            //render.Shape = Mesh.Cube;
             render.Shape = _meshIPipe;
             render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
@@ -211,40 +229,51 @@ namespace PipesDemo
             render.Material.Shininess = 32.0f;
             pipeGo.Position = cell.Position;
             
+            // Rotate current segment.
             if (_prev != null)
             {
-                if (_prev.Position.X != pipeGo.Position.X)
+                if (!MathHelper.ApproximatelyEqualEpsilon(_prev.Position.X, pipeGo.Position.X, Epsilon))
                 {
-                    pipeGo.Rotation = new Vector3(0, 0, 90);
+                    pipeGo.Euler = new Vector3(0, 0, 90);
                 }
-                else if (_prev.Position.Z != pipeGo.Position.Z)
+                else if (!MathHelper.ApproximatelyEqualEpsilon(_prev.Position.Z, pipeGo.Position.Z, Epsilon))
                 {
-                    pipeGo.Rotation = new Vector3(-90, 0, 0);
+                    pipeGo.Euler = new Vector3(-90, 0, 0);
                 }
             }
 
+            // Rotate first segment (special case for first pipe segment).
+            if (_prev != null && _tail == null)
+            {
+                _prev.Euler = pipeGo.Euler;
+            }
+
+            // Rotate prev segment.
             if (_tail != null)
             {
-                if (_tail.Position.X != pipeGo.Position.X && 
-                    _tail.Position.Y != pipeGo.Position.Y)
+                if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.X, pipeGo.Position.X, Epsilon))
                 {
-                    MeshRenderComponent meshRender = _prev.Get<MeshRenderComponent>();
-                    meshRender.Shape = _meshLPipe;
-                    _prev.Rotation = new Vector3(0.0f, 270.0f, 0.0f);
+                    if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Y, pipeGo.Position.Y, Epsilon))
+                    {
+                        var meshRender = _prev!.Get<MeshRenderComponent>()!;
+                        meshRender.Shape = _meshLPipe;
+                        _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
+                    }
+                    if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
+                    {
+                        var meshRender = _prev!.Get<MeshRenderComponent>()!;
+                        meshRender.Shape = _meshLPipe;
+                        _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
+                    }
                 }
-                else if (_tail.Position.X != pipeGo.Position.X && 
-                         _tail.Position.Z != pipeGo.Position.Z)
+                if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Y, pipeGo.Position.Y, Epsilon))
                 {
-                    MeshRenderComponent meshRender = _prev.Get<MeshRenderComponent>();
-                    meshRender.Shape = _meshLPipe;
-                    _prev.Rotation = new Vector3(0.0f, 90.0f, 0.0f);
-                }
-                else if (_tail.Position.Y != pipeGo.Position.Y &&
-                         _tail.Position.Z != pipeGo.Position.Z)
-                {
-                    MeshRenderComponent meshRender = _prev.Get<MeshRenderComponent>();
-                    meshRender.Shape = _meshLPipe;
-                    _prev.Rotation = new Vector3(0.0f, 270.0f, 0.0f);
+                    if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
+                    {
+                        var meshRender = _prev!.Get<MeshRenderComponent>()!;
+                        meshRender.Shape = _meshLPipe;
+                        _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
+                    }
                 }
             }
 
@@ -337,6 +366,120 @@ namespace PipesDemo
                     yield return normal.Z;
                 }
             }
+        }
+
+        private Vector3 GetLPipeRotation(Vector3 from, Vector3 via, Vector3 to)
+        {
+            if (MathHelper.ApproximatelyEqualEpsilon(from.Y, via.Y, Epsilon) && 
+                MathHelper.ApproximatelyEqualEpsilon(via.Y, to.Y, Epsilon))
+            {
+                // t--v f--v
+                //    |    |
+                //    f    t
+                if (from.Z < via.Z && via.X < to.X ||
+                    from.X > via.X && via.Z > to.Z)
+                {
+                    return new Vector3(90.0f, 0.0f, 0.0f);
+                }
+                //    f    t
+                //    |    |
+                // t--v f--v
+                if (from.Z > via.Z && via.X < to.X ||
+                    from.X > via.X && via.Z < to.Z)
+                {
+                    return new Vector3(90.0f, 0.0f, 90.0f);
+                }
+                // f    t
+                // |    |
+                // v--t v--f
+                if (from.Z > via.Z && via.X > to.X ||
+                    from.X < via.X && via.Z < to.Z)
+                {
+                    return new Vector3(90.0f, 0.0f, 180.0f);
+                }
+                // v--t v--f
+                // |    |
+                // f    t
+                if (from.Z < via.Z && via.X > to.X ||
+                    from.X < via.X && via.Z > to.Z)
+                {
+                    return new Vector3(90.0f, 270.0f, 270.0f);
+                }
+            }
+            else if (MathHelper.ApproximatelyEqualEpsilon(from.Z, via.Z, Epsilon) && 
+                     MathHelper.ApproximatelyEqualEpsilon(via.Z, to.Z, Epsilon))
+            {
+                // t--v f--v
+                //    |    |
+                //    f    t
+                if (from.Y < via.Y && via.X < to.X ||
+                    from.X > via.X && via.Y > to.Y)
+                {
+                    return new Vector3(0.0f, 0.0f, 0.0f);
+                }
+                //    f    t
+                //    |    |
+                // t--v f--v
+                if (from.Y > via.Y && via.X < to.X ||
+                    from.X > via.X && via.Y < to.Y)
+                {
+                    return new Vector3(0.0f, 0.0f, 90.0f);
+                }
+                // f    t
+                // |    |
+                // v--t v--f
+                if (from.Y > via.Y && via.X > to.X ||
+                    from.X < via.X && via.Y < to.Y)
+                {
+                    return new Vector3(0.0f, 0.0f, 180.0f);
+                }
+                // v--t v--f
+                // |    |
+                // f    t
+                if (from.Y < via.Y && via.X > to.X ||
+                    from.X < via.X && via.Y > to.Y)
+                {
+                    return new Vector3(0.0f, 270.0f, 270.0f);
+                }
+            }
+            else if (MathHelper.ApproximatelyEqualEpsilon(from.X, via.X, Epsilon) &&
+                     MathHelper.ApproximatelyEqualEpsilon(via.X, to.X, Epsilon))
+            {
+                // t--v f--v
+                //    |    |
+                //    f    t
+                if (from.Y < via.Y && via.Z < to.Z ||
+                    from.Z > via.Z && via.Y > to.Y)
+                {
+                    return new Vector3(0.0f, -90.0f, 0.0f);
+                }
+                //    f    t
+                //    |    |
+                // t--v f--v
+                if (from.Y > via.Y && via.Z < to.Z ||
+                    from.Z > via.Z && via.Y < to.Y)
+                {
+                    return new Vector3(0.0f, -90.0f, 90.0f);
+                }
+                // f    t
+                // |    |
+                // v--t v--f
+                if (from.Y > via.Y && via.Z > to.Z ||
+                    from.Z < via.Z && via.Y < to.Y)
+                {
+                    return new Vector3(0.0f, -90.0f, 180.0f);
+                }
+                // v--t v--f
+                // |    |
+                // f    t
+                if (from.Y < via.Y && via.Z > to.Z ||
+                    from.Z < via.Z && via.Y > to.Y)
+                {
+                    return new Vector3(0.0f, -90.0f, 270.0f);
+                }
+            }
+
+            throw new ArgumentOutOfRangeException();
         }
     }
 }
