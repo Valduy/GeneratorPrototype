@@ -38,6 +38,7 @@ namespace PipesDemo
         public event Action<Vector3> SegmentCreated;
         public event Action TemperatureCalculated;
         public event Action VectorsCalculated;
+        public event Action<List<Cell>> GraphPipeGenerated;
 
         public BuildingModel()
         {
@@ -107,6 +108,12 @@ namespace PipesDemo
             CalculateVectors();
             VectorsCalculated?.Invoke();
             return BuildSpline(from, to);
+        }
+
+        public void GenerateGraphBasePipe(Vector3i from, Vector3i to)
+        {
+            var path = AStar(this[from], this[to]);
+            GraphPipeGenerated?.Invoke(path);
         }
 
         public Cell this[int x, int y, int z] => _cells[x, y, z];
@@ -292,7 +299,92 @@ namespace PipesDemo
 
             Console.WriteLine("Pipe generation end.");
         }
-        
+
+        private List<Cell> AStar(Cell start, Cell goal)
+        {
+            // Set all nodes costs as infinity.
+            foreach (var cell in _cells)
+            {
+                cell.Temperature = float.PositiveInfinity;
+            }
+
+            start.Temperature = 0;
+            var reachable = new HashSet<Cell> { start };
+            var explored = new HashSet<Cell>();
+
+            while (reachable.Any())
+            {
+                var node = ChooseNode(reachable, goal);
+                if (node == goal) return BuildPath(node);
+
+                reachable.Remove(node!);
+                explored.Add(node!);
+
+                var newReachable = new HashSet<Cell>(GetCross(node!)
+                        .Where(c => c.Type != CellType.Wall && c.Type != CellType.Pipe));
+                newReachable.ExceptWith(explored);
+
+                foreach (var adjacent in newReachable)
+                {
+                    // Add new reachable.
+                    if (!reachable.Contains(adjacent))
+                    {
+                        adjacent.Direction = node!.Position - adjacent.Position;
+                        reachable.Add(adjacent);
+                    }
+
+                    // Cost recalculation.
+                    if (node!.Temperature + 1 < adjacent.Temperature)
+                    {
+                        adjacent.Direction = node.Position - adjacent.Position;
+                        adjacent.Temperature = node.Temperature + 1;
+                    }
+                }
+            }
+
+            throw new ArgumentException("Path not found.");
+        }
+
+        private Cell? ChooseNode(IEnumerable<Cell> reachable, Cell goal)
+        {
+            float minCost = float.PositiveInfinity;
+            Cell? best = null;
+
+            foreach (var node in reachable)
+            {
+                float costFromStart = node.Temperature;
+                float costToGoal = ManhattanLength(node, goal);
+                float totalCost = costFromStart + costToGoal;
+
+                if (minCost > totalCost)
+                {
+                    minCost = totalCost;
+                    best = node;
+                }
+            }
+
+            return best;
+        }
+
+        private float ManhattanLength(Cell a, Cell b) =>
+            Math.Abs(a.Position.X - b.Position.X) +
+            Math.Abs(a.Position.Y - b.Position.Y) +
+            Math.Abs(a.Position.Z - b.Position.Z);
+
+        private List<Cell> BuildPath(Cell node)
+        {
+            var path = new List<Cell>();
+
+            while (node.Direction != null)
+            {
+                var prev = this[node.Position + node.Direction.Value];
+                path.Add(prev);
+                node = prev;
+            }
+
+            return path;
+        }
+
         private IEnumerable<Cell> GetCross(Cell cell) =>
             GetCross(cell.Position);
 

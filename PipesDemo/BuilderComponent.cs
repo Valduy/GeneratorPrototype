@@ -71,17 +71,23 @@ namespace PipesDemo
             _buildingModel.VectorsCalculated += OnVectorsCalculate;
             _buildingModel.PipeCreated += OnPipeCreated;
             _buildingModel.SegmentCreated += OnSegmentCreated;
+            _buildingModel.GraphPipeGenerated += OnGraphPipeGenerated;
             _buildingModel.Load(MapPath);
 
             _meshIPipe = LoadMesh("Models", "IPipe.obj");
             _meshLPipe = LoadMesh("Models", "LPipe.obj");
 
-            _pipeGenerator1 = _buildingModel.GeneratePipes(
+            _buildingModel.GenerateGraphBasePipe(
                 new Vector3i(1, 1, 0),
-                new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1)
-                //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
-                )
-                .GetEnumerator();
+                new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1));
+
+            // TODO: this
+            //_pipeGenerator1 = _buildingModel.GeneratePipes(
+            //    new Vector3i(1, 1, 0),
+            //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1)
+            //    //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
+            //    )
+            //    .GetEnumerator();
 
             //_pipeGenerator2 = _buildingModel.GeneratePipes(
             //        new Vector3i(3, 1, 0),
@@ -148,12 +154,19 @@ namespace PipesDemo
             }
         }
 
+        private void OnGraphPipeGenerated(List<Cell> cells)
+        {
+            foreach (var cell in cells)
+            {
+                OnPipeCreated(cell);
+            }
+        }
+
         private void OnWallCreated(Cell cell)
         {
             var cellGo = Engine!.CreateGameObject();
             var render = cellGo.Add<MeshRenderComponent>();
             render.Shape = Mesh.Cube;
-            //GameObject!.AddChild(cellGo);
             cellGo.Position = cell.Position;
         }
 
