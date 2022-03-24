@@ -292,7 +292,7 @@ namespace PipesDemo
 
             Console.WriteLine("Pipe generation end.");
         }
-
+        
         private IEnumerable<Cell> GetCross(Cell cell) =>
             GetCross(cell.Position);
 

@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using static System.Single;
 
 namespace PipesDemo
 {
@@ -13,8 +14,8 @@ namespace PipesDemo
     public class Cell
     {
         private CellType _type = CellType.Empty;
-        private float _temperature = float.NaN;
-        public Vector3i? _direction = null;
+        private float _temperature = NaN;
+        private Vector3i? _direction = null;
 
         public BuildingModel Model { get; }
         public Vector3i Position { get; }
@@ -35,7 +36,7 @@ namespace PipesDemo
             get => _temperature;
             set
             {
-                if (_temperature == value) return;
+                if (MathHelper.ApproximatelyEqualEpsilon(_temperature, value, Epsilon)) return;
                 _temperature = value;
                 TemperatureChanged?.Invoke(this);
             }
