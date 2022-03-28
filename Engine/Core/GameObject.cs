@@ -12,52 +12,40 @@ namespace GameEngine.Core
         private readonly List<GameObject> _children = new();
         private readonly Dictionary<Type, Component> _componentsMap = new();
 
-        /// <summary>
-        /// The <see cref="Core.Engine"/> this <see cref="GameObject"/> belong to.
-        /// </summary>
         public readonly Engine Engine;
 
-        /// <summary>
-        /// Parent <see cref="GameObject"/>.
-        /// </summary>
         public GameObject? Parent { get; private set; }
 
-        /// <summary>
-        /// Children <see cref="GameObject"/>'s.
-        /// </summary>
         public IReadOnlyList<GameObject> Children => _children;
 
-        /// <summary>
-        /// Local rotation in degrees relative to <see cref="Parent"/>.
-        /// </summary>
-        public Vector3 LocalEuler { get; set; } = new(0);
+        public Quaternion LocalRotation { get; set; } = Quaternion.Identity;
 
-        /// <summary>
-        /// Local scale relative to <see cref="Parent"/>.
-        /// </summary>
+        public Vector3 LocalEuler
+        {
+            get => LocalRotation.ToEulerAngles() * 180 / MathHelper.Pi;
+            set => LocalRotation = Quaternion.FromEulerAngles(value * MathHelper.Pi / 180);
+        }
+
         public Vector3 LocalScale { get; set; } = new(1);
 
-        /// <summary>
-        /// Local position relative to <see cref="Parent"/>.
-        /// </summary>
         public Vector3 LocalPosition { get; set; } = new(0);
 
-        /// <summary>
-        /// World rotation in degrees.
-        /// </summary>
-        public Vector3 Euler
+        public Quaternion Rotation
         {
             get => Parent != null 
-                ? Parent.Euler + LocalEuler 
-                : LocalEuler;
-            set => LocalEuler = Parent != null 
-                ? Parent.Euler - value 
+                ? LocalRotation * Parent.Rotation 
+                : LocalRotation; 
+            set => LocalRotation = Parent != null 
+                ? Parent.Rotation.Inverted() * value
                 : value;
         }
 
-        /// <summary>
-        /// World scale.
-        /// </summary>
+        public Vector3 Euler
+        {
+            get => Rotation.ToEulerAngles() * 180 / MathHelper.Pi;
+            set => Rotation = Quaternion.FromEulerAngles(value * MathHelper.Pi / 180);
+        }
+
         public Vector3 Scale
         {
             get => Parent != null 
@@ -68,9 +56,6 @@ namespace GameEngine.Core
                 : value;
         }
 
-        /// <summary>
-        /// World position.
-        /// </summary>
         public Vector3 Position
         {
             get
@@ -99,21 +84,14 @@ namespace GameEngine.Core
         public Matrix4 GetModelMatrix()
         {
             var model = Matrix4.Identity;
-            model *= Matrix4.CreateScale(LocalScale.X, LocalScale.Y, LocalScale.Z);
-            model *= Matrix4.CreateFromQuaternion(Quaternion.FromEulerAngles(LocalEuler * MathHelper.Pi / 180));
+            model *= Matrix4.CreateScale(LocalScale);
+            model *= Matrix4.CreateFromQuaternion(LocalRotation);
             model *= Matrix4.CreateTranslation(LocalPosition);
             if (Parent != null) model *= Parent.GetModelMatrix();
             return model;
         }
 
-        /// <summary>
-        /// Event, which fires when new <see cref="Component"/> added to <see cref="GameObject"/>.
-        /// </summary>
         public event Action<GameObject, Component>? ComponentAdded;
-
-        /// <summary>
-        /// Event, which fires when <see cref="Component"/> removed from <see cref="GameObject"/>.
-        /// </summary>
         public event Action<GameObject, Component>? ComponentRemoved;
 
         internal GameObject(Engine engine)

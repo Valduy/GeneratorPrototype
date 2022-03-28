@@ -77,17 +77,17 @@ namespace PipesDemo
             _meshIPipe = LoadMesh("Models", "IPipe.obj");
             _meshLPipe = LoadMesh("Models", "LPipe.obj");
 
-            _buildingModel.GenerateGraphBasePipe(
-                new Vector3i(1, 1, 0),
-                new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1));
+            //_buildingModel.GenerateGraphBasePipe(
+            //    new Vector3i(1, 1, 0),
+            //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1));
 
             // TODO: this
-            //_pipeGenerator1 = _buildingModel.GeneratePipes(
-            //    new Vector3i(1, 1, 0),
-            //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1)
-            //    //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
-            //    )
-            //    .GetEnumerator();
+            _pipeGenerator1 = _buildingModel.GeneratePipes(
+                new Vector3i(1, 1, 0),
+                new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1)
+                //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
+                )
+                .GetEnumerator();
 
             //_pipeGenerator2 = _buildingModel.GeneratePipes(
             //        new Vector3i(3, 1, 0),
