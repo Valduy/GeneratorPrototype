@@ -3,50 +3,19 @@ using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
-using ObjLoader.Loader.Loaders;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using PipesDemo.Models;
 using static System.Single;
 
-namespace PipesDemo
+namespace PipesDemo.Components
 {
-    public class RotatorComponent : Component
-    {
-        public override void GameUpdate(FrameEventArgs args)
-        {
-            base.GameUpdate(args);
-            GameObject!.Euler += Vector3.UnitX * (float)args.Time * 10;
-            Console.WriteLine(GameObject!.Euler);
-        }
-    }
-
-    public class DirectoryStreamProvider : IMaterialStreamProvider
-    {
-        public string Directory { get; }
-
-        public DirectoryStreamProvider(string directory)
-        {
-            Directory = directory;
-        }
-
-        public Stream Open(string materialFilePath)
-        {
-            return File.Open($"{Directory}/{materialFilePath}", FileMode.Open, FileAccess.Read); ;
-        }
-    }
-
     public class BuilderComponent : Component
     {
-        public const int InWidth = 8;
-        public const int InHeight = 8;
-        public const int FloorWidth = 16;
-        public const int FloorHeight = 16;
+        private readonly Mesh _straightPipeMesh = Utils.ObjLoader.Load("Content", "IPipe.obj");
+        private readonly Mesh _angularPipeMesh = Utils.ObjLoader.Load("Content", "LPipe.obj");
 
-        private Mesh _meshIPipe;
-        private Mesh _meshLPipe;
-
-        private readonly BuildingModel _buildingModel = new();
         private IEnumerator _pipeGenerator1;
         private IEnumerator _pipeGenerator2;
         private Vector3? _prevPosition = null;
@@ -61,30 +30,25 @@ namespace PipesDemo
 
         #endregion
 
-
-        public string MapPath { get; set; }
+        public BuildingModel? Model { get; set; }
 
         public override void Start()
         {
-            _buildingModel.WallCreated += OnWallCreated;
-            _buildingModel.TemperatureCalculated += OnTemperatureCalculated;
-            _buildingModel.VectorsCalculated += OnVectorsCalculate;
-            _buildingModel.PipeCreated += OnPipeCreated;
-            _buildingModel.SegmentCreated += OnSegmentCreated;
-            _buildingModel.GraphPipeGenerated += OnGraphPipeGenerated;
-            _buildingModel.Load(MapPath);
-
-            _meshIPipe = LoadMesh("Models", "IPipe.obj");
-            _meshLPipe = LoadMesh("Models", "LPipe.obj");
+            CreateWalls();
+            Model!.TemperatureCalculated += OnTemperatureCalculated;
+            Model!.VectorsCalculated += OnVectorsCalculate;
+            Model!.PipeCreated += OnPipeCreated;
+            Model!.SegmentCreated += OnSegmentCreated;
+            Model!.GraphPipeGenerated += OnGraphPipeGenerated;
 
             //_buildingModel.GenerateGraphBasePipe(
             //    new Vector3i(1, 1, 0),
             //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1));
 
             // TODO: this
-            _pipeGenerator1 = _buildingModel.GeneratePipes(
+            _pipeGenerator1 = Model.GeneratePipes(
                 new Vector3i(1, 1, 0),
-                new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1)
+                new Vector3i(Model.Width - 1, Model.Height - 1, Model.Depth - 1)
                 //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
                 )
                 .GetEnumerator();
@@ -106,26 +70,10 @@ namespace PipesDemo
             //    .GetEnumerator();
         }
 
-        private Vector3i _position;
         private bool _flag = false;
 
         public override void GameUpdate(FrameEventArgs args)
         {
-            var newPosition = new Vector3i(
-                (int)Engine!.Camera.Position.X, 
-                (int)Engine!.Camera.Position.Y, 
-                (int)Engine!.Camera.Position.Z);
-
-            if (_position != newPosition 
-                && newPosition.X >= 0 && newPosition.X < _buildingModel.Width
-                && newPosition.Y >= 0 && newPosition.Y < _buildingModel.Height
-                && newPosition.Z >= 0 && newPosition.Z < _buildingModel.Depth)
-            {
-                Console.WriteLine($"Cell: ({newPosition})");
-                Console.WriteLine($"Temperature: {_buildingModel[newPosition].Temperature}");
-                _position = newPosition;
-            }
-
             if (GameObject!.Engine.Window.KeyboardState.IsKeyDown(Keys.Enter))
             {
                 if (!_pipeGenerator1.MoveNext())
@@ -141,15 +89,29 @@ namespace PipesDemo
                         _tail = null;
                         _prev = null;
                         
-                        _pipeGenerator2 = _buildingModel.GeneratePipes(
+                        _pipeGenerator2 = Model.GeneratePipes(
                                 new Vector3i(1, 3, 0),
-                                new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1)
+                                new Vector3i(Model.Width - 1, Model.Height - 3, Model.Depth - 1)
                             )
                             .GetEnumerator();
                         _flag = true;
                     }
 
                     _pipeGenerator2.MoveNext();
+                }
+            }
+        }
+
+        private void CreateWalls()
+        {
+            foreach (var cell in Model)
+            {
+                if (cell.Type is CellType.Wall)
+                {
+                    var wallGo = Engine!.CreateGameObject();
+                    var render = wallGo.Add<MeshRenderComponent>();
+                    render.Shape = Mesh.Cube;
+                    wallGo.Position = cell.Position;
                 }
             }
         }
@@ -162,22 +124,14 @@ namespace PipesDemo
             }
         }
 
-        private void OnWallCreated(Cell cell)
-        {
-            var cellGo = Engine!.CreateGameObject();
-            var render = cellGo.Add<MeshRenderComponent>();
-            render.Shape = Mesh.Cube;
-            cellGo.Position = cell.Position;
-        }
-
         private void OnTemperatureCalculated()
         {
-            var minTemperature = _buildingModel
+            var minTemperature = Model!
                 .Where(c => c.Type is CellType.Empty or CellType.Inside)
                 .OrderBy(c => c.Temperature)
                 .First().Temperature;
 
-            foreach (var cell in _buildingModel)
+            foreach (var cell in Model!)
             {
                 if (cell.Type is CellType.Empty or CellType.Inside)
                 {
@@ -198,7 +152,7 @@ namespace PipesDemo
 
         private void OnVectorsCalculate()
         {
-            foreach (var cell in _buildingModel)
+            foreach (var cell in Model!)
             {
                 if (cell.Type is CellType.Empty or CellType.Inside)
                 {
@@ -218,7 +172,8 @@ namespace PipesDemo
                     }
                     else
                     {
-                        vector.Euler = GetRotation(Vector3.UnitY, new Vector3(cell.Direction!.Value).Normalized()) * 180 / MathHelper.Pi;
+                        var to = new Vector3(cell.Direction!.Value).Normalized();
+                        vector.Rotation = Mathematics.GetRotation(Vector3.UnitY, to);
                     }
 
                     _vectors.Add(vector);
@@ -235,7 +190,7 @@ namespace PipesDemo
         {
             var pipeGo = GameObject!.Engine.CreateGameObject();
             var render = pipeGo.Add<MeshRenderComponent>();
-            render.Shape = _meshIPipe;
+            render.Shape = _straightPipeMesh;
             render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Specular = new Vector3(0.0f);
@@ -269,13 +224,13 @@ namespace PipesDemo
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Y, pipeGo.Position.Y, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _meshLPipe;
+                        meshRender.Shape = _angularPipeMesh;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _meshLPipe;
+                        meshRender.Shape = _angularPipeMesh;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                 }
@@ -284,7 +239,7 @@ namespace PipesDemo
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _meshLPipe;
+                        meshRender.Shape = _angularPipeMesh;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                 }
@@ -312,19 +267,6 @@ namespace PipesDemo
             _prevPosition = position;
         }
 
-        private Vector3 GetRotation(Vector3 from, Vector3 to)
-        {
-            from.Normalize();
-            to.Normalize();
-
-            if (from == to) return new Vector3(0);
-
-            float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
-            var axis = Vector3.Cross(from, to);
-            float angle = MathF.Acos(cosa);
-            return Matrix4.CreateFromAxisAngle(axis, angle).ExtractRotation().ToEulerAngles();
-        }
-
         private float[] GetSegmentPoints(
             Vector3 prevPosition, 
             Vector3 prevDirection, 
@@ -349,36 +291,6 @@ namespace PipesDemo
             }
 
             return result.ToArray();
-        }
-
-        private Mesh LoadMesh(string directory, string fileName)
-        {
-            var objLoaderFactory = new ObjLoaderFactory();
-            var objLoader = objLoaderFactory.Create(new DirectoryStreamProvider(directory));
-            using var fileStream = File.OpenRead($"{directory}/{fileName}");
-            var result = objLoader.Load(fileStream);
-
-            return new Mesh(EnumerateLoadResult(result).ToArray());
-        }
-
-        private IEnumerable<float> EnumerateLoadResult(LoadResult result)
-        {
-            foreach (var face in result.Groups[0].Faces)
-            {
-                for (int i = 0; i < face.Count; i++)
-                {
-                    var faceVertex = face[i];
-                    var vertex = result.Vertices[faceVertex.VertexIndex - 1];
-                    var normal = result.Normals[faceVertex.NormalIndex - 1];
-                    
-                    yield return vertex.X;
-                    yield return vertex.Y;
-                    yield return vertex.Z;
-                    yield return normal.X;
-                    yield return normal.Y;
-                    yield return normal.Z;
-                }
-            }
         }
 
         private Vector3 GetLPipeRotation(Vector3 from, Vector3 via, Vector3 to)

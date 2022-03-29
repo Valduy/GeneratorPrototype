@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using static System.Single;
 
-namespace PipesDemo
+namespace PipesDemo.Models
 {
     public enum CellType
     {

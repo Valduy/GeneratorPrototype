@@ -26,16 +26,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Models\IPipe.mtl">
+    <None Update="Content\IPipe.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Models\IPipe.obj">
+    <None Update="Content\IPipe.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Models\LPipe.mtl">
+    <None Update="Content\LPipe.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Models\LPipe.obj">
+    <None Update="Content\LPipe.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Sample\House.bmp">

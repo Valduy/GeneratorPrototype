@@ -221,5 +221,18 @@ namespace GameEngine.Mathematics
             return Math.Abs(position1.X - position2.X) * 2 < (width1 + width2)
                    && Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
         }
+
+        public static Quaternion GetRotation(Vector3 from, Vector3 to)
+        {
+            from.Normalize();
+            to.Normalize();
+
+            if (from == to) return Quaternion.Identity;
+
+            float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
+            var axis = Vector3.Cross(from, to);
+            float angle = MathF.Acos(cosa);
+            return Matrix4.CreateFromAxisAngle(axis, angle).ExtractRotation();
+        }
     }
 }

@@ -2,7 +2,7 @@
 using System.Drawing;
 using OpenTK.Mathematics;
 
-namespace PipesDemo
+namespace PipesDemo.Models
 {
     public class BuildingModel : IEnumerable<Cell>
     {
@@ -33,9 +33,9 @@ namespace PipesDemo
         public int Height => _cells.GetLength(1);
         public int Depth => _cells.GetLength(2);
 
-        public event Action<Cell> WallCreated;
         public event Action<Cell> PipeCreated;
         public event Action<Vector3> SegmentCreated;
+        public event Action WallsCreated;
         public event Action TemperatureCalculated;
         public event Action VectorsCalculated;
         public event Action<List<Cell>> GraphPipeGenerated;
@@ -66,6 +66,8 @@ namespace PipesDemo
                     BuildFloor(bmp, i, j);
                 }
             }
+
+            WallsCreated?.Invoke();
         }
 
         public IEnumerable GeneratePipes(Vector3i from, Vector3i to)
@@ -146,7 +148,6 @@ namespace PipesDemo
                         int height = FloorsInRow * j + i;
                         var cell = _cells[x + WallSpacing, height + WallSpacing, y + WallSpacing];
                         cell.Type = CellType.Wall;
-                        WallCreated?.Invoke(cell);
                     }
                 }
             }
@@ -280,7 +281,6 @@ namespace PipesDemo
 
                 Vector3 main = Vector3.Zero;
 
-                
                 Vector3 direction =
                     new Vector3(_cells[xi, yi, zi].Direction ?? main) * (1 - dx) * (1 - dy) * (1 - dz) +
                     new Vector3(_cells[xi, yi, zc].Direction ?? main) * (1 - dx) * (1 - dy) * (dz) +
