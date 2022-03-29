@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Drawing;
 using OpenTK.Mathematics;
+using static System.Single;
 
 namespace PipesDemo.Models
 {
@@ -33,12 +34,10 @@ namespace PipesDemo.Models
         public int Height => _cells.GetLength(1);
         public int Depth => _cells.GetLength(2);
 
-        public event Action<Cell> PipeCreated;
-        public event Action<Vector3> SegmentCreated;
         public event Action WallsCreated;
         public event Action TemperatureCalculated;
         public event Action VectorsCalculated;
-        public event Action<List<Cell>> GraphPipeGenerated;
+        public event Action<List<Cell>> AStarPipeCreated;
 
         public BuildingModel()
         {
@@ -70,7 +69,7 @@ namespace PipesDemo.Models
             WallsCreated?.Invoke();
         }
 
-        public IEnumerable GeneratePipes(Vector3i from, Vector3i to)
+        public IEnumerator<Cell> GenerateRigidPipe(Vector3i from, Vector3i to)
         {
             if (_cells[from.X, from.Y, from.Z].Type != CellType.Empty)
             {
@@ -83,7 +82,7 @@ namespace PipesDemo.Models
 
             foreach (var cell in _cells)
             {
-                cell.Temperature = float.NaN;
+                cell.Temperature = NaN;
                 cell.Direction = null;
             }
 
@@ -91,10 +90,10 @@ namespace PipesDemo.Models
             TemperatureCalculated?.Invoke();
             CalculateVectors();
             VectorsCalculated?.Invoke();
-            return BuildPipe(from, to);
+            return CreateRigidPipeSegment(from, to);
         }
 
-        public IEnumerable GenerateSpline(Vector3i from, Vector3i to)
+        public IEnumerator<Vector3> GenerateFlexiblePipe(Vector3i from, Vector3i to)
         {
             if (_cells[from.X, from.Y, from.Z].Type != CellType.Empty)
             {
@@ -109,13 +108,14 @@ namespace PipesDemo.Models
             TemperatureCalculated?.Invoke();
             CalculateVectors();
             VectorsCalculated?.Invoke();
-            return BuildSpline(from, to);
+            return CreateFlexiblePipeSegment(from, to);
         }
 
-        public void GenerateGraphBasePipe(Vector3i from, Vector3i to)
+        public List<Cell> GenerateAStarPipe(Vector3i from, Vector3i to)
         {
             var path = AStar(this[from], this[to]);
-            GraphPipeGenerated?.Invoke(path);
+            path.ForEach(p => p.Type = CellType.Pipe);
+            return path;
         }
 
         public Cell this[int x, int y, int z] => _cells[x, y, z];
@@ -155,6 +155,7 @@ namespace PipesDemo.Models
 
         private void CalculateWarm(int x, int y, int z)
         {
+            ClearWarm();
             var cell = _cells[x, y, z];
             cell.Temperature = MaxTemperature;
             var stack = new Stack<Cell>();
@@ -166,14 +167,14 @@ namespace PipesDemo.Models
                 var temperature = temp.Temperature - TemperatureStep;
                 
                 var neigbours = GetCross(temp)
-                    .Where(c => float.IsNaN(c.Temperature) || (c.Temperature < temperature && c.Type is CellType.Empty or CellType.Inside))
+                    .Where(c => IsNaN(c.Temperature) || (c.Temperature < temperature && c.Type is CellType.Empty or CellType.Inside))
                     .ToList();
 
                 foreach (var neigbour in neigbours)
                 {
                     if (neigbour.Type is CellType.Wall or CellType.Pipe)
                     {
-                        neigbour.Temperature = float.NegativeInfinity;
+                        neigbour.Temperature = NegativeInfinity;
                     }
                     else
                     {
@@ -211,6 +212,15 @@ namespace PipesDemo.Models
             }
         }
 
+        private void ClearWarm()
+        {
+            foreach (var cell in _cells)
+            {
+                cell.Temperature = NaN;
+                cell.Direction = null;
+            }
+        }
+
         private void CalculateVectors()
         {
             var initial = _cells[0, 0, 0];
@@ -239,28 +249,27 @@ namespace PipesDemo.Models
             }
         }
 
-        private IEnumerable BuildPipe(Vector3i from, Vector3i to)
+        private IEnumerator<Cell> CreateRigidPipeSegment(Vector3i from, Vector3i to)
         {
             var current = from;
+            yield return _cells[current.X, current.Y, current.Z];
 
             while (current != to)
             {
                 _cells[current.X, current.Y, current.Z].Type = CellType.Pipe;
-                PipeCreated?.Invoke(_cells[current.X, current.Y, current.Z]);
                 current = GetCross(current)
                     .Where(c => c.Type is CellType.Empty or CellType.Inside)
                     .OrderByDescending(c => c.Temperature)
                     .First().Position;
 
-                yield return null;
+                yield return _cells[current.X, current.Y, current.Z];
             }
-
-            Console.WriteLine("Pipe generation end.");
         }
 
-        private IEnumerable BuildSpline(Vector3i from, Vector3i to)
+        private IEnumerator<Vector3> CreateFlexiblePipeSegment(Vector3i from, Vector3i to)
         {
             Vector3 current = from;
+            yield return current;
 
             while (new Vector3i((int)current.X, (int)current.Y, (int)current.Z) != to)
             {
@@ -292,12 +301,8 @@ namespace PipesDemo.Models
                     new Vector3(_cells[xc, yc, zc].Direction ?? main) * (dx)     * (dy)     * (dz);
 
                 current += direction.Normalized() * SplineStep;
-                SegmentCreated?.Invoke(current);
-
-                yield return null;
+                yield return current;
             }
-
-            Console.WriteLine("Pipe generation end.");
         }
 
         private List<Cell> AStar(Cell start, Cell goal)
@@ -305,7 +310,8 @@ namespace PipesDemo.Models
             // Set all nodes costs as infinity.
             foreach (var cell in _cells)
             {
-                cell.Temperature = float.PositiveInfinity;
+                cell.Temperature = PositiveInfinity;
+                cell.Direction = null;
             }
 
             start.Temperature = 0;
@@ -347,7 +353,7 @@ namespace PipesDemo.Models
 
         private Cell? ChooseNode(IEnumerable<Cell> reachable, Cell goal)
         {
-            float minCost = float.PositiveInfinity;
+            float minCost = PositiveInfinity;
             Cell? best = null;
 
             foreach (var node in reachable)

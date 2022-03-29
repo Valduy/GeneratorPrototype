@@ -7,99 +7,99 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using PipesDemo.Models;
-using static System.Single;
+using PipesDemo.Utils;
 
 namespace PipesDemo.Components
 {
     public class BuilderComponent : Component
     {
-        private readonly Mesh _straightPipeMesh = Utils.ObjLoader.Load("Content", "IPipe.obj");
-        private readonly Mesh _angularPipeMesh = Utils.ObjLoader.Load("Content", "LPipe.obj");
+        private IEnumerator? currentGenerator;
+        private int _index = 0;
 
-        private IEnumerator _pipeGenerator1;
-        private IEnumerator _pipeGenerator2;
-        private Vector3? _prevPosition = null;
-        private Vector3? _prevDirection = null;
         private List<GameObject> _thermometers = new();
         private List<GameObject> _vectors = new();
 
-        #region Pipe generation.
-
-        private GameObject? _tail;
-        private GameObject? _prev;
-
-        #endregion
+        private RigidPipesBuilder _rigidPipesBuilder;
+        private FlexiblePipesBuilder _flexiblePipesBuilder;
 
         public BuildingModel? Model { get; set; }
+        public IList<IEnumerator> GenerationSteps { get; set; }
 
         public override void Start()
         {
+            _rigidPipesBuilder = new RigidPipesBuilder(Engine!);
+            _flexiblePipesBuilder = new FlexiblePipesBuilder(Engine!);
+
             CreateWalls();
             Model!.TemperatureCalculated += OnTemperatureCalculated;
             Model!.VectorsCalculated += OnVectorsCalculate;
-            Model!.PipeCreated += OnPipeCreated;
-            Model!.SegmentCreated += OnSegmentCreated;
-            Model!.GraphPipeGenerated += OnGraphPipeGenerated;
-
-            //_buildingModel.GenerateGraphBasePipe(
-            //    new Vector3i(1, 1, 0),
-            //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1));
-
-            // TODO: this
-            _pipeGenerator1 = Model.GeneratePipes(
-                new Vector3i(1, 1, 0),
-                new Vector3i(Model.Width - 1, Model.Height - 1, Model.Depth - 1)
-                //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
-                )
-                .GetEnumerator();
-
-            //_pipeGenerator2 = _buildingModel.GeneratePipes(
-            //        new Vector3i(3, 1, 0),
-            //        new Vector3i(_buildingModel.Width - 7, _buildingModel.Height - 5, _buildingModel.Depth - 1)
-            //    )
-            //    .GetEnumerator();
-
-            //_pipeGenerator1 = _buildingModel.GenerateSpline(
-            //    new Vector3i(1, 1, 0),
-            //    new Vector3i(_buildingModel.Width - 7, _buildingModel.Height - 5, _buildingModel.Depth - 1))
-            //    .GetEnumerator();
-
-            //_pipeGenerator2 = _buildingModel.GenerateSpline(
-            //        new Vector3i(1, 3, 0),
-            //        new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1))
-            //    .GetEnumerator();
         }
-
-        private bool _flag = false;
 
         public override void GameUpdate(FrameEventArgs args)
         {
             if (GameObject!.Engine.Window.KeyboardState.IsKeyDown(Keys.Enter))
             {
-                if (!_pipeGenerator1.MoveNext())
-                {
-                    if (!_flag)
-                    {
-                        _thermometers.ForEach(t => Engine!.RemoveGameObject(t));
-                        _thermometers.Clear();
+                if (GenerationSteps.Count == 0) return;
 
-                        _vectors.ForEach(v => Engine!.RemoveGameObject(v));
-                        _vectors.Clear();
+                currentGenerator ??= GenerationSteps[_index];
 
-                        _tail = null;
-                        _prev = null;
-                        
-                        _pipeGenerator2 = Model.GeneratePipes(
-                                new Vector3i(1, 3, 0),
-                                new Vector3i(Model.Width - 1, Model.Height - 3, Model.Depth - 1)
-                            )
-                            .GetEnumerator();
-                        _flag = true;
-                    }
+                if (currentGenerator.MoveNext()) return;
 
-                    _pipeGenerator2.MoveNext();
-                }
+                _index = Math.Min(_index + 1, GenerationSteps.Count - 1);
+                currentGenerator = GenerationSteps[_index];
             }
+        }
+
+        public IEnumerator GenerateAStarPipe(Vector3i from, Vector3i to)
+        {
+            ResetField();
+            _rigidPipesBuilder.Reset();
+
+            var path = Model!.GenerateAStarPipe(from, to);
+
+            foreach (var cell in path)
+            {
+                _rigidPipesBuilder.CreatePipeSegment(cell);
+            }
+            
+            yield return null;
+        }
+
+        public IEnumerator GenerateRigidPipe(Vector3i from, Vector3i to)
+        {
+            ResetField();
+            _rigidPipesBuilder.Reset();
+
+            var generator = Model!.GenerateRigidPipe(from, to);
+
+            while (generator.MoveNext())
+            {
+                _rigidPipesBuilder.CreatePipeSegment(generator.Current);
+                yield return null;
+            }
+        }
+
+        public IEnumerator GenerateFlexiblePipe(Vector3i from, Vector3i to)
+        {
+            ResetField();
+            _flexiblePipesBuilder.Reset();
+
+            var generator = Model!.GenerateFlexiblePipe(from, to);
+
+            while (generator.MoveNext())
+            {
+                _flexiblePipesBuilder.CreatePipeSegment(generator.Current);
+                yield return null;
+            }
+        }
+
+        private void ResetField()
+        {
+            _thermometers.ForEach(t => Engine!.RemoveGameObject(t));
+            _thermometers.Clear();
+
+            _vectors.ForEach(v => Engine!.RemoveGameObject(v));
+            _vectors.Clear();
         }
 
         private void CreateWalls()
@@ -113,14 +113,6 @@ namespace PipesDemo.Components
                     render.Shape = Mesh.Cube;
                     wallGo.Position = cell.Position;
                 }
-            }
-        }
-
-        private void OnGraphPipeGenerated(List<Cell> cells)
-        {
-            foreach (var cell in cells)
-            {
-                OnPipeCreated(cell);
             }
         }
 
@@ -149,6 +141,9 @@ namespace PipesDemo.Components
                 }
             }
         }
+
+        private static float GetPercent(float max, float min, float value) 
+            => (value - min) / (max - min);
 
         private void OnVectorsCalculate()
         {
@@ -179,232 +174,6 @@ namespace PipesDemo.Components
                     _vectors.Add(vector);
                 }
             }
-        }
-
-        private float GetPercent(float max, float min, float value)
-        {
-            return (value - min) / (max - min);
-        }
-        
-        private void OnPipeCreated(Cell cell)
-        {
-            var pipeGo = GameObject!.Engine.CreateGameObject();
-            var render = pipeGo.Add<MeshRenderComponent>();
-            render.Shape = _straightPipeMesh;
-            render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
-            render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
-            render.Material.Specular = new Vector3(0.0f);
-            render.Material.Shininess = 32.0f;
-            pipeGo.Position = cell.Position;
-            
-            // Rotate current segment.
-            if (_prev != null)
-            {
-                if (!MathHelper.ApproximatelyEqualEpsilon(_prev.Position.X, pipeGo.Position.X, Epsilon))
-                {
-                    pipeGo.Euler = new Vector3(0, 0, 90);
-                }
-                else if (!MathHelper.ApproximatelyEqualEpsilon(_prev.Position.Z, pipeGo.Position.Z, Epsilon))
-                {
-                    pipeGo.Euler = new Vector3(-90, 0, 0);
-                }
-            }
-
-            // Rotate first segment (special case for first pipe segment).
-            if (_prev != null && _tail == null)
-            {
-                _prev.Euler = pipeGo.Euler;
-            }
-
-            // Rotate prev segment.
-            if (_tail != null)
-            {
-                if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.X, pipeGo.Position.X, Epsilon))
-                {
-                    if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Y, pipeGo.Position.Y, Epsilon))
-                    {
-                        var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _angularPipeMesh;
-                        _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
-                    }
-                    if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
-                    {
-                        var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _angularPipeMesh;
-                        _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
-                    }
-                }
-                if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Y, pipeGo.Position.Y, Epsilon))
-                {
-                    if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
-                    {
-                        var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _angularPipeMesh;
-                        _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
-                    }
-                }
-            }
-
-            _tail = _prev;
-            _prev = pipeGo;
-        }
-
-        private void OnSegmentCreated(Vector3 position)
-        {
-            var lineGo = GameObject!.Engine.CreateGameObject();
-            var render = lineGo.Add<ShapeRenderComponent>();
-            render.IsLinear = true;
-            render.Color = Colors.Green;
-
-            Vector3 prevPosition = _prevPosition ?? position;
-            Vector3 prevDirection = _prevDirection ?? Vector3.Zero;
-            Vector3 currentDirection = position - prevPosition;
-
-            render.Shape = new Shape(GetSegmentPoints(
-                prevPosition, prevDirection, position, currentDirection));
-            
-            _prevDirection = currentDirection;
-            _prevPosition = position;
-        }
-
-        private float[] GetSegmentPoints(
-            Vector3 prevPosition, 
-            Vector3 prevDirection, 
-            Vector3 currentPosition,
-            Vector3 currentDirection)
-        {
-            var result = new List<float>();
-            int pointsPerSegment = 10;
-
-            Vector3 p1 = prevPosition;
-            Vector3 p2 = currentPosition;
-            Vector3 t1 = prevDirection;
-            Vector3 t2 = currentDirection;
-
-            for (int i = 0; i <= pointsPerSegment; i++)
-            {
-                var t = (float)i / pointsPerSegment;
-                var point = Curves.Hermite(p1, p2, t1, t2, t);
-                result.Add(point.X);
-                result.Add(point.Y);
-                result.Add(point.Z);
-            }
-
-            return result.ToArray();
-        }
-
-        private Vector3 GetLPipeRotation(Vector3 from, Vector3 via, Vector3 to)
-        {
-            if (MathHelper.ApproximatelyEqualEpsilon(from.Y, via.Y, Epsilon) && 
-                MathHelper.ApproximatelyEqualEpsilon(via.Y, to.Y, Epsilon))
-            {
-                // t--v f--v
-                //    |    |
-                //    f    t
-                if (from.Z < via.Z && via.X < to.X ||
-                    from.X > via.X && via.Z > to.Z)
-                {
-                    return new Vector3(90.0f, 0.0f, 0.0f);
-                }
-                //    f    t
-                //    |    |
-                // t--v f--v
-                if (from.Z > via.Z && via.X < to.X ||
-                    from.X > via.X && via.Z < to.Z)
-                {
-                    return new Vector3(90.0f, 0.0f, 90.0f);
-                }
-                // f    t
-                // |    |
-                // v--t v--f
-                if (from.Z > via.Z && via.X > to.X ||
-                    from.X < via.X && via.Z < to.Z)
-                {
-                    return new Vector3(90.0f, 0.0f, 180.0f);
-                }
-                // v--t v--f
-                // |    |
-                // f    t
-                if (from.Z < via.Z && via.X > to.X ||
-                    from.X < via.X && via.Z > to.Z)
-                {
-                    return new Vector3(90.0f, 270.0f, 270.0f);
-                }
-            }
-            else if (MathHelper.ApproximatelyEqualEpsilon(from.Z, via.Z, Epsilon) && 
-                     MathHelper.ApproximatelyEqualEpsilon(via.Z, to.Z, Epsilon))
-            {
-                // t--v f--v
-                //    |    |
-                //    f    t
-                if (from.Y < via.Y && via.X < to.X ||
-                    from.X > via.X && via.Y > to.Y)
-                {
-                    return new Vector3(0.0f, 0.0f, 0.0f);
-                }
-                //    f    t
-                //    |    |
-                // t--v f--v
-                if (from.Y > via.Y && via.X < to.X ||
-                    from.X > via.X && via.Y < to.Y)
-                {
-                    return new Vector3(0.0f, 0.0f, 90.0f);
-                }
-                // f    t
-                // |    |
-                // v--t v--f
-                if (from.Y > via.Y && via.X > to.X ||
-                    from.X < via.X && via.Y < to.Y)
-                {
-                    return new Vector3(0.0f, 0.0f, 180.0f);
-                }
-                // v--t v--f
-                // |    |
-                // f    t
-                if (from.Y < via.Y && via.X > to.X ||
-                    from.X < via.X && via.Y > to.Y)
-                {
-                    return new Vector3(0.0f, 270.0f, 270.0f);
-                }
-            }
-            else if (MathHelper.ApproximatelyEqualEpsilon(from.X, via.X, Epsilon) &&
-                     MathHelper.ApproximatelyEqualEpsilon(via.X, to.X, Epsilon))
-            {
-                // t--v f--v
-                //    |    |
-                //    f    t
-                if (from.Y < via.Y && via.Z < to.Z ||
-                    from.Z > via.Z && via.Y > to.Y)
-                {
-                    return new Vector3(0.0f, -90.0f, 0.0f);
-                }
-                //    f    t
-                //    |    |
-                // t--v f--v
-                if (from.Y > via.Y && via.Z < to.Z ||
-                    from.Z > via.Z && via.Y < to.Y)
-                {
-                    return new Vector3(0.0f, -90.0f, 90.0f);
-                }
-                // f    t
-                // |    |
-                // v--t v--f
-                if (from.Y > via.Y && via.Z > to.Z ||
-                    from.Z < via.Z && via.Y < to.Y)
-                {
-                    return new Vector3(0.0f, -90.0f, 180.0f);
-                }
-                // v--t v--f
-                // |    |
-                // f    t
-                if (from.Y < via.Y && via.Z > to.Z ||
-                    from.Z < via.Z && via.Y > to.Y)
-                {
-                    return new Vector3(0.0f, -90.0f, 270.0f);
-                }
-            }
-
-            throw new ArgumentOutOfRangeException();
         }
     }
 }
