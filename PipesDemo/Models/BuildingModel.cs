@@ -238,6 +238,8 @@ namespace PipesDemo.Models
                     temp.Direction = next.Position - temp.Position;
                 else
                     temp.Direction = new Vector3i(0);
+                
+                WallAdjustment(temp);
 
                 var neighbours = GetCube(temp)
                     .Where(c => c.Direction == null);
@@ -246,6 +248,24 @@ namespace PipesDemo.Models
                 {
                     stack.Push(neighbour);
                 }
+            }
+        }
+
+        private void WallAdjustment(Cell cell)
+        {
+            const int scale = 4;
+
+            if (this[cell.Position + new Vector3i(cell.Direction!.Value.X, 0, 0)].Type != CellType.Wall)
+            {
+                cell.Direction = cell.Direction.Value * new Vector3i(scale, 1, 1);
+            }
+            if (this[cell.Position + new Vector3i(0, cell.Direction!.Value.Y, 0)].Type != CellType.Wall)
+            {
+                cell.Direction = cell.Direction.Value * new Vector3i(1, scale, 1);
+            }
+            if (this[cell.Position + new Vector3i(0, 0, cell.Direction!.Value.Z)].Type != CellType.Wall)
+            {
+                cell.Direction = cell.Direction.Value * new Vector3i(1, 1, scale);
             }
         }
 
