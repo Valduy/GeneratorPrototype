@@ -119,7 +119,7 @@ namespace PipesDemo.Components
         private void OnTemperatureCalculated()
         {
             var minTemperature = Model!
-                .Where(c => c.Type is CellType.Empty or CellType.Inside)
+                .Where(IsTemperatureMeasurable)
                 .OrderBy(c => c.Temperature)
                 .First().Temperature;
 
@@ -141,6 +141,10 @@ namespace PipesDemo.Components
                 }
             }
         }
+
+        bool IsTemperatureMeasurable(Cell cell) =>
+            cell.Type is CellType.Empty or CellType.Inside // Isn't empty space.
+            && !float.IsNaN(cell.Temperature); // Isn't cut off area.
 
         private static float GetPercent(float max, float min, float value) 
             => (value - min) / (max - min);

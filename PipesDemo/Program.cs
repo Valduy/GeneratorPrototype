@@ -36,7 +36,13 @@ namespace PipesDemo
                     new Vector3i(model.Width - 1, model.Height - 1, model.Depth - 1)),
                 builder.GenerateAStarPipe(
                     new Vector3i(1, 3, 0),
-                    new Vector3i(model.Width - 1, model.Height - 3, model.Depth - 1))
+                    new Vector3i(model.Width - 1, model.Height - 3, model.Depth - 1)),
+                builder.GenerateAStarPipe(
+                    new Vector3i(1, 5, 0),
+                    new Vector3i(model.Width - 1, model.Height - 5, model.Depth - 1)),
+                builder.GenerateRigidPipe(
+                    new Vector3i(3, 8, 0),
+                    new Vector3i(model.Width - 1, model.Height - 7, model.Depth - 4))
             };
 
             engine.Run();

@@ -130,7 +130,7 @@ namespace PipesDemo.Utils
                 if (from.Z < via.Z && via.X > to.X ||
                     from.X < via.X && via.Z > to.Z)
                 {
-                    return new Vector3(90.0f, 270.0f, 270.0f);
+                    return new Vector3(90.0f, 0.0f, 270.0f);
                 }
             }
             else if (MathHelper.ApproximatelyEqualEpsilon(from.Z, via.Z, Epsilon) &&
@@ -166,7 +166,7 @@ namespace PipesDemo.Utils
                 if (from.Y < via.Y && via.X > to.X ||
                     from.X < via.X && via.Y > to.Y)
                 {
-                    return new Vector3(0.0f, 270.0f, 270.0f);
+                    return new Vector3(0.0f, 180.0f, 0.0f);
                 }
             }
             else if (MathHelper.ApproximatelyEqualEpsilon(from.X, via.X, Epsilon) &&

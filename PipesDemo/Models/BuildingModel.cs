@@ -252,11 +252,12 @@ namespace PipesDemo.Models
         private IEnumerator<Cell> CreateRigidPipeSegment(Vector3i from, Vector3i to)
         {
             var current = from;
-            yield return _cells[current.X, current.Y, current.Z];
+            this[current].Type = CellType.Pipe;
+            yield return this[current];
 
             while (current != to)
             {
-                _cells[current.X, current.Y, current.Z].Type = CellType.Pipe;
+                this[current].Type = CellType.Pipe;
                 current = GetCross(current)
                     .Where(c => c.Type is CellType.Empty or CellType.Inside)
                     .OrderByDescending(c => c.Temperature)
@@ -269,6 +270,7 @@ namespace PipesDemo.Models
         private IEnumerator<Vector3> CreateFlexiblePipeSegment(Vector3i from, Vector3i to)
         {
             Vector3 current = from;
+            this[from].Type = CellType.Pipe;
             yield return current;
 
             while (new Vector3i((int)current.X, (int)current.Y, (int)current.Z) != to)
@@ -326,8 +328,7 @@ namespace PipesDemo.Models
                 reachable.Remove(node!);
                 explored.Add(node!);
 
-                var newReachable = new HashSet<Cell>(GetCross(node!)
-                        .Where(c => c.Type != CellType.Wall && c.Type != CellType.Pipe));
+                var newReachable = new HashSet<Cell>(GetCross(node!).Where(IsSuitableForPipe));
                 newReachable.ExceptWith(explored);
 
                 foreach (var adjacent in newReachable)
@@ -350,6 +351,11 @@ namespace PipesDemo.Models
 
             throw new ArgumentException("Path not found.");
         }
+
+        bool IsSuitableForPipe(Cell cell) => 
+            cell.Type is not CellType.Wall
+            && cell.Type is not CellType.Pipe;
+            //&& !IsInsideBuilding(cell);
 
         private Cell? ChooseNode(IEnumerable<Cell> reachable, Cell goal)
         {
