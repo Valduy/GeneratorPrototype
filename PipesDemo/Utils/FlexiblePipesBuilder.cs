@@ -8,6 +8,8 @@ namespace PipesDemo.Utils
 {
     public class FlexiblePipesBuilder
     {
+        private static readonly Mesh _ringMesh = ObjLoader.Load("Content", "Ring.obj");
+
         private Engine _engine;
         private Vector3? _prevPosition;
         private Vector3? _prevDirection;
@@ -34,20 +36,49 @@ namespace PipesDemo.Utils
             Vector3 prevDirection = _prevDirection ?? Vector3.Zero;
             Vector3 currentDirection = position - prevPosition;
 
-            render.Shape = new Shape(GetSegmentPoints(
-                prevPosition, prevDirection, position, currentDirection));
+            var points = GetSegmentPoints(prevPosition, prevDirection, position, currentDirection);
+            render.Shape = new Shape(ToArray(points));
+            SpawnRings(points);
 
             _prevDirection = currentDirection;
             _prevPosition = position;
         }
 
-        private float[] GetSegmentPoints(
+        private void SpawnRings(IList<Vector3> points)
+        {
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                var ringGo = _engine.CreateGameObject();
+                var render = ringGo.Add<MeshRenderComponent>();
+                render.Shape = _ringMesh;
+                render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
+                render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
+                render.Material.Specular = new Vector3(0.0f);
+                render.Material.Shininess = 32.0f;
+                ringGo.Position = points[i];
+
+                var direction = new Vector3(points[i + 1] - points[i]).Normalized();
+
+                // crutch for (0, -1, 0) case...
+                if (direction == -Vector3i.UnitY)
+                {
+                    ringGo.Euler = new Vector3(180, 0, 0);
+                }
+                else
+                {
+                    var to = new Vector3(direction).Normalized();
+                    ringGo.Rotation = Mathematics.GetRotation(Vector3.UnitY, to);
+                }
+            }
+        }
+
+        private List<Vector3> GetSegmentPoints(
             Vector3 prevPosition,
             Vector3 prevDirection,
             Vector3 currentPosition,
             Vector3 currentDirection)
         {
-            var result = new List<float>();
+            var result = new List<Vector3>();
             int pointsPerSegment = 10;
 
             Vector3 p1 = prevPosition;
@@ -58,7 +89,18 @@ namespace PipesDemo.Utils
             for (int i = 0; i <= pointsPerSegment; i++)
             {
                 var t = (float)i / pointsPerSegment;
-                var point = Curves.Hermite(p1, p2, t1, t2, t);
+                result.Add(Curves.Hermite(p1, p2, t1, t2, t));
+            }
+
+            return result;
+        }
+
+        private float[] ToArray(IEnumerable<Vector3> points)
+        {
+            var result = new List<float>();
+
+            foreach (var point in points)
+            {
                 result.Add(point.X);
                 result.Add(point.Y);
                 result.Add(point.Z);

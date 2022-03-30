@@ -39,7 +39,7 @@ namespace GameEngine.Components
 
         public override void RenderUpdate(FrameEventArgs args)
         {
-            GL.LineWidth(10);
+            //GL.LineWidth(10);
             SetupShader();
             Render();
         }

@@ -38,6 +38,12 @@
     <None Update="Content\LPipe.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Ring.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Ring.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Sample\House.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

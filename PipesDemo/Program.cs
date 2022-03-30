@@ -40,7 +40,7 @@ namespace PipesDemo
                 builder.GenerateAStarPipe(
                     new Vector3i(1, 5, 0),
                     new Vector3i(model.Width - 1, model.Height - 5, model.Depth - 1)),
-                builder.GenerateRigidPipe(
+                builder.GenerateFlexiblePipe(
                     new Vector3i(3, 8, 0),
                     new Vector3i(model.Width - 1, model.Height - 7, model.Depth - 4))
             };

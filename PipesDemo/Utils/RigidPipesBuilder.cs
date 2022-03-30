@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GameEngine.Components;
+﻿using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
@@ -14,8 +9,8 @@ namespace PipesDemo.Utils
 {
     public class RigidPipesBuilder
     {
-        private static readonly Mesh _straightPipeMesh = Utils.ObjLoader.Load("Content", "IPipe.obj");
-        private static readonly Mesh _angularPipeMesh = Utils.ObjLoader.Load("Content", "LPipe.obj");
+        private static readonly Mesh _straightPipeMesh = ObjLoader.Load("Content", "IPipe.obj");
+        private static readonly Mesh _angularPipeMesh = ObjLoader.Load("Content", "LPipe.obj");
 
         private Engine _engine;
         private GameObject? _tail;
