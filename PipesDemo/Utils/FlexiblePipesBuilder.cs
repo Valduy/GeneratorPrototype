@@ -32,16 +32,23 @@ namespace PipesDemo.Utils
             render.IsLinear = true;
             render.Color = Colors.Green;
 
-            Vector3 prevPosition = _prevPosition ?? position;
-            Vector3 prevDirection = _prevDirection ?? Vector3.Zero;
+            if (_prevPosition == null)
+            {
+                _prevPosition = position;
+                _prevDirection = Vector3.Zero;
+                return;
+            }
+
+            Vector3 prevPosition = _prevPosition!.Value;
+            Vector3 prevDirection = _prevDirection!.Value;
             Vector3 currentDirection = position - prevPosition;
 
             var points = GetSegmentPoints(prevPosition, prevDirection, position, currentDirection);
             render.Shape = new Shape(ToArray(points));
             SpawnRings(points);
 
-            _prevDirection = currentDirection;
             _prevPosition = position;
+            _prevDirection = currentDirection;
         }
 
         private void SpawnRings(IList<Vector3> points)

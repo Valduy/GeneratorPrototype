@@ -22,8 +22,8 @@ namespace PipesDemo
             var operatorGo = engine.CreateGameObject();
             operatorGo.Add<Operator3DComponent>();
             operatorGo.Add<LightComponent>();
-            //var cellLogger = operatorGo.Add<CellInfoLoggerComponent>();
-            //cellLogger.Model = buildingModel;
+            var cellLogger = operatorGo.Add<CellInfoLoggerComponent>();
+            cellLogger.Model = model;
             operatorGo.Position = new Vector3(0, 20, 0);
 
             var builderGo = engine.CreateGameObject();

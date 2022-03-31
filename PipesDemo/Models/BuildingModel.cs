@@ -360,16 +360,32 @@ namespace PipesDemo.Models
                         reachable.Add(adjacent);
                     }
 
+                    float cost = GetCost(adjacent);
+
                     // Cost recalculation.
-                    if (node!.Temperature + 1 < adjacent.Temperature)
+                    if (node!.Temperature + cost < adjacent.Temperature)
                     {
                         adjacent.Direction = node.Position - adjacent.Position;
-                        adjacent.Temperature = node.Temperature + 1;
+                        adjacent.Temperature = node.Temperature + cost;
                     }
                 }
             }
 
             throw new ArgumentException("Path not found.");
+        }
+
+        float GetCost(Cell cell)
+        {
+            if (GetCube(cell).All(IsSuitableForPipe))
+            {
+                return 10;
+            }
+            if (GetCross(cell).All(IsSuitableForPipe))
+            {
+                return 5;
+            }
+
+            return 1;
         }
 
         bool IsSuitableForPipe(Cell cell) => 

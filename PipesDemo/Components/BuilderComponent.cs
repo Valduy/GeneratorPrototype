@@ -163,15 +163,16 @@ namespace PipesDemo.Components
                     render.Material.Specular = new Vector3(0.0f);
                     vector.Position = cell.Position;
                     vector.Scale = new Vector3(0.05f, 0.5f, 0.05f);
-                    
+
+                    var to = new Vector3(cell.Direction!.Value).Normalized();
+
                     // crutch for (0, -1, 0) case...
-                    if (cell.Direction!.Value == -Vector3i.UnitY)
+                    if (to == -Vector3.UnitY)
                     {
                         vector.Euler = new Vector3(180, 0, 0);
                     }
                     else
                     {
-                        var to = new Vector3(cell.Direction!.Value).Normalized();
                         vector.Rotation = Mathematics.GetRotation(Vector3.UnitY, to);
                     }
 
