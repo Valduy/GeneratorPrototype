@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using GameEngine.Components;
 using GameEngine.Core;
-using GameEngine.Graphics;
 using OpenTK.Mathematics;
 using PipesDemo.Components;
 using PipesDemo.Models;
@@ -32,17 +31,26 @@ namespace PipesDemo
             builder.GenerationSteps = new List<IEnumerator> 
             {
                 builder.GenerateAStarPipe(
-                    new Vector3i(1, 1, 0),
-                    new Vector3i(model.Width - 1, model.Height - 1, model.Depth - 1)),
+                    new Vector3i(2, 2, 1),
+                    new Vector3i(model.Width - 2, model.Height - 3, model.Depth - 3)),
                 builder.GenerateAStarPipe(
-                    new Vector3i(1, 3, 0),
-                    new Vector3i(model.Width - 1, model.Height - 3, model.Depth - 1)),
+                    new Vector3i(2, 5, 1),
+                    new Vector3i(model.Width - 2, model.Height - 5, model.Depth - 3)),
                 builder.GenerateAStarPipe(
-                    new Vector3i(1, 5, 0),
-                    new Vector3i(model.Width - 1, model.Height - 5, model.Depth - 1)),
+                    new Vector3i(2, 7, 1),
+                    new Vector3i(model.Width - 2, model.Height - 7, model.Depth - 3)),
                 builder.GenerateFlexiblePipe(
-                    new Vector3i(3, 8, 0),
-                    new Vector3i(model.Width - 1, model.Height - 7, model.Depth - 4))
+                    new Vector3i(5, 9, 1),
+                    new Vector3i(model.Width - 2, model.Height - 6, model.Depth - 3)),
+                //builder.GenerateFlexiblePipe(
+                //    new Vector3i(2, 3, 1),
+                //    new Vector3i(model.Width - 2, model.Height - 6, model.Depth - 3)),
+                //builder.GenerateFlexiblePipe(
+                //    new Vector3i(3, 10, 0),
+                //    new Vector3i(model.Width - 1, model.Height - 4, model.Depth - 4)),
+                //builder.GenerateFlexiblePipe(
+                //    new Vector3i(3, 12, 0),
+                //    new Vector3i(model.Width - 1, model.Height - 8, model.Depth - 4))
             };
 
             engine.Run();

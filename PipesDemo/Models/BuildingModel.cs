@@ -15,7 +15,7 @@ namespace PipesDemo.Models
         public const int FloorDepth = 16;
         public const int BuildingHeight = FloorsInRow * FloorsInColumn;
 
-        public const int WallSpacing = 1;
+        public const int WallSpacing = 2;
 
         public const float MaxTemperature = 100000;
         public const float WallFactor = 100;
@@ -205,10 +205,10 @@ namespace PipesDemo.Models
                 //    c.Temperature -= WallFactor;
                 //}
 
-                if (GetCross(c).Any(n => n.Type is CellType.Pipe))
-                {
-                    c.Temperature -= PipeFactor;
-                }
+                //if (GetCross(c).Any(n => n.Type is CellType.Pipe))
+                //{
+                //    c.Temperature -= PipeFactor;
+                //}
             }
         }
 
@@ -253,7 +253,7 @@ namespace PipesDemo.Models
 
         private void WallAdjustment(Cell cell)
         {
-            const int scale = 4;
+            const int scale = 5;
 
             if (this[cell.Position + new Vector3i(cell.Direction!.Value.X, 0, 0)].Type != CellType.Wall)
             {
@@ -311,6 +311,7 @@ namespace PipesDemo.Models
                 cell.Type = CellType.Pipe;
 
                 Vector3 main = Vector3.Zero;
+                //Vector3 main = _cells[xi, yi, zi].Direction.Value;
 
                 Vector3 direction =
                     new Vector3(_cells[xi, yi, zi].Direction ?? main) * (1 - dx) * (1 - dy) * (1 - dz) +
@@ -360,7 +361,7 @@ namespace PipesDemo.Models
                         reachable.Add(adjacent);
                     }
 
-                    float cost = GetCost(adjacent);
+                    float cost = GetCost(node!, adjacent);
 
                     // Cost recalculation.
                     if (node!.Temperature + cost < adjacent.Temperature)
@@ -374,18 +375,27 @@ namespace PipesDemo.Models
             throw new ArgumentException("Path not found.");
         }
 
-        float GetCost(Cell cell)
+        float GetCost(Cell node, Cell cell)
         {
+            float modifier = 1;
+
+            if (node.Direction.HasValue && 
+                MathHelper.ApproximatelyEqualEpsilon(node.Direction.Value.EuclideanLength, 1.0f, Epsilon) &&
+                node.Direction.Value == (node.Position - cell.Position))
+            {
+                modifier = 0.5f;
+            }
+
             if (GetCube(cell).All(IsSuitableForPipe))
             {
-                return 10;
+                return 10 * modifier;
             }
             if (GetCross(cell).All(IsSuitableForPipe))
             {
-                return 5;
+                return 5 * modifier;
             }
 
-            return 1;
+            return 1 * modifier;
         }
 
         bool IsSuitableForPipe(Cell cell) => 
