@@ -15,15 +15,15 @@ namespace PipesDemo.Models
         public const int FloorDepth = 16;
         public const int BuildingHeight = FloorsInRow * FloorsInColumn;
 
-        public const int WallSpacing = 2;
+        public const int WallSpacing = 5;
 
         public const float MaxTemperature = 100000;
-        public const float WallFactor = 100;
+        public const float WallFactor = 50;
         public const float InsideFactor = 1000;
         public const float PipeFactor = 1000;
         public const float TemperatureStep = 50;
 
-        public const float SplineStep = 0.5f;
+        public const float SplineStep = 0.1f;
 
         private Cell[,,] _cells = new Cell[
             FloorWidth + WallSpacing * 2,
@@ -88,8 +88,6 @@ namespace PipesDemo.Models
 
             CalculateWarm(to.X, to.Y, to.Z);
             TemperatureCalculated?.Invoke();
-            CalculateVectors();
-            VectorsCalculated?.Invoke();
             return CreateRigidPipeSegment(from, to);
         }
 
@@ -106,8 +104,8 @@ namespace PipesDemo.Models
 
             CalculateWarm(to.X, to.Y, to.Z);
             TemperatureCalculated?.Invoke();
-            CalculateVectors();
-            VectorsCalculated?.Invoke();
+            //CalculateVectors();
+            //VectorsCalculated?.Invoke();
             return CreateFlexiblePipeSegment(from, to);
         }
 
@@ -167,20 +165,22 @@ namespace PipesDemo.Models
                 var temperature = temp.Temperature - TemperatureStep;
                 
                 var neigbours = GetCross(temp)
-                    .Where(c => IsNaN(c.Temperature) || (c.Temperature < temperature && c.Type is CellType.Empty or CellType.Inside))
+                    .Where(c => IsNaN(c.Temperature) || (c.Temperature < temperature /* && c.Type is CellType.Empty or CellType.Inside*/))
                     .ToList();
 
                 foreach (var neigbour in neigbours)
                 {
-                    if (neigbour.Type is CellType.Wall or CellType.Pipe)
-                    {
-                        neigbour.Temperature = NegativeInfinity;
-                    }
-                    else
-                    {
-                        neigbour.Temperature = temperature;
-                        stack.Push(neigbour);
-                    }
+                    //if (neigbour.Type is CellType.Wall or CellType.Pipe)
+                    //{
+                    //    neigbour.Temperature = 0;
+                    //}
+                    //else
+                    //{
+                    //    neigbour.Temperature = temperature;
+                    //    stack.Push(neigbour);
+                    //}
+                    neigbour.Temperature = temperature;
+                    stack.Push(neigbour);
                 }
             }
 
@@ -193,23 +193,36 @@ namespace PipesDemo.Models
             //    }
             //}
 
-            foreach (var c in this.Where(c => c.Type is CellType.Empty or CellType.Inside))
+            foreach (var c in this.Where(c => c.Type is CellType.Wall or CellType.Pipe))
             {
-                if (!GetCube(c).Any(n => n.Type is CellType.Wall))
+                var coldest = GetCube(c)
+                    .Where(c => c.Type is not (CellType.Wall or CellType.Pipe))
+                    .OrderBy(c => c.Temperature)
+                    .FirstOrDefault();
+
+                if (coldest != null)
                 {
-                    c.Temperature -= WallFactor;
+                    c.Temperature = coldest.Temperature/* - TemperatureStep*/;
                 }
-
-                //if (GetCross(c).Any(n => n.Type is CellType.Inside))
-                //{
-                //    c.Temperature -= WallFactor;
-                //}
-
-                //if (GetCross(c).Any(n => n.Type is CellType.Pipe))
-                //{
-                //    c.Temperature -= PipeFactor;
-                //}
             }
+
+            //foreach (var c in this.Where(c => c.Type is CellType.Empty or CellType.Inside))
+            //{
+            //if (!GetCube(c).Any(n => n.Type is (CellType.Wall or CellType.Pipe)))
+            //{
+            //    c.Temperature -= WallFactor;
+            //}
+
+            //if (GetCross(c).Any(n => n.Type is CellType.Inside))
+            //{
+            //    c.Temperature -= WallFactor;
+            //}
+
+            //if (GetCross(c).Any(n => n.Type is CellType.Pipe))
+            //{
+            //    c.Temperature -= PipeFactor;
+            //}
+            //}
         }
 
         private void ClearWarm()
@@ -230,16 +243,34 @@ namespace PipesDemo.Models
             while (stack.Any())
             {
                 var temp = stack.Pop();
-                var next = GetCube(temp)
-                    .OrderByDescending(c => c.Temperature)
-                    .First();
+                //var next = GetCube(temp)
+                //    .OrderByDescending(c => c.Temperature)
+                //    .First();
 
-                if (next.Temperature >= temp.Temperature)
-                    temp.Direction = next.Position - temp.Position;
-                else
-                    temp.Direction = new Vector3i(0);
-                
-                WallAdjustment(temp);
+                //temp.Direction = next.Temperature >= temp.Temperature
+                //    ? next.Position - temp.Position
+                //    : new Vector3i(0);
+
+                //WallAdjustment(temp);
+
+                //int xi = temp.Position.X;
+                //int yi = temp.Position.Y;
+                //int zi = temp.Position.Z;
+
+                //int xc = xi + 1;
+                //int yc = yi + 1;
+                //int zc = zi + 1;
+
+                //var grad = new Vector3(
+                //    (GetHeat(xc, yi, zi) - GetHeat(xi - 1, yi, zi)) / (xc - xi + 1),
+                //    (GetHeat(xi, yc, zi) - GetHeat(xi, yi - 1, zi)) / (yc - yi + 1),
+                //    (GetHeat(xi, yi, zc) - GetHeat(xi, yi, zi - 1)) / (zc - zi + 1));
+
+                //temp.Direction = grad;
+
+                var grad = GetGradient(temp.Position, 1.0f);
+
+                temp.Direction = grad;
 
                 var neighbours = GetCube(temp)
                     .Where(c => c.Direction == null);
@@ -251,23 +282,23 @@ namespace PipesDemo.Models
             }
         }
 
-        private void WallAdjustment(Cell cell)
-        {
-            const int scale = 5;
+        //private void WallAdjustment(Cell cell)
+        //{
+        //    const int scale = 5;
 
-            if (this[cell.Position + new Vector3i(cell.Direction!.Value.X, 0, 0)].Type != CellType.Wall)
-            {
-                cell.Direction = cell.Direction.Value * new Vector3i(scale, 1, 1);
-            }
-            if (this[cell.Position + new Vector3i(0, cell.Direction!.Value.Y, 0)].Type != CellType.Wall)
-            {
-                cell.Direction = cell.Direction.Value * new Vector3i(1, scale, 1);
-            }
-            if (this[cell.Position + new Vector3i(0, 0, cell.Direction!.Value.Z)].Type != CellType.Wall)
-            {
-                cell.Direction = cell.Direction.Value * new Vector3i(1, 1, scale);
-            }
-        }
+        //    if (this[cell.Position + new Vector3i(cell.Direction!.Value.X, 0, 0)].Type != CellType.Wall)
+        //    {
+        //        cell.Direction = cell.Direction.Value * new Vector3i(scale, 1, 1);
+        //    }
+        //    if (this[cell.Position + new Vector3i(0, cell.Direction!.Value.Y, 0)].Type != CellType.Wall)
+        //    {
+        //        cell.Direction = cell.Direction.Value * new Vector3i(1, scale, 1);
+        //    }
+        //    if (this[cell.Position + new Vector3i(0, 0, cell.Direction!.Value.Z)].Type != CellType.Wall)
+        //    {
+        //        cell.Direction = cell.Direction.Value * new Vector3i(1, 1, scale);
+        //    }
+        //}
 
         private IEnumerator<Cell> CreateRigidPipeSegment(Vector3i from, Vector3i to)
         {
@@ -293,7 +324,7 @@ namespace PipesDemo.Models
             this[from].Type = CellType.Pipe;
             yield return current;
 
-            while (new Vector3i((int)current.X, (int)current.Y, (int)current.Z) != to)
+            while (new Vector3i((int)Math.Round(current.X), (int)Math.Round(current.Y), (int)Math.Round(current.Z)) != to)
             {
                 int xi = Math.Clamp((int)MathF.Floor(current.X), 0, Width - 1);
                 int yi = Math.Clamp((int)MathF.Floor(current.Y), 0, Height - 1);
@@ -310,23 +341,94 @@ namespace PipesDemo.Models
                 var cell = _cells[xi, yi, zi];
                 cell.Type = CellType.Pipe;
 
-                Vector3 main = Vector3.Zero;
-                //Vector3 main = _cells[xi, yi, zi].Direction.Value;
+                //Vector3 main = Vector3.Zero;
+                ////Vector3 main = _cells[xi, yi, zi].Direction.Value;
+
+                //Vector3 direction =
+                //    new Vector3(_cells[xi, yi, zi].Direction ?? main) * (1 - dx) * (1 - dy) * (1 - dz) +
+                //    new Vector3(_cells[xi, yi, zc].Direction ?? main) * (1 - dx) * (1 - dy) * (dz) +
+                //    new Vector3(_cells[xi, yc, zi].Direction ?? main) * (1 - dx) * (dy) * (1 - dz) +
+                //    new Vector3(_cells[xi, yc, zc].Direction ?? main) * (1 - dx) * (dy) * (dz) +
+                //    new Vector3(_cells[xc, yi, zi].Direction ?? main) * (dx) * (1 - dy) * (1 - dz) +
+                //    new Vector3(_cells[xc, yi, zc].Direction ?? main) * (dx) * (1 - dy) * (dz) +
+                //    new Vector3(_cells[xc, yc, zi].Direction ?? main) * (dx) * (dy) * (1 - dz) +
+                //    new Vector3(_cells[xc, yc, zc].Direction ?? main) * (dx) * (dy) * (dz);
+
+                //current += direction.Normalized() * SplineStep;
+
+                float h = 1.0f;
 
                 Vector3 direction =
-                    new Vector3(_cells[xi, yi, zi].Direction ?? main) * (1 - dx) * (1 - dy) * (1 - dz) +
-                    new Vector3(_cells[xi, yi, zc].Direction ?? main) * (1 - dx) * (1 - dy) * (dz) +
-                    new Vector3(_cells[xi, yc, zi].Direction ?? main) * (1 - dx) * (dy)     * (1 - dz) +
-                    new Vector3(_cells[xi, yc, zc].Direction ?? main) * (1 - dx) * (dy)     * (dz) +
-                    new Vector3(_cells[xc, yi, zi].Direction ?? main) * (dx)     * (1 - dy) * (1 - dz) +
-                    new Vector3(_cells[xc, yi, zc].Direction ?? main) * (dx)     * (1 - dy) * (dz) +
-                    new Vector3(_cells[xc, yc, zi].Direction ?? main) * (dx)     * (dy)     * (1 - dz) +
-                    new Vector3(_cells[xc, yc, zc].Direction ?? main) * (dx)     * (dy)     * (dz);
+                    new Vector3(GetGradient(xi, yi, zi, h)) * (1 - dx) * (1 - dy) * (1 - dz) +
+                    new Vector3(GetGradient(xi, yi, zc, h)) * (1 - dx) * (1 - dy) * (dz) +
+                    new Vector3(GetGradient(xi, yc, zi, h)) * (1 - dx) * (dy) * (1 - dz) +
+                    new Vector3(GetGradient(xi, yc, zc, h)) * (1 - dx) * (dy) * (dz) +
+                    new Vector3(GetGradient(xc, yi, zi, h)) * (dx) * (1 - dy) * (1 - dz) +
+                    new Vector3(GetGradient(xc, yi, zc, h)) * (dx) * (1 - dy) * (dz) +
+                    new Vector3(GetGradient(xc, yc, zi, h)) * (dx) * (dy) * (1 - dz) +
+                    new Vector3(GetGradient(xc, yc, zc, h)) * (dx) * (dy) * (dz);
 
+                Console.WriteLine(direction);
                 current += direction.Normalized() * SplineStep;
+
                 yield return current;
             }
+
+            yield return to;
         }
+
+        Vector3 GetGradient(Vector3 args, float h) 
+            => GetGradient(args.X, args.Y, args.Z, h);
+
+        Vector3 GetGradient(float x, float y, float z, float h)
+        {
+            return new Vector3(
+                (GetHeat(x + h, y, z) - GetHeat(x - h, y, z)) / (2 * h),
+                (GetHeat(x, y + h, z) - GetHeat(x, y - h, z)) / (2 * h),
+                (GetHeat(x, y, z + h) - GetHeat(x, y, z - h)) / (2 * h));
+        }
+
+        float GetHeat(Vector3 args) 
+            => GetHeat(args.X, args.Y, args.Z);
+
+        float GetHeat(float x, float y, float z)
+        {
+            if (x < 0 || y < 0 || z < 0 || x >= Width - 1 || y >= Height - 1 || z >= Depth - 1)
+            {
+                return 0;
+            }
+
+            int xf = (int)MathF.Floor(x);
+            int yf = (int)MathF.Floor(y);
+            int zf = (int)MathF.Floor(z);
+
+            int xc = xf + 1;
+            int yc = yf + 1;
+            int zc = zf + 1;
+
+            float denominator = (xc - xf) * (yc - yf) * (zc - zf);
+
+            var result =
+                _cells[xf, yf, zf].Temperature / denominator * (xc - x) * (yc - y) * (zc - z) +
+                _cells[xc, yf, zf].Temperature / denominator * (x - xf) * (yc - y) * (zc - z) +
+                _cells[xc, yf, zc].Temperature / denominator * (x - xf) * (yc - y) * (z - zf) +
+                _cells[xc, yc, zf].Temperature / denominator * (x - xf) * (y - yf) * (zc - z) +
+                _cells[xc, yc, zc].Temperature / denominator * (x - xf) * (y - yf) * (z - zf);
+
+            return result;
+
+            //return _cells[(int) Math.Round(x), (int) Math.Round(y), (int) Math.Round(z)].Temperature;
+        }
+
+        //float GetHeat(int x, int y, int z)
+        //{
+        //    if (x < 0 || y < 0 || z < 0 || x >= Width || y >= Height || z >= Depth)
+        //    {
+        //        return 0;
+        //    }
+
+        //    return _cells[x, y, z].Temperature;
+        //}
 
         private List<Cell> AStar(Cell start, Cell goal)
         {
@@ -334,7 +436,7 @@ namespace PipesDemo.Models
             foreach (var cell in _cells)
             {
                 cell.Temperature = PositiveInfinity;
-                cell.Direction = null;
+                cell.Prev = null;
             }
 
             start.Temperature = 0;
@@ -366,7 +468,7 @@ namespace PipesDemo.Models
                     // Cost recalculation.
                     if (node!.Temperature + cost < adjacent.Temperature)
                     {
-                        adjacent.Direction = node.Position - adjacent.Position;
+                        adjacent.Prev = node;
                         adjacent.Temperature = node.Temperature + cost;
                     }
                 }
@@ -379,9 +481,9 @@ namespace PipesDemo.Models
         {
             float modifier = 1;
 
-            if (node.Direction.HasValue && 
-                MathHelper.ApproximatelyEqualEpsilon(node.Direction.Value.EuclideanLength, 1.0f, Epsilon) &&
-                node.Direction.Value == (node.Position - cell.Position))
+            if (node.Prev != null && 
+                MathHelper.ApproximatelyEqualEpsilon((node.Prev.Position - node.Position).EuclideanLength, 1.0f, Epsilon) &&
+                node.Prev.Position - node.Position == node.Position - cell.Position)
             {
                 modifier = 0.5f;
             }
@@ -433,13 +535,13 @@ namespace PipesDemo.Models
         {
             var path = new List<Cell>();
 
-            while (node.Direction != null)
+            while (node.Prev != null)
             {
-                var prev = this[node.Position + node.Direction.Value];
-                path.Add(prev);
-                node = prev;
+                path.Add(node);
+                node = node.Prev;
             }
 
+            path.Add(node);
             return path;
         }
 

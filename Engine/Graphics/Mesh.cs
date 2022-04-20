@@ -7,7 +7,6 @@ namespace GameEngine.Graphics
         private readonly float[] _vertices;
 
         public int Count => _vertices.Length;
-        public IReadOnlyList<float> Vertices => _vertices;
 
         public Mesh(float[] vertices)
         {
@@ -97,7 +96,6 @@ namespace GameEngine.Graphics
              0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
             -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
             -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
         });
     }
 }

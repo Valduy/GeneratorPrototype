@@ -15,7 +15,7 @@ namespace PipesDemo.Models
     {
         private CellType _type = CellType.Empty;
         private float _temperature = NaN;
-        private Vector3i? _direction = null;
+        private Vector3? _direction = null;
 
         public BuildingModel Model { get; }
         public Vector3i Position { get; }
@@ -42,7 +42,7 @@ namespace PipesDemo.Models
             }
         }
 
-        public Vector3i? Direction
+        public Vector3? Direction
         {
             get => _direction;
             set
@@ -52,6 +52,8 @@ namespace PipesDemo.Models
                 DirectionChanged?.Invoke(this);
             }
         }
+
+        public Cell? Prev { get; set; }
 
         public event Action<Cell> TypeChanged;
         public event Action<Cell> TemperatureChanged;

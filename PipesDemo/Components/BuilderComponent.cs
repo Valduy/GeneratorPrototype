@@ -31,8 +31,8 @@ namespace PipesDemo.Components
             _flexiblePipesBuilder = new FlexiblePipesBuilder(Engine!);
 
             CreateWalls();
-            Model!.TemperatureCalculated += OnTemperatureCalculated;
-            Model!.VectorsCalculated += OnVectorsCalculate;
+            //Model!.TemperatureCalculated += OnTemperatureCalculated;
+            //Model!.VectorsCalculated += OnVectorsCalculate;
         }
 
         public override void GameUpdate(FrameEventArgs args)
@@ -164,7 +164,7 @@ namespace PipesDemo.Components
                     vector.Position = cell.Position;
                     vector.Scale = new Vector3(0.05f, 0.5f, 0.05f);
 
-                    var to = new Vector3(cell.Direction!.Value).Normalized();
+                    var to = cell.Direction!.Value.Normalized();
 
                     // crutch for (0, -1, 0) case...
                     if (to == -Vector3.UnitY)

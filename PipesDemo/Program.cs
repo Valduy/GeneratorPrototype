@@ -31,17 +31,41 @@ namespace PipesDemo
             builder.GenerationSteps = new List<IEnumerator> 
             {
                 builder.GenerateAStarPipe(
-                    new Vector3i(2, 2, 1),
-                    new Vector3i(model.Width - 2, model.Height - 3, model.Depth - 3)),
+                    new Vector3i(
+                        BuildingModel.WallSpacing,
+                        BuildingModel.WallSpacing,
+                        BuildingModel.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - BuildingModel.WallSpacing,
+                        model.Height - BuildingModel.WallSpacing - 1,
+                        model.Depth - BuildingModel.WallSpacing - 1)),
                 builder.GenerateAStarPipe(
-                    new Vector3i(2, 5, 1),
-                    new Vector3i(model.Width - 2, model.Height - 5, model.Depth - 3)),
+                    new Vector3i(
+                        BuildingModel.WallSpacing,
+                        BuildingModel.WallSpacing + 3,
+                        BuildingModel.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - BuildingModel.WallSpacing,
+                        model.Height - BuildingModel.WallSpacing - 3,
+                        model.Depth - BuildingModel.WallSpacing - 1)),
                 builder.GenerateAStarPipe(
-                    new Vector3i(2, 7, 1),
-                    new Vector3i(model.Width - 2, model.Height - 7, model.Depth - 3)),
+                    new Vector3i(
+                        BuildingModel.WallSpacing,
+                        BuildingModel.WallSpacing + 5,
+                        BuildingModel.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - BuildingModel.WallSpacing,
+                        model.Height - BuildingModel.WallSpacing - 5,
+                        model.Depth - BuildingModel.WallSpacing - 1)),
                 builder.GenerateFlexiblePipe(
-                    new Vector3i(5, 9, 1),
-                    new Vector3i(model.Width - 2, model.Height - 6, model.Depth - 3)),
+                    new Vector3i(
+                        BuildingModel.WallSpacing + 3,
+                        BuildingModel.WallSpacing + 7,
+                        BuildingModel.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - BuildingModel.WallSpacing,
+                        model.Height - BuildingModel.WallSpacing - 7,
+                        model.Depth - BuildingModel.WallSpacing - 3)),
                 //builder.GenerateFlexiblePipe(
                 //    new Vector3i(2, 3, 1),
                 //    new Vector3i(model.Width - 2, model.Height - 6, model.Depth - 3)),

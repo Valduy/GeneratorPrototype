@@ -86,7 +86,7 @@ namespace PipesDemo.Utils
             Vector3 currentDirection)
         {
             var result = new List<Vector3>();
-            int pointsPerSegment = 10;
+            int pointsPerSegment = 2;
 
             Vector3 p1 = prevPosition;
             Vector3 p2 = currentPosition;
