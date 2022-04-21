@@ -15,7 +15,7 @@ namespace PipesDemo
             engine.Light.Ambient = new(1);
             engine.Light.Diffuse = new(1);
 
-            var model = new BuildingModel();
+            var model = new Grid();
             model.Load("Sample/House.bmp");
 
             var operatorGo = engine.CreateGameObject();
@@ -32,40 +32,40 @@ namespace PipesDemo
             {
                 builder.GenerateAStarPipe(
                     new Vector3i(
-                        BuildingModel.WallSpacing,
-                        BuildingModel.WallSpacing,
-                        BuildingModel.WallSpacing - 1),
+                        Grid.WallSpacing,
+                        Grid.WallSpacing,
+                        Grid.WallSpacing - 1),
                     new Vector3i(
-                        model.Width - BuildingModel.WallSpacing,
-                        model.Height - BuildingModel.WallSpacing - 1,
-                        model.Depth - BuildingModel.WallSpacing - 1)),
+                        model.Width - Grid.WallSpacing,
+                        model.Height - Grid.WallSpacing - 1,
+                        model.Depth - Grid.WallSpacing - 1)),
                 builder.GenerateAStarPipe(
                     new Vector3i(
-                        BuildingModel.WallSpacing,
-                        BuildingModel.WallSpacing + 3,
-                        BuildingModel.WallSpacing - 1),
+                        Grid.WallSpacing,
+                        Grid.WallSpacing + 3,
+                        Grid.WallSpacing - 1),
                     new Vector3i(
-                        model.Width - BuildingModel.WallSpacing,
-                        model.Height - BuildingModel.WallSpacing - 3,
-                        model.Depth - BuildingModel.WallSpacing - 1)),
+                        model.Width - Grid.WallSpacing,
+                        model.Height - Grid.WallSpacing - 3,
+                        model.Depth - Grid.WallSpacing - 1)),
                 builder.GenerateAStarPipe(
                     new Vector3i(
-                        BuildingModel.WallSpacing,
-                        BuildingModel.WallSpacing + 5,
-                        BuildingModel.WallSpacing - 1),
+                        Grid.WallSpacing,
+                        Grid.WallSpacing + 5,
+                        Grid.WallSpacing - 1),
                     new Vector3i(
-                        model.Width - BuildingModel.WallSpacing,
-                        model.Height - BuildingModel.WallSpacing - 5,
-                        model.Depth - BuildingModel.WallSpacing - 1)),
-                builder.GenerateFlexiblePipe(
+                        model.Width - Grid.WallSpacing,
+                        model.Height - Grid.WallSpacing - 5,
+                        model.Depth - Grid.WallSpacing - 1)),
+                builder.GenerateRigidPipe(
                     new Vector3i(
-                        BuildingModel.WallSpacing + 3,
-                        BuildingModel.WallSpacing + 7,
-                        BuildingModel.WallSpacing - 1),
+                        Grid.WallSpacing + 3,
+                        Grid.WallSpacing + 7,
+                        Grid.WallSpacing - 1),
                     new Vector3i(
-                        model.Width - BuildingModel.WallSpacing,
-                        model.Height - BuildingModel.WallSpacing - 7,
-                        model.Depth - BuildingModel.WallSpacing - 3)),
+                        model.Width - Grid.WallSpacing + 1,
+                        model.Height - Grid.WallSpacing - 7,
+                        model.Depth - Grid.WallSpacing - 2)),
                 //builder.GenerateFlexiblePipe(
                 //    new Vector3i(2, 3, 1),
                 //    new Vector3i(model.Width - 2, model.Height - 6, model.Depth - 3)),

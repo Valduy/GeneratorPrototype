@@ -17,7 +17,7 @@ namespace PipesDemo.Models
         private float _temperature = NaN;
         private Vector3? _direction = null;
 
-        public BuildingModel Model { get; }
+        public Grid Model { get; }
         public Vector3i Position { get; }
 
         public CellType Type
@@ -59,7 +59,7 @@ namespace PipesDemo.Models
         public event Action<Cell> TemperatureChanged;
         public event Action<Cell> DirectionChanged;
 
-        public Cell(BuildingModel model, int x, int y, int z)
+        public Cell(Grid model, int x, int y, int z)
             : this(new Vector3i(x, y, z))
         {
             Model = model;

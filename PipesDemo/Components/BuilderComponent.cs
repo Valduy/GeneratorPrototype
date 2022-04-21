@@ -6,7 +6,9 @@ using GameEngine.Mathematics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using PipesDemo.Algorithms;
 using PipesDemo.Models;
+using PipesDemo.Models.Utils;
 using PipesDemo.Utils;
 
 namespace PipesDemo.Components
@@ -22,7 +24,7 @@ namespace PipesDemo.Components
         private RigidPipesBuilder _rigidPipesBuilder;
         private FlexiblePipesBuilder _flexiblePipesBuilder;
 
-        public BuildingModel? Model { get; set; }
+        public Grid? Model { get; set; }
         public IList<IEnumerator> GenerationSteps { get; set; }
 
         public override void Start()
@@ -31,8 +33,6 @@ namespace PipesDemo.Components
             _flexiblePipesBuilder = new FlexiblePipesBuilder(Engine!);
 
             CreateWalls();
-            //Model!.TemperatureCalculated += OnTemperatureCalculated;
-            //Model!.VectorsCalculated += OnVectorsCalculate;
         }
 
         public override void GameUpdate(FrameEventArgs args)
@@ -70,6 +70,8 @@ namespace PipesDemo.Components
             ResetField();
             _rigidPipesBuilder.Reset();
 
+            Model!.CalculateWarmBreathFirst(to);
+            //Model!.CalculateWarm(to);
             var generator = Model!.GenerateRigidPipe(from, to);
 
             while (generator.MoveNext())
@@ -84,11 +86,22 @@ namespace PipesDemo.Components
             ResetField();
             _flexiblePipesBuilder.Reset();
 
+            Model!.CalculateWarmBreathFirst(to);
+            //Model!.CalculateWarm(to);
+            //VisualizeTemperature();
+            //Model!.CalculateVectors();
+            //VisualizeVectors();
             var generator = Model!.GenerateFlexiblePipe(from, to);
+
+            Vector3 prev = from;
+            Vector3 next;
 
             while (generator.MoveNext())
             {
-                _flexiblePipesBuilder.CreatePipeSegment(generator.Current);
+                next = generator.Current;
+                CreateVector(prev, next - prev);
+                _flexiblePipesBuilder.CreatePipeSegment(next);
+                prev = next;
                 yield return null;
             }
         }
@@ -106,7 +119,7 @@ namespace PipesDemo.Components
         {
             foreach (var cell in Model)
             {
-                if (cell.Type is CellType.Wall)
+                if (cell.IsWall())
                 {
                     var wallGo = Engine!.CreateGameObject();
                     var render = wallGo.Add<MeshRenderComponent>();
@@ -116,7 +129,7 @@ namespace PipesDemo.Components
             }
         }
 
-        private void OnTemperatureCalculated()
+        private void VisualizeTemperature()
         {
             var minTemperature = Model!
                 .Where(IsTemperatureMeasurable)
@@ -130,7 +143,7 @@ namespace PipesDemo.Components
                     var thermometer = Engine!.CreateGameObject();
                     var render = thermometer.Add<MeshRenderComponent>();
                     render.Shape = Mesh.Cube;
-                    var percent = GetPercent(BuildingModel.MaxTemperature, minTemperature, cell.Temperature);
+                    var percent = GetPercent(FieldAlgorithms.MaxTemperature, minTemperature, cell.Temperature);
                     var color = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
                     render.Material.Ambient = color;
                     render.Material.Diffuse = color;
@@ -143,42 +156,47 @@ namespace PipesDemo.Components
         }
 
         bool IsTemperatureMeasurable(Cell cell) =>
-            cell.Type is CellType.Empty or CellType.Inside // Isn't empty space.
+            cell.IsFree() // Isn't empty space.
             && !float.IsNaN(cell.Temperature); // Isn't cut off area.
 
         private static float GetPercent(float max, float min, float value) 
             => (value - min) / (max - min);
 
-        private void OnVectorsCalculate()
+        private void VisualizeVectors()
         {
             foreach (var cell in Model!)
             {
                 if (cell.Type is CellType.Empty or CellType.Inside)
                 {
-                    var vector = Engine!.CreateGameObject();
-                    var render = vector.Add<MeshRenderComponent>();
-                    render.Shape = Mesh.Pyramid;
-                    render.Material.Ambient = Colors.Blue;
-                    render.Material.Diffuse = Colors.Blue;
-                    render.Material.Specular = new Vector3(0.0f);
-                    vector.Position = cell.Position;
-                    vector.Scale = new Vector3(0.05f, 0.5f, 0.05f);
-
-                    var to = cell.Direction!.Value.Normalized();
-
-                    // crutch for (0, -1, 0) case...
-                    if (to == -Vector3.UnitY)
-                    {
-                        vector.Euler = new Vector3(180, 0, 0);
-                    }
-                    else
-                    {
-                        vector.Rotation = Mathematics.GetRotation(Vector3.UnitY, to);
-                    }
-
-                    _vectors.Add(vector);
+                    CreateVector(cell.Position, cell.Direction!.Value);
                 }
             }
+        }
+
+        private void CreateVector(Vector3 position, Vector3 direction)
+        {
+            var vector = Engine!.CreateGameObject();
+            var render = vector.Add<MeshRenderComponent>();
+            render.Shape = Mesh.Pyramid;
+            render.Material.Ambient = Colors.Blue;
+            render.Material.Diffuse = Colors.Blue;
+            render.Material.Specular = new Vector3(0.0f);
+            vector.Position = position;
+            vector.Scale = new Vector3(0.05f, 0.5f, 0.05f);
+
+            var to = direction.Normalized();
+
+            // crutch for (0, -1, 0) case...
+            if (to == -Vector3.UnitY)
+            {
+                vector.Euler = new Vector3(180, 0, 0);
+            }
+            else
+            {
+                vector.Rotation = Mathematics.GetRotation(Vector3.UnitY, to);
+            }
+
+            _vectors.Add(vector);
         }
     }
 }
