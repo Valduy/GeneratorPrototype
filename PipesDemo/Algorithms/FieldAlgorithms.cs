@@ -6,7 +6,7 @@ namespace PipesDemo.Algorithms
 {
     public static class FieldAlgorithms
     {
-        public const float MaxTemperature = 100000;
+        public const float MaxTemperature = 1000;
         public const float TemperatureStep = 50;
 
         public static void CalculateWarm(this Grid grid, Vector3i hearth)
@@ -54,7 +54,7 @@ namespace PipesDemo.Algorithms
             while (frontier.Any())
             {
                 var temp = frontier.Dequeue();
-                var reachable = grid.GetCube(temp)
+                var reachable = grid.GetCross(temp)
                     .Where(c => !visited.Contains(c))
                     .ToList();
 
@@ -65,6 +65,71 @@ namespace PipesDemo.Algorithms
                     frontier.Enqueue(adjacent);
                     visited.Add(adjacent);
                 }
+            }
+        }
+
+        public static void CalculateWarmHeatTransfer(this Grid grid, Vector3i hearth)
+            => grid.CalculateWarmHeatTransfer(hearth.X, hearth.Y, hearth.Z);
+
+        public static void CalculateWarmHeatTransfer(this Grid grid, int x, int y, int z)
+        {
+            grid.ZeroWarm();
+            grid[x, y, z].Temperature = MaxTemperature;
+
+            for (int t = 1; t < 16 * 16 * 16; t++)
+            {
+                grid[x, y, z].Temperature = MaxTemperature;
+
+                for (int i = 1; i < grid.Width - 1; i++)
+                {
+                    for (int j = 1; j < grid.Height - 1; j++)
+                    {
+                        for (int k = 1; k < grid.Depth - 1; k++)
+                        {
+                            grid[x, y, z].Temperature = MaxTemperature;
+                            float coefficient = grid.GetCoefficient(i, j, k);
+                            float tau = 100;
+                            grid[i, j, k].Temperature += coefficient * tau * grid.Derivative2(i, j, k);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static float GetCoefficient(this Grid grid, int x, int y, int z)
+        {
+            float coefficient;
+
+            if (grid[x, y, z].IsFree())
+            {
+                coefficient = grid.IsNearWall(new Vector3i(x, y, z)) ? 0.01f : 0.0000001f;
+            }
+            else
+            {
+                coefficient = 0.0f;
+            }
+
+            return coefficient;
+        }
+
+        private static float Derivative2(this Grid grid, int x, int y, int z)
+            => grid.DerivativeX2(x, y, z) + grid.DerivativeY2(x, y, z) + grid.DerivativeZ2(x, y, z);
+
+        private static float DerivativeX2(this Grid grid, int x, int y, int z) 
+            => (grid[x + 1, y, z].Temperature - 2 * grid[x, y, z].Temperature + grid[x - 1, y, z].Temperature) / 4;
+
+        private static float DerivativeY2(this Grid grid, int x, int y, int z)
+            => (grid[x, y + 1, z].Temperature - 2 * grid[x, y, z].Temperature + grid[x, y - 1, z].Temperature) / 4;
+
+        private static float DerivativeZ2(this Grid grid, int x, int y, int z)
+            => (grid[x, y, z + 1].Temperature - 2 * grid[x, y, z].Temperature + grid[x, y, z - 1].Temperature) / 4;
+
+        public static void ZeroWarm(this Grid grid)
+        {
+            foreach (var cell in grid)
+            {
+                cell.Temperature = 0;
+                cell.Direction = Vector3.Zero;
             }
         }
 

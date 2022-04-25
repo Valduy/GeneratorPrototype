@@ -16,8 +16,14 @@ namespace PipesDemo.Models.Utils
         public static bool IsWall(this Cell cell)
             => cell.Type is CellType.Wall;
 
+        public static bool IsNearWall(this Grid grid, Cell cell)
+            => grid.IsNearWall(cell.Position);
+
+        public static bool IsNearWall(this Grid grid, Vector3i position) 
+            => grid.GetCross(position).Any(IsWall);
+
         public static bool IsInsideBuilding(this Grid grid, Cell cell)
-            => IsInsideBuilding(grid, cell.Position);
+            => grid.IsInsideBuilding(cell.Position);
 
         public static bool IsInsideBuilding(this Grid grid, Vector3i position)
         {

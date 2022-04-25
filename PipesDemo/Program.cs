@@ -57,13 +57,19 @@ namespace PipesDemo
                         model.Width - Grid.WallSpacing,
                         model.Height - Grid.WallSpacing - 5,
                         model.Depth - Grid.WallSpacing - 1)),
-                builder.GenerateRigidPipe(
+                //builder.GenerateFlexiblePipe(
+                //    new Vector3i(
+                //        Grid.WallSpacing + 3,
+                //        Grid.WallSpacing + 7,
+                //        Grid.WallSpacing - 1),
+                //    new Vector3i(2, 2, 2)),
+                builder.GenerateFlexiblePipe(
                     new Vector3i(
                         Grid.WallSpacing + 3,
                         Grid.WallSpacing + 7,
                         Grid.WallSpacing - 1),
                     new Vector3i(
-                        model.Width - Grid.WallSpacing + 1,
+                        model.Width - Grid.WallSpacing,
                         model.Height - Grid.WallSpacing - 7,
                         model.Depth - Grid.WallSpacing - 2)),
                 //builder.GenerateFlexiblePipe(

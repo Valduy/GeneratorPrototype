@@ -86,7 +86,8 @@ namespace PipesDemo.Components
             ResetField();
             _flexiblePipesBuilder.Reset();
 
-            Model!.CalculateWarmBreathFirst(to);
+            //Model!.CalculateWarmBreathFirst(to);
+            Model!.CalculateWarmHeatTransfer(to);
             //Model!.CalculateWarm(to);
             //VisualizeTemperature();
             //Model!.CalculateVectors();

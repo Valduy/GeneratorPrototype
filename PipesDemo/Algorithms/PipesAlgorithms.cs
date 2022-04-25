@@ -39,7 +39,7 @@ namespace PipesDemo.Algorithms
 
         #region FlexiblePipe
 
-        public const float SplineStep = 0.05f;
+        public const float SplineStep = 0.5f;
 
         public static IEnumerator<Vector3> GenerateFlexiblePipe(this Grid grid, Vector3i from, Vector3i to)
         {
@@ -82,7 +82,7 @@ namespace PipesDemo.Algorithms
             float dy = point.Y - yi;
             float dz = point.Z - zi;
 
-            float h = 1.0f;
+            float h = 0.5f;
 
             Vector3 c000 = grid.GetGradient(xi, yi, zi, h);
             Vector3 c001 = grid.GetGradient(xi, yi, zc, h);
