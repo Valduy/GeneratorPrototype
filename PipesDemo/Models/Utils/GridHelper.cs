@@ -16,6 +16,9 @@ namespace PipesDemo.Models.Utils
         public static bool IsWall(this Cell cell)
             => cell.Type is CellType.Wall;
 
+        public static bool IsWallOrPipe(this Cell cell)
+            => cell.IsWall() || cell.IsPipe();
+
         public static bool IsNearWall(this Grid grid, Cell cell)
             => grid.IsNearWall(cell.Position);
 

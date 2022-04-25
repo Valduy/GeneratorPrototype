@@ -83,6 +83,9 @@ namespace PipesDemo.Components
 
         public IEnumerator GenerateFlexiblePipe(Vector3i from, Vector3i to)
         {
+            if (Model![from].IsWallOrPipe()) throw new Exception();
+            if (Model![to].IsWallOrPipe()) throw new Exception();
+
             ResetField();
             _flexiblePipesBuilder.Reset();
 

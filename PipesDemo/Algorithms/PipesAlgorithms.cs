@@ -59,7 +59,13 @@ namespace PipesDemo.Algorithms
             while (new Vector3i((int)Math.Round(current.X), (int)Math.Round(current.Y), (int)Math.Round(current.Z)) != to)
             {
                 Vector3 direction = grid.Bilinear(current);
-                //Console.WriteLine(direction);
+
+                if (MathHelper.ApproximatelyEqualEpsilon(direction.Length, 0, float.Epsilon))
+                {
+                    direction *= 100000000;
+                }
+
+                Console.WriteLine(direction);
                 current += direction.Normalized() * SplineStep;
 
                 yield return current;
@@ -82,7 +88,7 @@ namespace PipesDemo.Algorithms
             float dy = point.Y - yi;
             float dz = point.Z - zi;
 
-            float h = 0.5f;
+            float h = 1.0f;
 
             Vector3 c000 = grid.GetGradient(xi, yi, zi, h);
             Vector3 c001 = grid.GetGradient(xi, yi, zc, h);

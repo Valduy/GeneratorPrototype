@@ -57,12 +57,42 @@ namespace PipesDemo
                         model.Width - Grid.WallSpacing,
                         model.Height - Grid.WallSpacing - 5,
                         model.Depth - Grid.WallSpacing - 1)),
-                //builder.GenerateFlexiblePipe(
-                //    new Vector3i(
-                //        Grid.WallSpacing + 3,
-                //        Grid.WallSpacing + 7,
-                //        Grid.WallSpacing - 1),
-                //    new Vector3i(2, 2, 2)),
+                builder.GenerateAStarPipe(
+                    new Vector3i(
+                        Grid.WallSpacing,
+                        Grid.WallSpacing + 7,
+                        Grid.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - Grid.WallSpacing,
+                        model.Height - Grid.WallSpacing - 7,
+                        model.Depth - Grid.WallSpacing - 1)),
+                builder.GenerateAStarPipe(
+                    new Vector3i(
+                        Grid.WallSpacing,
+                        Grid.WallSpacing + 11,
+                        Grid.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - Grid.WallSpacing,
+                        model.Height - Grid.WallSpacing - 11,
+                        model.Depth - Grid.WallSpacing - 1)),
+                builder.GenerateAStarPipe(
+                    new Vector3i(
+                        Grid.WallSpacing,
+                        Grid.WallSpacing + 13,
+                        Grid.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - Grid.WallSpacing,
+                        model.Height - Grid.WallSpacing - 13,
+                        model.Depth - Grid.WallSpacing - 1)),
+                builder.GenerateAStarPipe(
+                    new Vector3i(
+                        Grid.WallSpacing,
+                        Grid.WallSpacing + 15,
+                        Grid.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - Grid.WallSpacing,
+                        model.Height - Grid.WallSpacing - 15,
+                        model.Depth - Grid.WallSpacing - 1)),
                 builder.GenerateFlexiblePipe(
                     new Vector3i(
                         Grid.WallSpacing + 3,
@@ -71,7 +101,16 @@ namespace PipesDemo
                     new Vector3i(
                         model.Width - Grid.WallSpacing,
                         model.Height - Grid.WallSpacing - 7,
-                        model.Depth - Grid.WallSpacing - 2)),
+                        model.Depth - Grid.WallSpacing - 3)),
+                builder.GenerateFlexiblePipe(
+                    new Vector3i(
+                        Grid.WallSpacing + 4,
+                        Grid.WallSpacing + 10,
+                        Grid.WallSpacing - 1),
+                    new Vector3i(
+                        model.Width - Grid.WallSpacing,
+                        model.Height - Grid.WallSpacing - 9,
+                        model.Depth - Grid.WallSpacing - 3)),
                 //builder.GenerateFlexiblePipe(
                 //    new Vector3i(2, 3, 1),
                 //    new Vector3i(model.Width - 2, model.Height - 6, model.Depth - 3)),
@@ -85,37 +124,5 @@ namespace PipesDemo
 
             engine.Run();
         }
-
-        //_pipeGenerator1 = GenerateRigidPipe(
-        //new Vector3i(1, 1, 0),
-        //new Vector3i(Model!.Width - 1, Model!.Height - 1, Model!.Depth - 1));
-
-        //_buildingModel.GenerateGraphBasePipe(
-        //    new Vector3i(1, 1, 0),
-        //    new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 1, _buildingModel.Depth - 1));
-
-        // TODO: this
-        //_pipeGenerator1 = Model.GeneratePipes(
-        //    new Vector3i(1, 1, 0),
-        //    new Vector3i(Model.Width - 1, Model.Height - 1, Model.Depth - 1)
-        //    //new Vector3i(_buildingModel.Width - 10, _buildingModel.Height -7, _buildingModel.Depth - 10)
-        //    )
-        //    .GetEnumerator();
-
-        //_pipeGenerator2 = _buildingModel.GeneratePipes(
-        //        new Vector3i(3, 1, 0),
-        //        new Vector3i(_buildingModel.Width - 7, _buildingModel.Height - 5, _buildingModel.Depth - 1)
-        //    )
-        //    .GetEnumerator();
-
-        //_pipeGenerator1 = Model!.GenerateFlexiblePipe(
-        //    new Vector3i(1, 1, 0),
-        //    new Vector3i(Model!.Width - 7, Model!.Height - 5, Model!.Depth - 1))
-        //    .GetEnumerator();
-
-        //_pipeGenerator2 = _buildingModel.GenerateSpline(
-        //        new Vector3i(1, 3, 0),
-        //        new Vector3i(_buildingModel.Width - 1, _buildingModel.Height - 3, _buildingModel.Depth - 1))
-        //    .GetEnumerator();
     }
 }

@@ -102,7 +102,7 @@ namespace PipesDemo.Algorithms
 
             if (grid[x, y, z].IsFree())
             {
-                coefficient = grid.IsNearWall(new Vector3i(x, y, z)) ? 0.01f : 0.0000001f;
+                coefficient = grid.GetCube(grid[x, y, z]).Any(c => c.IsWallOrPipe()) ? 0.01f : 0.0000001f;
             }
             else
             {
