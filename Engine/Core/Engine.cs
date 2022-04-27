@@ -1,22 +1,43 @@
-﻿using System.Collections;
+﻿using GameEngine.Graphics;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
 namespace GameEngine.Core
 {
-    /// <summary>
-    /// Class implement engine logic. It manage <see cref="GameObject"/>'s and implement engine tick methods.
-    /// </summary>
-    public class Engine : IEnumerable<GameObject>
+    public class Engine : IDisposable
     {
         private readonly HashSet<GameObject> _gameObjects = new();
 
+        public const int WindowWidth = 800;
+        public const int WindowHeight = 600;
+        public const string WindowTitle = "";
+
+        public readonly Window Window;
+        public readonly Camera Camera;
+        public readonly Light Light;
+
         public bool IsRun { get; private set; }
 
-        public IEnumerator<GameObject> GetEnumerator() 
-            => _gameObjects.GetEnumerator();
+        public IEnumerable<GameObject> GameObjects => _gameObjects;
 
-        IEnumerator IEnumerable.GetEnumerator() 
-            => GetEnumerator();
+        public Engine()
+        {
+            Window = new Window(WindowWidth, WindowHeight, WindowTitle);
+            Camera = new Camera(Window, Vector3.Zero);
+            Light = new Light();
+
+            Window.Load += OnWindowLoaded;
+            Window.UpdateFrame += OnWindowUpdateFrame;
+            Window.RenderFrame += OnWindowRenderFrame;
+            Window.Unload += OnWindowUnloaded;
+            Window.Resize += OnWindowResized;
+        }
+
+        public void Dispose()
+        {
+            Window.Dispose();
+        }
 
         /// <summary>
         /// Method create new <see cref="GameObject"/> in engine.
@@ -38,8 +59,17 @@ namespace GameEngine.Core
             return _gameObjects.Remove(go);
         }
 
-        public void Start()
+        public void Run()
         {
+            Window.Run();
+        }
+
+        private void OnWindowLoaded()
+        {
+            GL.ClearColor(0, 0, 0, 1);
+            GL.Enable(EnableCap.DepthTest);
+            Window.CursorGrabbed = true;
+
             foreach (var go in _gameObjects.ToList())
             {
                 go.Start();
@@ -48,7 +78,7 @@ namespace GameEngine.Core
             IsRun = true;
         }
 
-        public void GameUpdate(FrameEventArgs args)
+        private void OnWindowUpdateFrame(FrameEventArgs args)
         {
             foreach (var go in _gameObjects.ToList())
             {
@@ -56,15 +86,19 @@ namespace GameEngine.Core
             }
         }
 
-        public void RenderUpdate(FrameEventArgs args)
+        private void OnWindowRenderFrame(FrameEventArgs args)
         {
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
             foreach (var go in _gameObjects.ToList())
             {
                 go.RenderUpdate(args);
             }
+
+            Window.SwapBuffers();
         }
 
-        public void Stop()
+        private void OnWindowUnloaded()
         {
             foreach (var go in _gameObjects.ToList())
             {
@@ -72,6 +106,11 @@ namespace GameEngine.Core
             }
 
             IsRun = false;
+        }
+
+        private void OnWindowResized(ResizeEventArgs args)
+        {
+            GL.Viewport(0, 0, Window.Size.X, Window.Size.Y);
         }
     }
 }

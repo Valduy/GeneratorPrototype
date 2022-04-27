@@ -7,21 +7,30 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Shaders\shader.frag" />
-    <None Remove="Shaders\shader.vert" />
+    <None Remove="Shaders\shader2d.frag" />
+    <None Remove="Shaders\shader2d.vert" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Shaders\shader.frag">
+    <Content Include="Shaders\shader2d.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Shaders\shader.vert">
+    <Content Include="Shaders\shader2d.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.6.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Shaders\shader3d.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\shader3d.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

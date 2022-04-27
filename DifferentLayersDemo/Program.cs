@@ -1,5 +1,5 @@
 ﻿using GameEngine.Components;
-using GameEngine.Game;
+using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 
@@ -9,27 +9,26 @@ namespace DifferentLayersDemo
     {
         public static void Main(string[] args)
         {
-            using var game = new Game();
+            using var engine = new Engine();
+            engine.Camera.Projection = Projection.Orthographic;
 
-            var triangle1Go = game.Engine.CreateGameObject();
-            triangle1Go.Add(() => new RenderComponent(game.Window.Renderer)
-            {
-                Color = Colors.Yellow,
-                Layer = -10, // Further from camera.
-                Shape = Shape.Triangle(100)
-            });
+            CreateTriangle(engine, new Vector2(0), 0, 100, -10, Colors.Yellow);
+            CreateTriangle(engine, new Vector2(0, -50), 180, 100, -9, Colors.Red);
 
-            var triangle2Go = game.Engine.CreateGameObject();
-            triangle2Go.Add(() => new RenderComponent(game.Window.Renderer)
-            {
-                Color = Colors.Red,
-                Layer = -9, // Closer to camera.
-                Shape = Shape.Triangle(100)
-            });
-            triangle2Go.Rotation = 180;
-            triangle2Go.Position = -Vector2.UnitY * 50;
+            engine.Run();
+        }
 
-            game.Run();
+        public static GameObject CreateTriangle(Engine engine, Vector2 position, float rotation, float size, float distance, Vector3 color)
+        {
+            var go = engine.CreateGameObject();
+            
+            var render2d = go.Add<ShapeRenderComponent>();
+            render2d.Color = color;
+            render2d.Shape = Shape.Triangle(size);
+
+            go.Position = new Vector3(position.X, position.Y, distance);
+            go.Euler = new Vector3(0, 0, rotation);
+            return go;
         }
     }
 }

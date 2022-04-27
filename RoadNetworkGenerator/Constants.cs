@@ -5,6 +5,7 @@
     {
         public const int Brunches = 3;
         public const int BrunchingDistance = 3;
+        public const float BruncingAngle = 88;
         public const float FloatEpsilon = 0.01f;
         public const float FrontArc = 60;
         public const float SegmentLength = 30;

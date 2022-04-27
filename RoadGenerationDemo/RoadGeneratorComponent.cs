@@ -1,7 +1,7 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
-using GameEngine.Mathematics;
+using Graph;
 using Net;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -12,18 +12,16 @@ namespace RoadGenerationDemo
 {
     public class RoadGeneratorComponent : Component
     {
-        private readonly Renderer _renderer;
-        private readonly KeyboardState _keyboardState;
-
         private RoadGenerator _roadGenerator;
         private InputData _inputData;
 
         private bool _isKeyPressed = false;
 
-        public RoadGeneratorComponent(Renderer renderer, KeyboardState keyboardState)
+        private Engine Engine => GameObject!.Engine;
+        private KeyboardState Inputs => Engine.Window.KeyboardState;
+
+        public RoadGeneratorComponent()
         {
-            _renderer = renderer;
-            _keyboardState = keyboardState;
             _inputData = CreateInputData();
             _roadGenerator = new RoadGenerator(_inputData);
             _roadGenerator.Net.Connected += OnConnected;
@@ -44,7 +42,7 @@ namespace RoadGenerationDemo
 
         public override void GameUpdate(FrameEventArgs args)
         {
-            if (_keyboardState.IsKeyDown(Keys.Space) /*&& !_isKeyPressed*/)
+            if (Inputs.IsKeyDown(Keys.Space) /*&& !_isKeyPressed*/)
             {
                 //_isKeyPressed = true;
 
@@ -63,23 +61,23 @@ namespace RoadGenerationDemo
         private void OnConnected(object? source, ConnectionEventArgs<Sucessor> args)
         {
             var roadGo = GameObject!.Engine.CreateGameObject();
-            roadGo.Add(() => new RenderComponent(_renderer)
-            {
-                Color = Colors.White,
-                Shape = Shape.Line(args.Node1.Item.Position, args.Node2.Item.Position)
-            });
+            var roadRender = roadGo.Add<ShapeRenderComponent>();
+            roadRender.Color = IsMain(args.Node1, args.Node2) ? Colors.Red : Colors.White;
+            roadRender.Shape = Shape.Line(args.Node1.Item.Position, args.Node2.Item.Position);
+            roadGo.Position = Vector3.UnitZ * -10;
         }
+
+        private bool IsMain(Node<Sucessor> node1, Node<Sucessor> node2) 
+            => node1.Item.SucessorType is SucessorType.Main or SucessorType.Pivot 
+            && node2.Item.SucessorType is SucessorType.Main or SucessorType.Pivot;        
 
         private void CreateTriangle(Vector2 position, Vector3 color)
         {
             var triangleGo = GameObject!.Engine.CreateGameObject();
-            triangleGo.Add(() => new RenderComponent(_renderer)
-            {
-                Shape = Shape.Triangle(20),
-                Color = color,
-                Layer = -9,
-            });
-            triangleGo.Position = position;
+            var render = triangleGo.Add<ShapeRenderComponent>();
+            render.Color = color;
+            render.Shape = Shape.Triangle(20);
+            triangleGo.Position = new Vector3(position.X, position.Y, -9.0f);
         }
 
         private static InputData CreateInputData() => new()
@@ -91,7 +89,7 @@ namespace RoadGenerationDemo
                 new Vector2(700.0f, 700.0f),
                 new Vector2(150.0f, 800.0f)
             },
-            ImportantPoints = new []
+            ImportantPoints = new[]
             {
                 new Vector2(500, 300),
                 new Vector2(600, 800),

@@ -14,6 +14,8 @@ namespace GameEngine.Core
         /// <see cref="Core.GameObject"/>, which own this component.
         /// </summary>
         public GameObject? GameObject { get; internal set; }
+        
+        public Engine? Engine => GameObject?.Engine;
 
         /// <summary>
         /// Method which called when component instantiated and/or <see cref="Engine"/> has started.
@@ -21,7 +23,7 @@ namespace GameEngine.Core
         public virtual void Start() {}
 
         /// <summary>
-        /// Game loop tick method. Game logic should be placed there.
+        /// Engine loop tick method. Engine logic should be placed there.
         /// </summary>
         /// <param name="args"><see cref="FrameEventArgs"/></param>
         public virtual void GameUpdate(FrameEventArgs args) {}

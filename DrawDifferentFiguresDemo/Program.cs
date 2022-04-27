@@ -1,5 +1,5 @@
 ﻿using GameEngine.Components;
-using GameEngine.Game;
+using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
 
@@ -9,90 +9,81 @@ namespace DrawDifferentFiguresDemo
     {
         public static void Main(string[] args)
         {
-            using var game = new Game();
-            float leftTopCornerX = -Game.WindowWidth / 2;
-            float leftTopCornerY = Game.WindowHeight / 2;
+            using var engine = new Engine();
+            engine.Camera.Projection = Projection.Orthographic;
+            float leftTopCornerX = -Engine.WindowWidth / 2;
+            float leftTopCornerY = Engine.WindowHeight / 2;
+            float distanceFromCamera = -10.0f;
 
-            var lineGo = game.Engine.CreateGameObject();
-            lineGo.Add(() => new RenderComponent(game.Window.Renderer)
+            var lineGo = engine.CreateGameObject();
+            var lineRender = lineGo.Add<ShapeRenderComponent>();
+            lineRender.Color = Colors.Yellow;
+            lineRender.Shape = Shape.Line(new Vector2(-50, 0), new Vector2(50, 0));
+            lineGo.Position = new Vector3(leftTopCornerX + 100, leftTopCornerY - 100, distanceFromCamera);
+
+            var triangleGo = engine.CreateGameObject();
+            var triangleRender = triangleGo.Add<ShapeRenderComponent>();
+            triangleRender.Color = Colors.Red;
+            triangleRender.Shape = Shape.Triangle(100);
+            triangleGo.Position = new Vector3(leftTopCornerX + 250, leftTopCornerY - 100, distanceFromCamera);
+
+            var squareGo = engine.CreateGameObject();
+            var squareRender = squareGo.Add<ShapeRenderComponent>();
+            squareRender.Color = Colors.Lime;
+            squareRender.Shape = Shape.Square(100);
+            squareGo.Position = new Vector3(leftTopCornerX + 400, leftTopCornerY - 100, distanceFromCamera);
+
+            var convexGo = engine.CreateGameObject();
+            var convexRender = convexGo.Add<ShapeRenderComponent>();
+            convexRender.Color = Colors.Blue;
+            convexRender.Shape = new Shape(Shape.GetVertices(new List<Vector2>
             {
-                Color = Colors.Yellow,
-                Shape = Shape.Line(new Vector2(-50, 0), new Vector2(50, 0))
-            });
-            lineGo.Position = new Vector2(leftTopCornerX + 100, leftTopCornerY - 100);
+                new(-25, -50),
+                new(25, -50),
+                new(50, -25),
+                new(50, 25),
+                new(25, 50),
+                new(-25, 50),
+                new(-50, 25),
+                new(-50, -25),
+            }));
+            convexGo.Position = new Vector3(leftTopCornerX + 550, leftTopCornerY - 100, distanceFromCamera);
 
-            var triangleGo = game.Engine.CreateGameObject();
-            triangleGo.Add(() => new RenderComponent(game.Window.Renderer)
+            var nonConvexGo = engine.CreateGameObject();
+            var nonConvexRender = nonConvexGo.Add<ShapeRenderComponent>();
+            nonConvexRender.Color = Colors.Cyan;
+            nonConvexRender.Shape = new Shape(Shape.GetVertices(new List<Vector2>
             {
-                Color = Colors.Red,
-                Shape = Shape.Triangle(100)
-            });
-            triangleGo.Position = new Vector2(leftTopCornerX + 250, leftTopCornerY - 100);
+                new(-25, -50),
+                new(0, -50),
+                new(0, 0),
+                new(50, 0),
+                new(50, 25),
+                new(25, 50),
+                new(-25, 50),
+                new(-50, 25),
+                new(-50, -25),
+            }));
+            nonConvexGo.Position = new Vector3(leftTopCornerX + 700, leftTopCornerY - 100, distanceFromCamera);
 
-            var squareGo = game.Engine.CreateGameObject();
-            squareGo.Add(() => new RenderComponent(game.Window.Renderer)
+            var complexGo = engine.CreateGameObject();
+            var complexRender = complexGo.Add<ShapeRenderComponent>();
+            complexRender.Color = Colors.Green;
+            complexRender.Shape = new Shape(Shape.GetVertices(new List<Vector2>
             {
-                Color = Colors.Lime,
-                Shape = Shape.Square(100)
-            });
-            squareGo.Position = new Vector2(leftTopCornerX + 400, leftTopCornerY - 100);
+                new(-20, 10),
+                new(-60, 0),
+                new(0, -50),
+                new(30, 30),
+                new(50, -60),
+                new(70, 0),
+                new(20, 50),
+                new(0, 20),
+                new(-40, 60),
+            }));
+            complexGo.Position = Vector3.UnitZ * distanceFromCamera;
 
-            var convexGo = game.Engine.CreateGameObject();
-            convexGo.Add(() => new RenderComponent(game.Window.Renderer)
-            {
-                Color = Colors.Blue,
-                Shape = new Shape(new[]
-                {
-                    new Vector2(-25, -50),
-                    new Vector2(25, -50),
-                    new Vector2(50, -25),
-                    new Vector2(50, 25),
-                    new Vector2(25, 50),
-                    new Vector2(-25, 50),
-                    new Vector2(-50, 25),
-                    new Vector2(-50, -25),
-                })
-            });
-            convexGo.Position = new Vector2(leftTopCornerX + 550, leftTopCornerY - 100);
-
-            var nonConvexGo = game.Engine.CreateGameObject();
-            nonConvexGo.Add(() => new RenderComponent(game.Window.Renderer)
-            {
-                Color = Colors.Cyan,
-                Shape = new Shape(new[]
-                {
-                    new Vector2(-25, -50),
-                    new Vector2(0, -50),
-                    new Vector2(0, 0),
-                    new Vector2(50, 0),
-                    new Vector2(50, 25),
-                    new Vector2(25, 50),
-                    new Vector2(-25, 50),
-                    new Vector2(-50, 25),
-                    new Vector2(-50, -25),
-                })
-            });
-            nonConvexGo.Position = new Vector2(leftTopCornerX + 700, leftTopCornerY - 100);
-
-            var complexGo = game.Engine.CreateGameObject();
-            complexGo.Add(() => new RenderComponent(game.Window.Renderer)
-            {
-                Color = Colors.Green,
-                Shape = new Shape(new[]
-                {
-                    new Vector2(-20, 10),
-                    new Vector2(-60, 0),
-                    new Vector2(0, -50),
-                    new Vector2(30, 30),
-                    new Vector2(50, -60),
-                    new Vector2(70, 0),
-                    new Vector2(20, 50),
-                    new Vector2(0, 20),
-                    new Vector2(-40, 60),
-                })
-            });
-
-            game.Run();
+            engine.Run();
         }
     }
 }

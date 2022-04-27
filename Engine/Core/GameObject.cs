@@ -4,119 +4,75 @@ using OpenTK.Windowing.Common;
 namespace GameEngine.Core
 {
     /// <summary>
-    /// Class implement game object. Game object is container for components.
-    /// Components declare properties and behaviour of game object.
+    /// Class implement engine object. Engine object is container for components.
+    /// Components declare properties and behaviour of engine object.
     /// </summary>
     public class GameObject
     {
         private readonly List<GameObject> _children = new();
         private readonly Dictionary<Type, Component> _componentsMap = new();
 
-        /// <summary>
-        /// The <see cref="Core.Engine"/> this <see cref="GameObject"/> belong to.
-        /// </summary>
         public readonly Engine Engine;
 
-        /// <summary>
-        /// Parent <see cref="GameObject"/>.
-        /// </summary>
         public GameObject? Parent { get; private set; }
 
-        /// <summary>
-        /// Children <see cref="GameObject"/>'s.
-        /// </summary>
         public IReadOnlyList<GameObject> Children => _children;
 
-        /// <summary>
-        /// Local rotation relative to <see cref="Parent"/>.
-        /// </summary>
-        public float LocalRotation { get; set; } = 0;
+        public Quaternion LocalRotation { get; set; } = Quaternion.Identity;
 
-        /// <summary>
-        /// Local scale relative to <see cref="Parent"/>.
-        /// </summary>
-        public Vector2 LocalScale { get; set; } = new(1);
-
-        /// <summary>
-        /// Local position relative to <see cref="Parent"/>.
-        /// </summary>
-        public Vector2 LocalPosition { get; set; } = new(0);
-
-        /// <summary>
-        /// World rotation.
-        /// </summary>
-        public float Rotation
+        public Vector3 LocalEuler
         {
-            get
-            {
-                if (Parent != null)
-                {
-                    return Parent.Rotation + LocalRotation;
-                }
-
-                return LocalRotation;
-            }
-            set
-            {
-                if (Parent != null)
-                {
-                    LocalRotation = Parent.Rotation - value;
-                }
-                else
-                {
-                    LocalRotation = value;
-                }
-            }
+            get => LocalRotation.ToEulerAngles() * 180 / MathHelper.Pi;
+            set => LocalRotation = Quaternion.FromEulerAngles(value * MathHelper.Pi / 180);
         }
 
-        /// <summary>
-        /// World scale.
-        /// </summary>
-        public Vector2 Scale
+        public Vector3 LocalScale { get; set; } = new(1);
+
+        public Vector3 LocalPosition { get; set; } = new(0);
+
+        public Quaternion Rotation
         {
-            get
-            {
-                if (Parent != null)
-                {
-                    return Parent.Scale * LocalScale;
-                }
-
-                return LocalScale;
-            }
-            set
-            {
-                if (Parent != null)
-                {
-                    LocalScale = new Vector2(Parent.Scale.X / value.X, Parent.Scale.Y / value.Y);
-                }
-
-                LocalScale = value;
-            }
+            get => Parent != null 
+                ? LocalRotation * Parent.Rotation 
+                : LocalRotation; 
+            set => LocalRotation = Parent != null 
+                ? Parent.Rotation.Inverted() * value
+                : value;
         }
 
-        /// <summary>
-        /// World position.
-        /// </summary>
-        public Vector2 Position
+        public Vector3 Euler
+        {
+            get => Rotation.ToEulerAngles() * 180 / MathHelper.Pi;
+            set => Rotation = Quaternion.FromEulerAngles(value * MathHelper.Pi / 180);
+        }
+
+        public Vector3 Scale
+        {
+            get => Parent != null 
+                ? Parent.Scale * LocalScale 
+                : LocalScale;
+            set => LocalScale = Parent != null 
+                ? new Vector3(value.X / Parent.Scale.X, value.Y / Parent.Scale.Y, value.Z / Parent.Scale.Z)
+                : value;
+        }
+
+        public Vector3 Position
         {
             get
             {
-                if (Parent != null)
-                {
-                    var offset = new Vector3(LocalPosition.X, LocalPosition.Y, 1);
-                    offset *= Matrix3.CreateRotationZ(MathHelper.DegreesToRadians(Parent.Rotation));
-                    return new Vector2(Parent.Position.X + offset.X, Parent.Position.Y + offset.Y);
-                }
+                if (Parent == null) return LocalPosition;
+                var offset = new Vector4(LocalPosition, 1);
+                offset *= Parent.GetModelMatrix();
+                return offset.Xyz;
 
-                return LocalPosition;
             }
             set
             {
                 if (Parent != null)
                 {
-                    var offset = new Vector3(value.X - Parent.Position.X, value.Y - Parent.Position.Y, 1);
-                    offset *= Matrix3.CreateRotationZ(-MathHelper.DegreesToRadians(Parent.Rotation));
-                    LocalPosition = new Vector2(offset.X, offset.Y);
+                    var offset = new Vector4(value, 1);
+                    offset *= Parent.GetModelMatrix().Inverted();
+                    LocalPosition = offset.Xyz;
                 }
                 else
                 {
@@ -125,14 +81,17 @@ namespace GameEngine.Core
             }
         }
 
-        /// <summary>
-        /// Event, which fires when new <see cref="Component"/> added to <see cref="GameObject"/>.
-        /// </summary>
-        public event Action<GameObject, Component>? ComponentAdded;
+        public Matrix4 GetModelMatrix()
+        {
+            var model = Matrix4.Identity;
+            model *= Matrix4.CreateScale(LocalScale);
+            model *= Matrix4.CreateFromQuaternion(LocalRotation);
+            model *= Matrix4.CreateTranslation(LocalPosition);
+            if (Parent != null) model *= Parent.GetModelMatrix();
+            return model;
+        }
 
-        /// <summary>
-        /// Event, which fires when <see cref="Component"/> removed from <see cref="GameObject"/>.
-        /// </summary>
+        public event Action<GameObject, Component>? ComponentAdded;
         public event Action<GameObject, Component>? ComponentRemoved;
 
         internal GameObject(Engine engine)
@@ -169,15 +128,6 @@ namespace GameEngine.Core
         /// <summary>
         /// Method add new <see cref="Component"/> to <see cref="GameObject"/>.
         /// </summary>
-        /// <typeparam name="T">Type of <see cref="Component"/>.</typeparam>
-        /// <param name="factory"><see cref="Component"/> factory.</param>
-        /// <returns><see cref="Component"/>, added to <see cref="GameObject"/>.</returns>
-        public T Add<T>(Func<T> factory) where T : Component
-            => (T) Add(() => factory() as Component);
-
-        /// <summary>
-        /// Method add new <see cref="Component"/> to <see cref="GameObject"/>.
-        /// </summary>
         /// <param name="componentType">Type of <see cref="Component"/>.</param>
         /// <returns><see cref="Component"/>, added to <see cref="GameObject"/>.</returns>
         /// <exception cref="ArgumentException"></exception>
@@ -194,32 +144,6 @@ namespace GameEngine.Core
                 Remove(component.GetType());
             }
             
-            _componentsMap[instance.GetType()] = instance;
-            instance.GameObject = this;
-
-            if (Engine.IsRun)
-            {
-                instance.Start();
-            }
-
-            ComponentAdded?.Invoke(this, instance);
-            return instance;
-        }
-
-        /// <summary>
-        /// Method add new <see cref="Component"/> to <see cref="GameObject"/>.
-        /// </summary>
-        /// <param name="factory"><see cref="Component"/> factory.</param>
-        /// <returns><see cref="Component"/>, added to <see cref="GameObject"/>.</returns>
-        public Component Add(Func<Component> factory)
-        {
-            var instance = factory();
-
-            if (_componentsMap.TryGetValue(instance.GetType(), out var component))
-            {
-                Remove(component.GetType());
-            }
-
             _componentsMap[instance.GetType()] = instance;
             instance.GameObject = this;
 

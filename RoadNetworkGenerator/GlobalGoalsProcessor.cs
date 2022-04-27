@@ -1,6 +1,6 @@
-﻿using Graph;
+﻿using GameEngine.Mathematics;
+using Graph;
 using OpenTK.Mathematics;
-using Math = GameEngine.Mathematics.Math;
 
 namespace RoadNetworkGenerator
 {
@@ -54,22 +54,22 @@ namespace RoadNetworkGenerator
                     ? (influencer!.Value - node.Item.Position) 
                     : node.Item.Goal - node.Item.Position;
 
-                int sign = System.Math.Sign(Math.Cross(prevDirection, desiredDirection));
-                var angle = MathHelper.RadiansToDegrees(Math.Angle(prevDirection, desiredDirection));
+                int sign = System.Math.Sign(Mathematics.Cross(prevDirection, desiredDirection));
+                var angle = MathHelper.RadiansToDegrees(Mathematics.Angle(prevDirection, desiredDirection));
                 angle = System.Math.Min(angle, Constants.MaxAngle) * sign;
   
                 var forward = prevDirection.Normalized();
                 forward *= Constants.SegmentLength;
-                forward = Math.Rotate(forward, angle);
+                forward = Mathematics.Rotate(forward, angle);
 
                 result.a = GrowMain(node, forward + node.Item.Position);
 
                 if (IsCanBrunch(node))
                 {
-                    var left = Math.Rotate(forward, 90);
+                    var left = Mathematics.Rotate(forward, Constants.BruncingAngle);
                     result.b = CreateBrunch(node, left + node.Item.Position);
 
-                    var right = Math.Rotate(forward, -90);
+                    var right = Mathematics.Rotate(forward, -Constants.BruncingAngle);
                     result.c = CreateBrunch(node, right + node.Item.Position);
                 }
             }
@@ -87,10 +87,10 @@ namespace RoadNetworkGenerator
 
             if (IsCanBrunch(node))
             {
-                var left = Math.Rotate(forward, 90);
+                var left = Mathematics.Rotate(forward, Constants.BruncingAngle);
                 result.b = GrowBrunch(node, left + node.Item.Position);
 
-                var right = Math.Rotate(forward, -90);
+                var right = Mathematics.Rotate(forward, -Constants.BruncingAngle);
                 result.c = GrowBrunch(node, right + node.Item.Position);
             }
 
@@ -106,7 +106,7 @@ namespace RoadNetworkGenerator
                 switch (neighbour.Item.SucessorType)
                 {
                     case SucessorType.Pivot:
-                        return Math.Equal(neighbour.Item.Position, node.Item.Goal, Constants.FloatEpsilon);
+                        return Mathematics.Equal(neighbour.Item.Position, node.Item.Goal, Constants.FloatEpsilon);
                     case SucessorType.Main when IsGoalAchievable(node.Item.Goal, visited, neighbour):
                         return true;
                 }
@@ -124,7 +124,7 @@ namespace RoadNetworkGenerator
                 switch (neighbour.Item.SucessorType)
                 {
                     case SucessorType.Pivot:
-                        return Math.Equal(neighbour.Item.Position, goal, Constants.FloatEpsilon);
+                        return Mathematics.Equal(neighbour.Item.Position, goal, Constants.FloatEpsilon);
                     case SucessorType.Main when IsGoalAchievable(goal, visited, neighbour):
                         return true;
                 }
@@ -134,7 +134,7 @@ namespace RoadNetworkGenerator
         }
 
         private bool IsGoalAchieved(Sucessor sucessor) 
-            => _pivots.Any(pivot => Math.Equal(pivot, sucessor.Position, Constants.FloatEpsilon));
+            => _pivots.Any(pivot => Mathematics.Equal(pivot, sucessor.Position, Constants.FloatEpsilon));
 
         private Sucessor CreateNewGlobalBranch(Node<Sucessor> node, Vector2 newGlobalGoal) => new()
         {
