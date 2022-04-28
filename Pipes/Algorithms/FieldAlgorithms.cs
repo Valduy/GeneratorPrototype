@@ -78,19 +78,22 @@ namespace Pipes.Algorithms
 
             for (int t = 1; t < 16 * 16 * 16; t++)
             {
-                grid[x, y, z].Temperature = MaxTemperature;
+                grid.HeatTransferIteration(x, y, z);
+            }
+        }
 
-                for (int i = 1; i < grid.Width - 1; i++)
+        public static void HeatTransferIteration(this Grid grid, int x, int y, int z)
+        {
+            for (int i = 1; i < grid.Width - 1; i++)
+            {
+                for (int j = 1; j < grid.Height - 1; j++)
                 {
-                    for (int j = 1; j < grid.Height - 1; j++)
+                    for (int k = 1; k < grid.Depth - 1; k++)
                     {
-                        for (int k = 1; k < grid.Depth - 1; k++)
-                        {
-                            grid[x, y, z].Temperature = MaxTemperature;
-                            float coefficient = grid.GetCoefficient(i, j, k);
-                            float tau = 100;
-                            grid[i, j, k].Temperature += coefficient * tau * grid.Derivative2(i, j, k);
-                        }
+                        grid[x, y, z].Temperature = MaxTemperature;
+                        float coefficient = grid.GetCoefficient(i, j, k);
+                        float tau = 100;
+                        grid[i, j, k].Temperature += coefficient * tau * grid.Derivative2(i, j, k);
                     }
                 }
             }

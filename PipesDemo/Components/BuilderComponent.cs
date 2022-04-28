@@ -24,7 +24,7 @@ namespace PipesDemo.Components
         private RigidPipesBuilder _rigidPipesBuilder;
         private FlexiblePipesBuilder _flexiblePipesBuilder;
 
-        public Grid? Model { get; set; }
+        public Grid? Grid { get; set; }
         public IList<IEnumerator> GenerationSteps { get; set; }
 
         public override void Start()
@@ -55,7 +55,7 @@ namespace PipesDemo.Components
             ResetField();
             _rigidPipesBuilder.Reset();
 
-            var path = Model!.GenerateAStarPipe(from, to);
+            var path = Grid!.GenerateAStarPipe(from, to);
 
             foreach (var cell in path)
             {
@@ -70,9 +70,9 @@ namespace PipesDemo.Components
             ResetField();
             _rigidPipesBuilder.Reset();
 
-            Model!.CalculateWarmBreathFirst(to);
-            //Model!.CalculateWarm(to);
-            var generator = Model!.GenerateRigidPipe(from, to);
+            Grid!.CalculateWarmBreathFirst(to);
+            //Grid!.CalculateWarm(to);
+            var generator = Grid!.GenerateRigidPipe(from, to);
 
             while (generator.MoveNext())
             {
@@ -83,19 +83,19 @@ namespace PipesDemo.Components
 
         public IEnumerator GenerateFlexiblePipe(Vector3i from, Vector3i to)
         {
-            if (Model![from].IsWallOrPipe()) throw new Exception();
-            if (Model![to].IsWallOrPipe()) throw new Exception();
+            if (Grid![from].IsWallOrPipe()) throw new Exception();
+            if (Grid![to].IsWallOrPipe()) throw new Exception();
 
             ResetField();
             _flexiblePipesBuilder.Reset();
 
-            //Model!.CalculateWarmBreathFirst(to);
-            Model!.CalculateWarmHeatTransfer(to);
-            //Model!.CalculateWarm(to);
+            //Grid!.CalculateWarmBreathFirst(to);
+            Grid!.CalculateWarmHeatTransfer(to);
+            //Grid!.CalculateWarm(to);
             //VisualizeTemperature();
-            //Model!.CalculateVectors();
+            //Grid!.CalculateVectors();
             //VisualizeVectors();
-            var generator = Model!.GenerateFlexiblePipe(from, to);
+            var generator = Grid!.GenerateFlexiblePipe(from, to);
 
             Vector3 prev = from;
             Vector3 next;
@@ -121,7 +121,7 @@ namespace PipesDemo.Components
 
         private void CreateWalls()
         {
-            foreach (var cell in Model)
+            foreach (var cell in Grid)
             {
                 if (cell.IsWall())
                 {
@@ -135,28 +135,33 @@ namespace PipesDemo.Components
 
         private void VisualizeTemperature()
         {
-            var minTemperature = Model!
+            var minTemperature = Grid!
                 .Where(IsTemperatureMeasurable)
                 .OrderBy(c => c.Temperature)
                 .First().Temperature;
 
-            foreach (var cell in Model!)
+            foreach (var cell in Grid!)
             {
                 if (cell.Type is CellType.Empty or CellType.Inside)
                 {
-                    var thermometer = Engine!.CreateGameObject();
-                    var render = thermometer.Add<MeshRenderComponent>();
-                    render.Shape = Mesh1.Cube;
                     var percent = GetPercent(FieldAlgorithms.MaxTemperature, minTemperature, cell.Temperature);
                     var color = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
-                    render.Material.Ambient = color;
-                    render.Material.Diffuse = color;
-                    thermometer.Position = cell.Position;
-                    thermometer.Scale = new Vector3(0.05f);
-                    thermometer.Euler = new Vector3(45);
-                    _thermometers.Add(thermometer);
+                    _thermometers.Add(CreateThermometer(cell, color));
                 }
             }
+        }
+
+        private GameObject CreateThermometer(Cell cell, Vector3 color)
+        {
+            var thermometer = Engine!.CreateGameObject();
+            var render = thermometer.Add<MeshRenderComponent>();
+            render.Shape = Mesh1.Cube;
+            render.Material.Ambient = color;
+            render.Material.Diffuse = color;
+            thermometer.Position = cell.Position;
+            thermometer.Scale = new Vector3(0.05f);
+            thermometer.Euler = new Vector3(45);
+            return thermometer;
         }
 
         bool IsTemperatureMeasurable(Cell cell) =>
@@ -168,7 +173,7 @@ namespace PipesDemo.Components
 
         private void VisualizeVectors()
         {
-            foreach (var cell in Model!)
+            foreach (var cell in Grid!)
             {
                 if (cell.Type is CellType.Empty or CellType.Inside)
                 {

@@ -6,49 +6,24 @@ namespace Pipes.Models
 {
     public class Grid : IEnumerable<Cell>
     {
-        public const int FloorsInRow = 8;
-        //public const int FloorsInColumn = 8;
-        public const int FloorsInColumn = 2;
-
-        public const int FloorWidth = 16;
-        public const int FloorDepth = 16;
-        public const int BuildingHeight = FloorsInRow * FloorsInColumn;
-
-        public const int WallSpacing = 5;
-
-        private Cell[,,] _cells = new Cell[
-            FloorWidth + WallSpacing * 2,
-            BuildingHeight + WallSpacing * 2,
-            FloorDepth + WallSpacing * 2];
+        private Cell[,,] _cells;
 
         public int Width => _cells.GetLength(0);
         public int Height => _cells.GetLength(1);
         public int Depth => _cells.GetLength(2);
 
-        public Grid()
+        public Grid(int width, int height, int depth)
         {
-            for (int i = 0; i < _cells.GetLength(0); i++)
+            _cells = new Cell[width, height, depth];
+
+            for (int i = 0; i < Width; i++)
             {
-                for (int j = 0; j < _cells.GetLength(1); j++)
+                for (int j = 0; j < Height; j++)
                 {
-                    for (int k = 0; k < _cells.GetLength(2); k++)
+                    for (int k = 0; k < Depth; k++)
                     {
                         _cells[i, j, k] = new Cell(this, i, j, k);
                     }
-                }
-            }
-        }
-
-        public void Load(string path)
-        {
-            using var reader = new StreamReader(path);
-            var bmp = new Bitmap(reader.BaseStream);
-
-            for (int i = 0; i < FloorsInRow; i++)
-            {
-                for (int j = 0; j < FloorsInColumn; j++)
-                {
-                    BuildFloor(bmp, i, j);
                 }
             }
         }
@@ -67,27 +42,6 @@ namespace Pipes.Models
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-        private static bool IsNotEmpty(Color color) => color.A != 0;
-
-        private void BuildFloor(Bitmap bmp, int i, int j)
-        {
-            int pivotX = FloorWidth * i;
-            int pivotY = FloorDepth * j;
-
-            for (int x = 0; x < FloorWidth; x++)
-            {
-                for (int y = 0; y < FloorDepth; y++)
-                {
-                    if (IsNotEmpty(bmp.GetPixel(pivotX + x, pivotY + y)))
-                    {
-                        int height = FloorsInRow * j + i;
-                        var cell = _cells[x + WallSpacing, height + WallSpacing, y + WallSpacing];
-                        cell.Type = CellType.Wall;
-                    }
-                }
-            }
-        }
-        
         public IEnumerable<Cell> GetCross(Cell cell) =>
             GetCross(cell.Position);
 

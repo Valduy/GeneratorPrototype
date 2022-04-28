@@ -10,7 +10,7 @@ namespace PipesDemo.Components
         private Vector3i _integerPosition;
         private Vector3 _floatPosition;
 
-        public Grid? Model { get; set; }
+        public Grid? Grid { get; set; }
 
         public override void Start()
         {
@@ -28,12 +28,12 @@ namespace PipesDemo.Components
             //    Engine!.Camera.Position.Z);
 
             //if (_floatPosition != floatPosition
-            //    && floatPosition.X >= 0 && floatPosition.X < Model!.Width
-            //    && floatPosition.Y >= 0 && floatPosition.Y < Model!.Height
-            //    && floatPosition.Z >= 0 && floatPosition.Z < Model!.Depth)
+            //    && floatPosition.X >= 0 && floatPosition.X < Grid!.Width
+            //    && floatPosition.Y >= 0 && floatPosition.Y < Grid!.Height
+            //    && floatPosition.Z >= 0 && floatPosition.Z < Grid!.Depth)
             //{
-            //    Console.WriteLine($"Interpolated: ({Model.GetHeat(floatPosition)})");
-            //    Console.WriteLine($"Is greater: ({Model.GetHeat(floatPosition) > Model.GetHeat(_floatPosition)})");
+            //    Console.WriteLine($"Interpolated: ({Grid.GetHeat(floatPosition)})");
+            //    Console.WriteLine($"Is greater: ({Grid.GetHeat(floatPosition) > Grid.GetHeat(_floatPosition)})");
             //    _floatPosition = floatPosition;
             //}
 
@@ -43,13 +43,13 @@ namespace PipesDemo.Components
                 (int)MathF.Round(Engine!.Camera.Position.Z));
 
             if (_integerPosition != integerPosition
-                && integerPosition.X >= 0 && integerPosition.X < Model!.Width
-                && integerPosition.Y >= 0 && integerPosition.Y < Model!.Height
-                && integerPosition.Z >= 0 && integerPosition.Z < Model!.Depth)
+                && integerPosition.X >= 0 && integerPosition.X < Grid!.Width
+                && integerPosition.Y >= 0 && integerPosition.Y < Grid!.Height
+                && integerPosition.Z >= 0 && integerPosition.Z < Grid!.Depth)
             {
                 Console.WriteLine($"Cell: ({integerPosition})");
-                Console.WriteLine($"Temperature: {Model[integerPosition].Temperature}");
-                Console.WriteLine($"Direction: {Model[integerPosition].Direction}\n");
+                Console.WriteLine($"Temperature: {Grid[integerPosition].Temperature}");
+                Console.WriteLine($"Direction: {Grid[integerPosition].Direction}\n");
                 _integerPosition = integerPosition;
             }
         }
