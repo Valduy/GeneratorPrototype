@@ -78,11 +78,11 @@ namespace Pipes.Algorithms
 
             for (int t = 1; t < 16 * 16 * 16; t++)
             {
-                grid.HeatTransferIteration(x, y, z);
+                grid.HeatTransferIteration(x, y, z, 100, GetCoefficient);
             }
         }
 
-        public static void HeatTransferIteration(this Grid grid, int x, int y, int z)
+        public static void HeatTransferIteration(this Grid grid, int x, int y, int z, float t, Func<Cell, float> weighter)
         {
             for (int i = 1; i < grid.Width - 1; i++)
             {
@@ -91,21 +91,51 @@ namespace Pipes.Algorithms
                     for (int k = 1; k < grid.Depth - 1; k++)
                     {
                         grid[x, y, z].Temperature = MaxTemperature;
-                        float coefficient = grid.GetCoefficient(i, j, k);
-                        float tau = 100;
-                        grid[i, j, k].Temperature += coefficient * tau * grid.Derivative2(i, j, k);
+                        float coefficient = weighter(grid[i, j, k]);
+                        grid[i, j, k].Temperature += coefficient * t * grid.Derivative2(i, j, k);
+                        //grid[i, j, k].Temperature = Math.Clamp(grid[i, j, k].Temperature, 0, MaxTemperature);
                     }
                 }
             }
+
+            //var frontier = new Queue<Cell>();
+            //var visited = new HashSet<Cell>();
+            //var start = grid[x, y, z];
+            //start.Temperature = MaxTemperature;
+            //frontier.Enqueue(start);
+            //visited.Add(start);
+
+            //while (frontier.Any())
+            //{
+            //    var temp = frontier.Dequeue();
+            //    grid[x, y, z].Temperature = MaxTemperature;
+            //    float coefficient = weighter(temp);
+            //    temp.Temperature += coefficient * t * grid.Derivative2(temp.Position.X, temp.Position.Y, temp.Position.Z);
+            //    var reachable = grid.GetCross(temp)
+            //        .Where(c => !visited.Contains(c) && IsInner(c))
+            //        .ToList();
+
+            //    foreach (var adjacent in reachable)
+            //    {
+            //        frontier.Enqueue(adjacent);
+            //        visited.Add(adjacent);
+            //    }
+            //}
         }
 
-        private static float GetCoefficient(this Grid grid, int x, int y, int z)
+        private static bool IsInner(this Cell cell)
+            => cell.Position.X > 0 && cell.Position.X < cell.Model.Width - 1
+            && cell.Position.Y > 0 && cell.Position.Y < cell.Model.Width - 1
+            && cell.Position.Z > 0 && cell.Position.Z < cell.Model.Width - 1;
+
+        private static float GetCoefficient(Cell cell)
         {
             float coefficient;
+            var grid = cell.Model;
 
-            if (grid[x, y, z].IsFree())
+            if (cell.IsFree())
             {
-                coefficient = grid.GetCube(grid[x, y, z]).Any(c => c.IsWallOrPipe()) ? 0.01f : 0.0000001f;
+                coefficient = grid.GetCube(cell).Any(c => c.IsWallOrPipe()) ? 0.01f : 0.0000001f;
             }
             else
             {

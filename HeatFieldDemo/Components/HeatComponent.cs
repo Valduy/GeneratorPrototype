@@ -13,7 +13,7 @@ namespace HeatFieldDemo.Components
         public const float MaxTemperature = FieldAlgorithms.MaxTemperature;
         public const float MinTemperature = 0;
 
-        public static readonly Vector3i Hearth = new(3, 3, 3);
+        public static readonly Vector3i Hearth = new(4);
 
         private GameObject[,,] _thermometers;
 
@@ -26,15 +26,23 @@ namespace HeatFieldDemo.Components
             foreach (var cell in Grid)
             {
                 cell.Temperature = MinTemperature;
-                var percent = GetPercent(MaxTemperature, MinTemperature, cell.Temperature);
-                var color = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
+                var color = GetColor(cell);
                 _thermometers[cell.Position.X, cell.Position.Y, cell.Position.Z] = CreateThermometer(cell, color);
+                cell.TemperatureChanged += OnTemperatureChanged;
+            }
+
+            for (int i = 0; i < 1000; i++)
+            {
+                Grid!.HeatTransferIteration(Hearth.X, Hearth.Y, Hearth.Z, 0.1f, _ => 0.1f);
             }
         }
 
         public override void GameUpdate(FrameEventArgs args)
         {
-            
+            for (int i = 0; i < 10; i++)
+            {
+                Grid!.HeatTransferIteration(Hearth.X, Hearth.Y, Hearth.Z, 0.1f, _ => 0.1f);
+            }
         }
 
         private GameObject CreateThermometer(Cell cell, Vector3 color)
@@ -50,7 +58,22 @@ namespace HeatFieldDemo.Components
             return thermometer;
         }
 
+        private static Vector3 GetColor(Cell cell)
+        {
+            var percent = GetPercent(MaxTemperature, MinTemperature, cell.Temperature);
+            return new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
+        }
+
         private static float GetPercent(float max, float min, float value)
             => (value - min) / (max - min);
+
+        private void OnTemperatureChanged(Cell cell)
+        {
+            var thermometer = _thermometers[cell.Position.X, cell.Position.Y, cell.Position.Z];
+            var render = thermometer.Get<MeshRenderComponent>();
+            var color = GetColor(cell);
+            render!.Material.Ambient = color;
+            render!.Material.Diffuse = color;
+        }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using GameEngine.Core;
 using GameEngine.Graphics;
-using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 

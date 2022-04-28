@@ -2,6 +2,7 @@
 using GameEngine.Components;
 using GameEngine.Core;
 using OpenTK.Mathematics;
+using Pipes.Components;
 using Pipes.Models;
 using Pipes.Utils;
 using PipesDemo.Components;
