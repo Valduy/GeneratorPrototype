@@ -36,6 +36,9 @@ namespace DungeonViz
 
 			public List<int> room_counts = new List<int>();
 
+			string room_events = "";
+
+
 			public void Reno(int border)
 			{
 				int exp = 2;
@@ -65,7 +68,7 @@ namespace DungeonViz
 					}
 					else
 					{
-						if (i < border)
+						if (i < border && room_counts[room_counts.Count - 1] >= 4)
 						{
 							if (rooms_remain > room_counts[room_counts.Count - 1] * exp)
 							{
@@ -107,18 +110,23 @@ namespace DungeonViz
 				events.Add(name + c);
 			}
 
+			public void Add_StringEvent(string name)
+			{
+				room_events += ("\n" + name);
+			}
+
 			public void High_Event(ref int dd)
 			{
 				while (dd - 8 >= 0)
 				{
-					Add_Event("Босс_");
+					Add_StringEvent("Босс: +8");
 
 					dd -= 8;
 				}
 
 				while (dd - 6 >= 0)
 				{
-					Add_Event("Артефакт_");
+					Add_StringEvent("Артефакт: +6");
 
 					dd -= 6;
 				}
@@ -128,14 +136,14 @@ namespace DungeonViz
 			{
 				while (dd - 4 >= 0)
 				{
-					Add_Event("Противник_");
+					Add_StringEvent("Противник: +4");
 
 					dd -= 4;
 				}
 
 				while (dd - 3 >= 0)
 				{
-					Add_Event("Диалог_");
+					Add_StringEvent("Диалог: +3");
 
 					dd -= 3;
 				}
@@ -147,7 +155,7 @@ namespace DungeonViz
 			{
 				while (dd - 2 >= 0)
 				{
-					Add_Event("Предмет_");
+					Add_StringEvent("Предмет: +2");
 
 					dd -= 2;
 				}
@@ -161,13 +169,13 @@ namespace DungeonViz
 					switch (v)
 					{
 						case 1:
-							Add_Event("Секрет_");
+							Add_StringEvent("Секрет: +1");
 							break;
 						case 2:
-							Add_Event("Кнопка_");
+							Add_StringEvent("Кнопка: +1");
 							break;
 						case 3:
-							Add_Event("КатСцена_");
+							Add_StringEvent("КатСцена: +1");
 							break;
 						default:
 							break;
@@ -189,9 +197,7 @@ namespace DungeonViz
 				{
 					for (int j = 0; j < room_counts[i]; j++)
 					{
-						string name = "Room_" + i + "_" + j + "\n" + "+" + signature[i].ToString();
-						//string name = "+" + signature[i].ToString();
-						current.Add(name);
+
 
 						int d = signature[i];
 
@@ -205,6 +211,10 @@ namespace DungeonViz
 						//}
 
 						//events.Clear();
+
+						string name = "Room_" + i + "_" + j + room_events;
+						//string name = "+" + signature[i].ToString();
+						current.Add(name);
 					}
 
 					foreach (var item in current)
@@ -357,19 +367,19 @@ namespace DungeonViz
             };
 
             var squareRoom1 = new RoomTemplateGrid2D(
-                PolygonGrid2D.GetSquare(12),
+                PolygonGrid2D.GetSquare(20),
                 doors,
                 allowedTransformations: transformations,
                 name: "Boss"
             );
             var squareRoom2 = new RoomTemplateGrid2D(
-                PolygonGrid2D.GetSquare(10),
+                PolygonGrid2D.GetSquare(25),
                 doors,
                 allowedTransformations: transformations,
                 name: "Exit"
             );
             var rectangleRoom = new RoomTemplateGrid2D(
-                PolygonGrid2D.GetRectangle(8, 12),
+                PolygonGrid2D.GetRectangle(16, 24),
                 doors,
                 allowedTransformations: transformations,
                 name: "Room"
@@ -524,7 +534,7 @@ namespace DungeonViz
 			var levelDescription = new LevelDescriptionGrid2D<string>();
 
 			////
-			var gen = new Generator(10);
+			var gen = new Generator(8);
 			////
 			var graph = gen.g;
 
@@ -539,6 +549,7 @@ namespace DungeonViz
             {
                 // We manually insert a new room between each pair of neighboring rooms in the graph
                 levelDescription.AddRoom(corridorCounter.ToString(), corridorRoomDescription);
+
                 // And instead of connecting the rooms directly, we connect them to the corridor room
                 levelDescription.AddConnection(connection.From, corridorCounter.ToString());
                 levelDescription.AddConnection(connection.To, corridorCounter.ToString());
@@ -552,8 +563,8 @@ namespace DungeonViz
 			var drawer = new DungeonDrawer<string>();
 			drawer.DrawLayoutAndSave(layout, "layout.png", new DungeonDrawerOptions()
 			{
-				Width = 1000,
-				Height = 1000,
+				Width = 4000,
+				Height = 4000,
 			});
 
 		}
