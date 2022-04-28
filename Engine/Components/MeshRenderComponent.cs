@@ -14,9 +14,9 @@ namespace GameEngine.Components
         private int _vertexBufferObject;
         private int _count;
 
-        private Mesh _shape = new(Array.Empty<float>());
+        private Mesh1 _shape = new(Array.Empty<float>());
 
-        public Mesh Shape
+        public Mesh1 Shape
         {
             get => _shape;
             set

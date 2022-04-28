@@ -1,8 +1,7 @@
 ﻿using GameEngine.Core;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
-using PipesDemo.Algorithms;
-using PipesDemo.Models;
+using Pipes.Models;
 
 namespace PipesDemo.Components
 {

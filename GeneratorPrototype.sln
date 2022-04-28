@@ -27,7 +27,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scene3DDemo", "Scene3DDemo\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PipesDemo", "PipesDemo\PipesDemo.csproj", "{AAEA0CF3-87E5-443A-AF89-88EE9B0215FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SplineDemo", "SplineDemo\SplineDemo.csproj", "{D334B6BB-C928-49A2-A665-411DC2BD7C69}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SplineDemo", "SplineDemo\SplineDemo.csproj", "{D334B6BB-C928-49A2-A665-411DC2BD7C69}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pipes", "Pipes\Pipes.csproj", "{B1ACCCF0-5CC6-4FD3-AF06-1AB8A7F880B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,6 +85,10 @@ Global
 		{D334B6BB-C928-49A2-A665-411DC2BD7C69}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D334B6BB-C928-49A2-A665-411DC2BD7C69}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D334B6BB-C928-49A2-A665-411DC2BD7C69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1ACCCF0-5CC6-4FD3-AF06-1AB8A7F880B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1ACCCF0-5CC6-4FD3-AF06-1AB8A7F880B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1ACCCF0-5CC6-4FD3-AF06-1AB8A7F880B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1ACCCF0-5CC6-4FD3-AF06-1AB8A7F880B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

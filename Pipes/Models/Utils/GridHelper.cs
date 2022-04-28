@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 
-namespace PipesDemo.Models.Utils
+namespace Pipes.Models.Utils
 {
     public static class GridHelper
     {

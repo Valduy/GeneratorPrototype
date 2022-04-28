@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AssimpNet" Version="4.1.0" />
     <PackageReference Include="OpenTK" Version="4.6.7" />
-    <PackageReference Include="Unofficial.AssimpNet" Version="4.0.10" />
   </ItemGroup>
 
   <ItemGroup>

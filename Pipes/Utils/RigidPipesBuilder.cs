@@ -2,15 +2,15 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Mathematics;
-using PipesDemo.Models;
+using Pipes.Models;
 using static System.Single;
 
-namespace PipesDemo.Utils
+namespace Pipes.Utils
 {
     public class RigidPipesBuilder
     {
-        private static readonly Mesh _straightPipeMesh = ObjLoader.Load("Content", "IPipe.obj");
-        private static readonly Mesh _angularPipeMesh = ObjLoader.Load("Content", "LPipe.obj");
+        private static readonly Mesh1 StraightPipeMesh1 = ObjLoader.Load("Content", "IPipe.obj");
+        private static readonly Mesh1 AngularPipeMesh1 = ObjLoader.Load("Content", "LPipe.obj");
 
         private Engine _engine;
         private GameObject? _tail;
@@ -31,7 +31,7 @@ namespace PipesDemo.Utils
         {
             var pipeGo = _engine.CreateGameObject();
             var render = pipeGo.Add<MeshRenderComponent>();
-            render.Shape = _straightPipeMesh;
+            render.Shape = StraightPipeMesh1;
             render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Specular = new Vector3(0.0f);
@@ -65,13 +65,13 @@ namespace PipesDemo.Utils
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Y, pipeGo.Position.Y, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _angularPipeMesh;
+                        meshRender.Shape = AngularPipeMesh1;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _angularPipeMesh;
+                        meshRender.Shape = AngularPipeMesh1;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                 }
@@ -80,7 +80,7 @@ namespace PipesDemo.Utils
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = _angularPipeMesh;
+                        meshRender.Shape = AngularPipeMesh1;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                 }

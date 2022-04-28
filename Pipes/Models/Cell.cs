@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using static System.Single;
 
-namespace PipesDemo.Models
+namespace Pipes.Models
 {
     public enum CellType
     {
@@ -59,15 +59,14 @@ namespace PipesDemo.Models
         public event Action<Cell> TemperatureChanged;
         public event Action<Cell> DirectionChanged;
 
+        public Cell(Grid model, Vector3i position)
+            : this(model, position.X, position.Y, position.Z)
+        {}
+
         public Cell(Grid model, int x, int y, int z)
-            : this(new Vector3i(x, y, z))
         {
             Model = model;
-        }
-
-        public Cell(Vector3i position)
-        {
-            Position = position;
+            Position = new Vector3i(x, y, z);
         }
     }
 }

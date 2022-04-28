@@ -6,10 +6,10 @@ using GameEngine.Mathematics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using PipesDemo.Algorithms;
-using PipesDemo.Models;
-using PipesDemo.Models.Utils;
-using PipesDemo.Utils;
+using Pipes.Algorithms;
+using Pipes.Models;
+using Pipes.Models.Utils;
+using Pipes.Utils;
 
 namespace PipesDemo.Components
 {
@@ -127,7 +127,7 @@ namespace PipesDemo.Components
                 {
                     var wallGo = Engine!.CreateGameObject();
                     var render = wallGo.Add<MeshRenderComponent>();
-                    render.Shape = Mesh.Cube;
+                    render.Shape = Mesh1.Cube;
                     wallGo.Position = cell.Position;
                 }
             }
@@ -146,7 +146,7 @@ namespace PipesDemo.Components
                 {
                     var thermometer = Engine!.CreateGameObject();
                     var render = thermometer.Add<MeshRenderComponent>();
-                    render.Shape = Mesh.Cube;
+                    render.Shape = Mesh1.Cube;
                     var percent = GetPercent(FieldAlgorithms.MaxTemperature, minTemperature, cell.Temperature);
                     var color = new Vector3(percent, MathF.Sin(percent * MathF.PI), 1.0f - percent);
                     render.Material.Ambient = color;
@@ -181,7 +181,7 @@ namespace PipesDemo.Components
         {
             var vector = Engine!.CreateGameObject();
             var render = vector.Add<MeshRenderComponent>();
-            render.Shape = Mesh.Pyramid;
+            render.Shape = Mesh1.Pyramid;
             render.Material.Ambient = Colors.Blue;
             render.Material.Diffuse = Colors.Blue;
             render.Material.Specular = new Vector3(0.0f);

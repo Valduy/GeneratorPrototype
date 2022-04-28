@@ -2,8 +2,8 @@
 using GameEngine.Components;
 using GameEngine.Core;
 using OpenTK.Mathematics;
+using Pipes.Models;
 using PipesDemo.Components;
-using PipesDemo.Models;
 
 namespace PipesDemo
 {

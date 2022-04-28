@@ -1,8 +1,8 @@
 ﻿using OpenTK.Mathematics;
-using PipesDemo.Models;
-using PipesDemo.Models.Utils;
+using Pipes.Models;
+using Pipes.Models.Utils;
 
-namespace PipesDemo.Algorithms
+namespace Pipes.Algorithms
 {
     public static class PipesAlgorithms
     {

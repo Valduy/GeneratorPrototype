@@ -1,9 +1,8 @@
 ﻿using System.Collections;
 using System.Drawing;
 using OpenTK.Mathematics;
-using static System.Single;
 
-namespace PipesDemo.Models
+namespace Pipes.Models
 {
     public class Grid : IEnumerable<Cell>
     {
@@ -93,55 +92,63 @@ namespace PipesDemo.Models
             GetCross(cell.Position);
 
         public IEnumerable<Cell> GetCross(Vector3i position)
+            => GetCross(position.X, position.Y, position.Z);
+
+        public IEnumerable<Cell> GetCross(int x, int y, int z)
         {
-            if (position.X - 1 >= 0)
+            if (x - 1 >= 0)
             {
-                yield return _cells[position.X - 1, position.Y, position.Z];
+                yield return _cells[x - 1, y, z];
             }
-            if (position.X + 1 < Width)
+            if (x + 1 < Width)
             {
-                yield return _cells[position.X + 1, position.Y, position.Z];
+                yield return _cells[x + 1, y, z];
             }
-            if (position.Y - 1 >= 0)
+            if (y - 1 >= 0)
             {
-                yield return _cells[position.X, position.Y - 1, position.Z];
+                yield return _cells[x, y - 1, z];
             }
-            if (position.Y + 1 < Height)
+            if (y + 1 < Height)
             {
-                yield return _cells[position.X, position.Y + 1, position.Z];
+                yield return _cells[x, y + 1, z];
             }
-            if (position.Z - 1 >= 0)
+            if (z - 1 >= 0)
             {
-                yield return _cells[position.X, position.Y, position.Z - 1];
+                yield return _cells[x, y, z - 1];
             }
-            if (position.Z + 1 < Depth)
+            if (z + 1 < Depth)
             {
-                yield return _cells[position.X, position.Y, position.Z + 1];
+                yield return _cells[x, y, z + 1];
             }
         }
 
         public IEnumerable<Cell> GetCube(Cell cell) 
             => GetCube(cell.Position);
 
-        public IEnumerable<Cell> GetCube(Vector3i position)
+        public IEnumerable<Cell> GetCube(Vector3i position) 
+            => GetCube(position.X, position.Y, position.Z);
+
+        public IEnumerable<Cell> GetCube(int x, int y, int z)
         {
+            var initial = new Vector3i(x, y, z);
+
             var start = new Vector3i(
-                Math.Max(0, position.X - 1),
-                Math.Max(0, position.Y - 1),
-                Math.Max(0, position.Z - 1));
+                Math.Max(0, x - 1),
+                Math.Max(0, y - 1),
+                Math.Max(0, z - 1));
 
             var end = new Vector3i(
-                Math.Min(Width - 1, position.X + 1),
-                Math.Min(Height - 1, position.Y + 1),
-                Math.Min(Depth - 1, position.Z + 1));
+                Math.Min(Width - 1, x + 1),
+                Math.Min(Height - 1, y + 1),
+                Math.Min(Depth - 1, z + 1));
 
-            for (int x = start.X; x <= end.X; x++)
+            for (x = start.X; x <= end.X; x++)
             {
-                for (int y = start.Y; y <= end.Y; y++)
+                for (y = start.Y; y <= end.Y; y++)
                 {
-                    for (int z = start.Z; z <= end.Z; z++)
+                    for (z = start.Z; z <= end.Z; z++)
                     {
-                        if (new Vector3i(x, y, z) == position)
+                        if (new Vector3i(x, y, z) == initial)
                         {
                             continue;
                         }

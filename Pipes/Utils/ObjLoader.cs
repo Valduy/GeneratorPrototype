@@ -1,7 +1,7 @@
 ﻿using GameEngine.Graphics;
 using ObjLoader.Loader.Loaders;
 
-namespace PipesDemo.Utils
+namespace Pipes.Utils
 {
     public class DirectoryStreamProvider : IMaterialStreamProvider
     {
@@ -20,14 +20,14 @@ namespace PipesDemo.Utils
 
     public static class ObjLoader
     {
-        public static Mesh Load(string directory, string fileName)
+        public static Mesh1 Load(string directory, string fileName)
         {
             var objLoaderFactory = new ObjLoaderFactory();
             var objLoader = objLoaderFactory.Create(new DirectoryStreamProvider(directory));
             using var fileStream = File.OpenRead($"{directory}/{fileName}");
             var result = objLoader.Load(fileStream);
 
-            return new Mesh(EnumerateLoadResult(result).ToArray());
+            return new Mesh1(EnumerateLoadResult(result).ToArray());
         }
 
         private static IEnumerable<float> EnumerateLoadResult(LoadResult result)
