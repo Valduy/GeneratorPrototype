@@ -48,6 +48,8 @@ namespace DungeonViz
 
 				room_counts.Add(1);
 
+				int full_complexity = signature.Sum();
+
 				//Отнимаем начало и конец
 				int rooms_remain = rooms - 2;
 
@@ -57,12 +59,20 @@ namespace DungeonViz
 					{
 						room_counts.Add(0);
 
-						for (int j = complexity_lost; j < i; j++)
-						{
-							int lost = (int)MathF.Ceiling(signature[i] / (signature.Count - i));
-							int new_signature = (signature[j] + lost) / 2 + 1;
-							signature[j] = new_signature;
-						}
+						int lost = (int)MathF.Ceiling(full_complexity / (rooms - 2));
+
+						float coef = (float)rooms / signature.Count;
+
+						int new_signature = (int)MathF.Ceiling((signature[complexity_lost] + lost) * coef);
+						signature[complexity_lost] = new_signature;
+
+						//for (int j = complexity_lost; j < i; j++)
+						//{
+							//int lost = (int)MathF.Ceiling(signature[i] / (signature.Count - i));
+							//int new_signature = (signature[j] + lost) / 2 + 1;
+
+							
+						//}
 
 						complexity_lost += 1;
 					}
@@ -94,6 +104,8 @@ namespace DungeonViz
 								rooms_remain -= room_counts[room_counts.Count - 1];
 							}
 						}
+
+						full_complexity -= signature[i];
 					}
 				}
 			}
@@ -201,9 +213,9 @@ namespace DungeonViz
 
 						int d = signature[i];
 
-						High_Event(ref d);
-						Mid_Event(ref d);
-						Low_Event(ref d);
+						//High_Event(ref d);
+						//Mid_Event(ref d);
+						//Low_Event(ref d);
 
 						//for ( auto ev : events)
 						//{
@@ -215,6 +227,8 @@ namespace DungeonViz
 						string name = "Room_" + i + "_" + j + room_events;
 						//string name = "+" + signature[i].ToString();
 						current.Add(name);
+
+						room_events = "";
 					}
 
 					foreach (var item in current)
@@ -342,6 +356,53 @@ namespace DungeonViz
 				}
 				sw.Close();
 			}
+
+			public void DFS(Dictionary<string, bool> vertexes, string vertex, string output)
+            {
+				if(!vertexes.ContainsKey(vertex))
+                {
+					vertexes.Add(vertex, false);
+
+					foreach (var neighbor in g.GetNeighbours(vertex))
+					{
+						DFS(vertexes, neighbor, output + "->" + neighbor);
+					}
+
+					Console.WriteLine(output);
+				}
+                else if(vertexes[vertex] == false)
+                {
+					vertexes[vertex] = true;
+
+					foreach (var neighbor in g.GetNeighbours(vertex))
+					{
+						DFS(vertexes, neighbor, output + "->" + neighbor);
+					}
+
+					Console.WriteLine(output);
+				}
+			}
+
+			public void PrintPaths(string vertex)
+			{
+
+				List<string> res = new List<String>();
+
+				Queue<string> pred = new Queue<string>();
+				Queue<string> cur = new Queue<string>();
+
+				foreach (var vertex1 in g.Vertices)
+				{
+
+				}
+
+				//while ()
+                //{
+				   
+                //}
+
+				Console.WriteLine();
+			}
 		}
 
 		public class Room
@@ -442,7 +503,7 @@ namespace DungeonViz
 
             graph.AddVerticesRange(0, matrix.Length);
 
-            levelDescription.MinimumRoomDistance = 1;
+            levelDescription.MinimumRoomDistance = 3;
 
             for (int i = 0; i < matrix.Length; i++)
             {
@@ -491,7 +552,7 @@ namespace DungeonViz
 
         }
 
-		public static void MakeGraph()
+		public static void MakeGraph(int rooms)
 		{
 			var corridorOutline = PolygonGrid2D.GetRectangle(2, 1);
 
@@ -532,9 +593,10 @@ namespace DungeonViz
 
 			var basicRoomDescription = GetBasicRoomDescription();
 			var levelDescription = new LevelDescriptionGrid2D<string>();
+			levelDescription.MinimumRoomDistance = 1;
 
 			////
-			var gen = new Generator(8);
+			var gen = new Generator(rooms);
 			////
 			var graph = gen.g;
 
@@ -574,9 +636,12 @@ namespace DungeonViz
 
 			//ReadGraph(@"D:\DungeonViz\DungeonViz\my_graph.txt");
 
-			MakeGraph();
+			var gen = new Generator(6);
+			gen.DFS(new Dictionary<string, bool>(), "Начало", "Начало");
 
-            Console.WriteLine("Hello World!");
+			//MakeGraph(24);
+
+			Console.WriteLine("Hello World!");
         }
     }
 }
