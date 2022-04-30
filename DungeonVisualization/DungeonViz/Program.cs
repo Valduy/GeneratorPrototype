@@ -357,51 +357,189 @@ namespace DungeonViz
 				sw.Close();
 			}
 
-			public void DFS(Dictionary<string, bool> vertexes, string vertex, string output)
+			public void DFS(Dictionary<string, bool> vertexes, List<string> Path, string vertex, string output)
             {
-				if(!vertexes.ContainsKey(vertex))
+                if (!vertexes.ContainsKey(vertex))
                 {
-					vertexes.Add(vertex, false);
+                    vertexes.Add(vertex, true);
+
+                    foreach (var neighbor in g.GetNeighbours(vertex))
+                    {
+						Path.Add(neighbor);
+                        DFS(vertexes, Path, neighbor, output + "->" + neighbor);
+                    }
+
+					string s = "";
+					foreach (var v in Path)
+					{
+						s += (v + "->");
+					}
+
+					Console.WriteLine(s);
+                }
+
+    //            else if (vertexes[vertex] == false)
+    //            {
+    //                vertexes[vertex] = true;
+
+    //                foreach (var neighbor in g.GetNeighbours(vertex))
+    //                {
+				//		Path.Add(neighbor);
+				//		DFS(vertexes, Path, neighbor, output + "->" + neighbor);
+    //                }
+
+				//	string s = "";
+				//	foreach(var v in Path)
+    //                {
+				//		s += (v + "->");
+				//	}
+
+				//	Console.WriteLine(s);
+				//}
+
+                //if (!vertexes.ContainsKey(vertex))
+                //{
+                //	vertexes.Add(vertex, true);
+
+                //	foreach (var neighbor in g.GetNeighbours(vertex))
+                //	{
+                //		DFS(vertexes, neighbor, output + "->" + neighbor);
+                //	}
+
+                //	Console.WriteLine(output);
+
+                //}
+            }
+
+			public void Circules(Dictionary<string, bool> vertexes, List<string> Path, string vertex, string output)
+			{
+				if (true)
+				{
+					//vertexes.Add(vertex, true);
 
 					foreach (var neighbor in g.GetNeighbours(vertex))
 					{
-						DFS(vertexes, neighbor, output + "->" + neighbor);
-					}
+						if(!Path.Contains(neighbor))
+                        {
+							Path.Add(vertex);
+							Circules(vertexes, Path, neighbor, output + "->" + neighbor);
+						}
+						else
+                        {
+							//Path.Add(vertex);
+							string s = "";
+							bool toogle = false;
 
-					Console.WriteLine(output);
+							foreach (var v in Path)
+							{
+								if (v == vertex)
+								{
+									toogle = true;
+
+								}
+
+								if (toogle == true)
+								{
+									s += (v + "->");
+								}
+							}
+
+							s += ("->" + vertex);
+
+							Console.WriteLine(s);
+						}
+					}
 				}
-                else if(vertexes[vertex] == false)
+                else
                 {
-					vertexes[vertex] = true;
-
-					foreach (var neighbor in g.GetNeighbours(vertex))
-					{
-						DFS(vertexes, neighbor, output + "->" + neighbor);
-					}
-
-					Console.WriteLine(output);
+					
 				}
 			}
 
-			public void PrintPaths(string vertex)
+			public void new_DFS(string vertex, string end, Stack<string> path, HashSet<string> visited)
 			{
+				if(vertex == end)
+                {
+					PrintPath(path);
+					return;
+                }
 
-				List<string> res = new List<String>();
-
-				Queue<string> pred = new Queue<string>();
-				Queue<string> cur = new Queue<string>();
-
-				foreach (var vertex1 in g.Vertices)
+				foreach (var neighbor in g.GetNeighbours(vertex))
 				{
+					if(!visited.Contains(neighbor))
+                    {
+						path.Push(neighbor);
+						visited.Add(neighbor);
 
+						new_DFS(neighbor, end, path, visited);
+
+						path.Pop();
+						visited.Remove(neighbor);
+
+					}
+                }
+			}
+
+			public UndirectedAdjacencyListGraph<string> gg = new UndirectedAdjacencyListGraph<string>();
+
+			public void BFS_Plus(string vertex, int difficult)
+			{
+				Dictionary<string, bool> visited = new Dictionary<string, bool>();
+
+				Queue<string> q = new Queue<string>();
+				Queue<int> d = new Queue<int>();
+
+				q.Enqueue(vertex);
+				d.Enqueue(difficult);
+
+				visited.Add(vertex, true);
+
+				while (q.Count != 0)
+                {
+					string s = q.Dequeue();
+					int c = d.Dequeue();
+					
+					vertex = s;
+					difficult = c;
+
+					if (g.GetNeighbours(vertex).Count() == 1)
+                    {
+						s += " - Тупик";
+                    }
+					else if (q.Count == 0)
+					{
+						s += " - Горло";
+					}
+					else
+                    {
+						s += " - Норма";
+					}
+
+					Console.WriteLine(s);
+
+					foreach (var v in g.GetNeighbours(vertex))
+					{
+						if (!visited.ContainsKey(v))
+						{
+							visited.Add(v, true);
+							q.Enqueue(v);
+						}
+					}
+                }
+			}
+
+			public void PrintPath(Stack<string> path)
+			{
+				string s = "";
+
+				foreach (var v in path)
+				{
+					s += (v + "->");
 				}
 
-				//while ()
-                //{
-				   
-                //}
+				//s += ("->" + vertex);
 
-				Console.WriteLine();
+				Console.WriteLine(s);
 			}
 		}
 
@@ -599,6 +737,9 @@ namespace DungeonViz
 			var gen = new Generator(rooms);
 			////
 			var graph = gen.g;
+			////
+			//gen.new_DFS("Начало", "Конец", new Stack<string>(), new HashSet<string>());
+			gen.BFS_Plus("Начало", 0);
 
             foreach (var room in graph.Vertices)
             {
@@ -636,10 +777,10 @@ namespace DungeonViz
 
 			//ReadGraph(@"D:\DungeonViz\DungeonViz\my_graph.txt");
 
-			var gen = new Generator(6);
-			gen.DFS(new Dictionary<string, bool>(), "Начало", "Начало");
+			//var gen = new Generator(8);
+			//gen.DFS(new Dictionary<string, bool>(), new List<string>(), "Начало", "Начало");
 
-			//MakeGraph(24);
+			MakeGraph(8);
 
 			Console.WriteLine("Hello World!");
         }
