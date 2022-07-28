@@ -17,7 +17,7 @@ struct Light {
 uniform Light light;
 uniform Material material;
 uniform vec3 viewPosition;
-uniform sampler2D texture;
+uniform sampler2D texture0;
 
 out vec4 color;
 
@@ -43,5 +43,5 @@ void main()
     vec3 specular = light.specular * (spec * material.specular);
 
     vec3 result = ambient + diffuse + specular;
-    color = vec4(result, 1.0);
+    color = vec4(result, 1.0) * texture(texture0, textureCoord);
 }

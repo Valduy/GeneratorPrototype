@@ -2,6 +2,7 @@
 using GameEngine.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
+using TextureUnit = OpenTK.Graphics.OpenGL4.TextureUnit;
 
 namespace GameEngine.Components
 {
@@ -38,7 +39,7 @@ namespace GameEngine.Components
 
         public override void RenderUpdate(FrameEventArgs args)
         {
-            SetupShader();
+            Setup();
             Render();
         }
 
@@ -61,8 +62,10 @@ namespace GameEngine.Components
             return result.ToArray();
         }
 
-        private void SetupShader()
+        private void Setup()
         {
+            Texture.Use(TextureUnit.Texture0);
+
             _shader.Use();
             _shader.SetMatrix4("transform.model", GameObject!.GetModelMatrix());
             _shader.SetMatrix4("transform.view", GameObject!.Engine.Camera.GetViewMatrix());
@@ -123,7 +126,7 @@ namespace GameEngine.Components
         private void Render()
         {
             GL.BindVertexArray(_vertexArrayObject);
-            SetupShader();
+            Setup();
             GL.DrawElements(PrimitiveType.Triangles, Shape.Indices.Count, DrawElementsType.UnsignedInt, 0);
             GL.BindVertexArray(0);
         }
