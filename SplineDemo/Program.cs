@@ -2,12 +2,15 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
+using GameEngine.Utils;
 using OpenTK.Mathematics;
 
 namespace SplineDemo
 {
     public class Program
     {
+        public static readonly Model Cube = ModelLoader.Load("Content/Cube.obj");
+
         public static void Main(string[] args)
         {
             using var engine = new Engine();
@@ -55,7 +58,7 @@ namespace SplineDemo
             go.Scale = new Vector3(scale);
 
             var render = go.Add<MeshRenderComponent>();
-            render.Shape = Mesh1.Cube;
+            render.Shape = Cube.Meshes[0];
 
             return go;
         }

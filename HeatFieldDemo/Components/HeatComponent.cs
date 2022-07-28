@@ -1,6 +1,7 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
+using GameEngine.Utils;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using Pipes.Algorithms;
@@ -10,6 +11,8 @@ namespace HeatFieldDemo.Components
 {
     public class HeatComponent : Component
     {
+        private readonly Model _cube = ModelLoader.Load("Content/Cube.obj");
+
         public const float MaxTemperature = FieldAlgorithms.MaxTemperature;
         public const float MinTemperature = 0;
 
@@ -49,7 +52,7 @@ namespace HeatFieldDemo.Components
         {
             var thermometer = Engine!.CreateGameObject();
             var render = thermometer.Add<MeshRenderComponent>();
-            render.Shape = Mesh1.Cube;
+            render.Shape = _cube.Meshes[0];
             render.Material.Ambient = color;
             render.Material.Diffuse = color;
             thermometer.Position = cell.Position;

@@ -12,4 +12,13 @@
     <ProjectReference Include="..\Pipes\Pipes.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Content\Cube.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Cube.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
