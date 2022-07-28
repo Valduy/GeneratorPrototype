@@ -2,14 +2,13 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
-using GameEngine.Utils;
 using OpenTK.Mathematics;
 
 namespace Pipes.Utils
 {
     public class FlexiblePipesBuilder
     {
-        private static readonly Model RingModel = ModelLoader.Load("Content/Ring.obj");
+        private static readonly Model RingModel = Model.Load("Content/Ring.obj");
 
         private Engine _engine;
         private Vector3? _prevPosition;

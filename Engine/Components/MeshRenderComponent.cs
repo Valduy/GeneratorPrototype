@@ -27,6 +27,8 @@ namespace GameEngine.Components
             }
         }
 
+        public Texture Texture { get; set; } = Texture.Default;
+
         public Material Material { get; set; } = new();
 
         public MeshRenderComponent()
@@ -52,6 +54,8 @@ namespace GameEngine.Components
                 result.Add(vertex.Normal.X);
                 result.Add(vertex.Normal.Y);
                 result.Add(vertex.Normal.Z);
+                result.Add(vertex.TextureCoords.X);
+                result.Add(vertex.TextureCoords.Y);
             }
 
             return result.ToArray();
@@ -60,10 +64,10 @@ namespace GameEngine.Components
         private void SetupShader()
         {
             _shader.Use();
-            _shader.SetMatrix4("model", GameObject!.GetModelMatrix());
-            _shader.SetMatrix4("view", GameObject!.Engine.Camera.GetViewMatrix());
-            _shader.SetMatrix4("projection", GameObject!.Engine.Camera.GetProjectionMatrix());
-            _shader.SetVector3("viewPos", GameObject!.Engine.Camera.Position);
+            _shader.SetMatrix4("transform.model", GameObject!.GetModelMatrix());
+            _shader.SetMatrix4("transform.view", GameObject!.Engine.Camera.GetViewMatrix());
+            _shader.SetMatrix4("transform.projection", GameObject!.Engine.Camera.GetProjectionMatrix());
+            _shader.SetVector3("viewPosition", GameObject!.Engine.Camera.Position);
 
             _shader.SetVector3("material.ambient", Material.Ambient);
             _shader.SetVector3("material.diffuse", Material.Diffuse);
@@ -89,13 +93,17 @@ namespace GameEngine.Components
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _vertexElementObject);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
-            var positionLocation = _shader.GetAttribLocation("aPos");
+            var positionLocation = _shader.GetAttribLocation("vertexPosition");
             GL.EnableVertexAttribArray(positionLocation);
-            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
 
-            var normalLocation = _shader.GetAttribLocation("aNormal");
+            var normalLocation = _shader.GetAttribLocation("vertexNormal");
             GL.EnableVertexAttribArray(normalLocation);
-            GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+            GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
+
+            var textureLocation = _shader.GetAttribLocation("vertexTexture");
+            GL.EnableVertexAttribArray(textureLocation);
+            GL.VertexAttribPointer(textureLocation, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
 
             GL.EnableVertexAttribArray(0);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
@@ -115,10 +123,7 @@ namespace GameEngine.Components
         private void Render()
         {
             GL.BindVertexArray(_vertexArrayObject);
-
             SetupShader();
-            // TODO: ???
-            //GL.DrawArrays(PrimitiveType.Triangles, 0, _count);
             GL.DrawElements(PrimitiveType.Triangles, Shape.Indices.Count, DrawElementsType.UnsignedInt, 0);
             GL.BindVertexArray(0);
         }

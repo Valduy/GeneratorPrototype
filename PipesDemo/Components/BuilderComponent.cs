@@ -3,7 +3,6 @@ using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
-using GameEngine.Utils;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -16,9 +15,6 @@ namespace PipesDemo.Components
 {
     public class BuilderComponent : Component
     {
-        private readonly Model _cube = ModelLoader.Load("Content/Cube.obj");
-        private readonly Model _pyramid = ModelLoader.Load("Content/Pyramid.obj");
-
         private IEnumerator? _currentGenerator;
         private int _index = 0;
 
@@ -131,7 +127,7 @@ namespace PipesDemo.Components
                 {
                     var wallGo = Engine!.CreateGameObject();
                     var render = wallGo.Add<MeshRenderComponent>();
-                    render.Shape = _cube.Meshes[0];
+                    render.Shape = Model.Cube.Meshes[0];
                     wallGo.Position = cell.Position;
                 }
             }
@@ -159,7 +155,7 @@ namespace PipesDemo.Components
         {
             var thermometer = Engine!.CreateGameObject();
             var render = thermometer.Add<MeshRenderComponent>();
-            render.Shape = _cube.Meshes[0];
+            render.Shape = Model.Cube.Meshes[0];
             render.Material.Ambient = color;
             render.Material.Diffuse = color;
             thermometer.Position = cell.Position;
@@ -190,7 +186,7 @@ namespace PipesDemo.Components
         {
             var vector = Engine!.CreateGameObject();
             var render = vector.Add<MeshRenderComponent>();
-            render.Shape = _pyramid.Meshes[0];
+            render.Shape = Model.Pyramid.Meshes[0];
             render.Material.Ambient = Colors.Blue;
             render.Material.Diffuse = Colors.Blue;
             render.Material.Specular = new Vector3(0.0f);

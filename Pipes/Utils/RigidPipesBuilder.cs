@@ -1,7 +1,6 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
-using GameEngine.Utils;
 using OpenTK.Mathematics;
 using Pipes.Models;
 using static System.Single;
@@ -10,8 +9,8 @@ namespace Pipes.Utils
 {
     public class RigidPipesBuilder
     {
-        private static readonly Model StraightPipeModel = ModelLoader.Load("Content/IPipe.obj");
-        private static readonly Model AngularPipeModel = ModelLoader.Load("Content/LPipe.obj");
+        private static readonly Model StraightPipeModel = Model.Load("Content/IPipe.obj");
+        private static readonly Model AngularPipeModel = Model.Load("Content/LPipe.obj");
 
         private Engine _engine;
         private GameObject? _tail;

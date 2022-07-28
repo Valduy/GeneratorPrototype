@@ -1,4 +1,4 @@
-﻿using GameEngine.Utils;
+﻿using GameEngine.Graphics;
 
 namespace TextureDemo
 {
@@ -6,7 +6,7 @@ namespace TextureDemo
     {
         public static void Main(string[] args)
         {
-            var m = ModelLoader.Load("Content/IPipe.obj");
+            var m = Model.Load("Content/IPipe.obj");
         }
     }
 }
