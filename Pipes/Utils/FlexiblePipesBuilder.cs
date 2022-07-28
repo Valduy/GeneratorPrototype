@@ -2,13 +2,14 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
+using GameEngine.Utils;
 using OpenTK.Mathematics;
 
 namespace Pipes.Utils
 {
     public class FlexiblePipesBuilder
     {
-        private static readonly Mesh1 RingMesh1 = ObjLoader.Load("Content", "Ring.obj");
+        private static readonly Model RingModel = ModelLoader.Load("Content/Ring.obj");
 
         private Engine _engine;
         private Vector3? _prevPosition;
@@ -57,7 +58,7 @@ namespace Pipes.Utils
             {
                 var ringGo = _engine.CreateGameObject();
                 var render = ringGo.Add<MeshRenderComponent>();
-                render.Shape = RingMesh1;
+                render.Shape = RingModel.Meshes[0];
                 render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
                 render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
                 render.Material.Specular = new Vector3(0.0f);

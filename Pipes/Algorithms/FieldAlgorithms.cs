@@ -76,7 +76,7 @@ namespace Pipes.Algorithms
             grid.ZeroWarm();
             grid[x, y, z].Temperature = MaxTemperature;
 
-            for (int t = 1; t < 16 * 16 * 16; t++)
+            for (int t = 1; t < 100; t++)
             {
                 grid.HeatTransferIteration(x, y, z, 100, GetCoefficient);
             }
@@ -84,6 +84,8 @@ namespace Pipes.Algorithms
 
         public static void HeatTransferIteration(this Grid grid, int x, int y, int z, float t, Func<Cell, float> weighter)
         {
+            grid[x, y, z].Temperature = MaxTemperature;
+
             for (int i = 1; i < grid.Width - 1; i++)
             {
                 for (int j = 1; j < grid.Height - 1; j++)
@@ -93,34 +95,9 @@ namespace Pipes.Algorithms
                         grid[x, y, z].Temperature = MaxTemperature;
                         float coefficient = weighter(grid[i, j, k]);
                         grid[i, j, k].Temperature += coefficient * t * grid.Derivative2(i, j, k);
-                        //grid[i, j, k].Temperature = Math.Clamp(grid[i, j, k].Temperature, 0, MaxTemperature);
                     }
                 }
             }
-
-            //var frontier = new Queue<Cell>();
-            //var visited = new HashSet<Cell>();
-            //var start = grid[x, y, z];
-            //start.Temperature = MaxTemperature;
-            //frontier.Enqueue(start);
-            //visited.Add(start);
-
-            //while (frontier.Any())
-            //{
-            //    var temp = frontier.Dequeue();
-            //    grid[x, y, z].Temperature = MaxTemperature;
-            //    float coefficient = weighter(temp);
-            //    temp.Temperature += coefficient * t * grid.Derivative2(temp.Position.X, temp.Position.Y, temp.Position.Z);
-            //    var reachable = grid.GetCross(temp)
-            //        .Where(c => !visited.Contains(c) && IsInner(c))
-            //        .ToList();
-
-            //    foreach (var adjacent in reachable)
-            //    {
-            //        frontier.Enqueue(adjacent);
-            //        visited.Add(adjacent);
-            //    }
-            //}
         }
 
         private static bool IsInner(this Cell cell)

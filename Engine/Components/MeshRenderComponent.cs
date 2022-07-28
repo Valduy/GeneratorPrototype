@@ -11,11 +11,11 @@ namespace GameEngine.Components
 
         private int _vertexArrayObject;
         private int _vertexBufferObject;
-        private int _count;
+        private int _vertexElementObject;
 
-        private Mesh1 _shape = new(Array.Empty<float>());
+        private Mesh _shape = new(Enumerable.Empty<Vertex>(), Enumerable.Empty<int>());
 
-        public Mesh1 Shape
+        public Mesh Shape
         {
             get => _shape;
             set
@@ -23,7 +23,7 @@ namespace GameEngine.Components
                 if (_shape == value) return;
                 _shape = value;
                 Unregister();
-                Register(Shape.ToArray());
+                Register(GetVertices(Shape), Shape.Indices.ToArray());
             }
         }
 
@@ -31,13 +31,30 @@ namespace GameEngine.Components
 
         public MeshRenderComponent()
         {
-            Register(Shape.ToArray());
+            Register(GetVertices(Shape), Shape.Indices.ToArray());
         }
 
         public override void RenderUpdate(FrameEventArgs args)
         {
             SetupShader();
             Render();
+        }
+
+        private float[] GetVertices(Mesh mesh)
+        {
+            var result = new List<float>();
+
+            foreach (var vertex in mesh.Vertices)
+            {
+                result.Add(vertex.Position.X);
+                result.Add(vertex.Position.Y);
+                result.Add(vertex.Position.Z);
+                result.Add(vertex.Normal.X);
+                result.Add(vertex.Normal.Y);
+                result.Add(vertex.Normal.Z);
+            }
+
+            return result.ToArray();
         }
 
         private void SetupShader()
@@ -59,7 +76,7 @@ namespace GameEngine.Components
             _shader.SetVector3("light.specular", GameObject!.Engine.Light.Specular);
         }
 
-        private void Register(float[] vertices)
+        private void Register(float[] vertices, int[] indices)
         {
             _vertexArrayObject = GL.GenVertexArray();
             GL.BindVertexArray(_vertexArrayObject);
@@ -67,6 +84,10 @@ namespace GameEngine.Components
             _vertexBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+            _vertexElementObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _vertexElementObject);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
             var positionLocation = _shader.GetAttribLocation("aPos");
             GL.EnableVertexAttribArray(positionLocation);
@@ -77,7 +98,8 @@ namespace GameEngine.Components
             GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
 
             GL.EnableVertexAttribArray(0);
-            _count = vertices.Length / 6;
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindVertexArray(0);
         }
 
         private void Unregister()
@@ -86,6 +108,7 @@ namespace GameEngine.Components
             GL.BindVertexArray(0);
 
             GL.DeleteBuffer(_vertexBufferObject);
+            GL.DeleteBuffer(_vertexElementObject);
             GL.DeleteVertexArray(_vertexArrayObject);
         }
 
@@ -94,8 +117,9 @@ namespace GameEngine.Components
             GL.BindVertexArray(_vertexArrayObject);
 
             SetupShader();
-            GL.DrawArrays(PrimitiveType.Triangles, 0, _count);
-
+            // TODO: ???
+            //GL.DrawArrays(PrimitiveType.Triangles, 0, _count);
+            GL.DrawElements(PrimitiveType.Triangles, Shape.Indices.Count, DrawElementsType.UnsignedInt, 0);
             GL.BindVertexArray(0);
         }
     }
