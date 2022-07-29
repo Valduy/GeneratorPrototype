@@ -14,8 +14,6 @@ namespace PipesDemo
         public static void Main(string[] args)
         {
             using var engine = new Engine();
-            engine.Light.Ambient = new(1);
-            engine.Light.Diffuse = new(1);
 
             var grid = new Grid(
                 SampleLoader.FloorWidth + SampleLoader.WallSpacing * 2,

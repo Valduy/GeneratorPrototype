@@ -156,8 +156,7 @@ namespace PipesDemo.Components
             var thermometer = Engine!.CreateGameObject();
             var render = thermometer.Add<MeshRenderComponent>();
             render.Model = Model.Cube;
-            render.Material.Ambient = color;
-            render.Material.Diffuse = color;
+            render.Material.Color = color;
             thermometer.Position = cell.Position;
             thermometer.Scale = new Vector3(0.05f);
             thermometer.Euler = new Vector3(45);
@@ -187,9 +186,8 @@ namespace PipesDemo.Components
             var vector = Engine!.CreateGameObject();
             var render = vector.Add<MeshRenderComponent>();
             render.Model = Model.Pyramid;
-            render.Material.Ambient = Colors.Blue;
-            render.Material.Diffuse = Colors.Blue;
-            render.Material.Specular = new Vector3(0.0f);
+            render.Material.Color = Colors.Blue;
+            render.Material.Specular = 0.0f;
             vector.Position = position;
             vector.Scale = new Vector3(0.05f, 0.5f, 0.05f);
 

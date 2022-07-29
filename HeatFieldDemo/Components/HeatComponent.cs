@@ -49,9 +49,8 @@ namespace HeatFieldDemo.Components
         {
             var thermometer = Engine!.CreateGameObject();
             var render = thermometer.Add<MeshRenderComponent>();
-            render.Shape = Model.Cube.Meshes[0];
-            render.Material.Ambient = color;
-            render.Material.Diffuse = color;
+            render.Model = Model.Cube;
+            render.Material.Color = color;
             thermometer.Position = cell.Position;
             thermometer.Scale = new Vector3(0.05f);
             thermometer.Euler = new Vector3(45);
@@ -72,8 +71,7 @@ namespace HeatFieldDemo.Components
             var thermometer = _thermometers[cell.Position.X, cell.Position.Y, cell.Position.Z];
             var render = thermometer.Get<MeshRenderComponent>();
             var color = GetColor(cell);
-            render!.Material.Ambient = color;
-            render!.Material.Diffuse = color;
+            render!.Material.Color = color;
         }
     }
 }

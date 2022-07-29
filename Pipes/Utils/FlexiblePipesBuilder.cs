@@ -58,9 +58,8 @@ namespace Pipes.Utils
                 var ringGo = _engine.CreateGameObject();
                 var render = ringGo.Add<MeshRenderComponent>();
                 render.Model = RingModel;
-                render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
-                render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
-                render.Material.Specular = new Vector3(0.0f);
+                render.Material.Color = new Vector3(1.0f, 0.5f, 0.31f);
+                render.Material.Specular = 0.0f;
                 render.Material.Shininess = 32.0f;
                 ringGo.Position = points[i];
 
