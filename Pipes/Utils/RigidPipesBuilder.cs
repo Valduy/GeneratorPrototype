@@ -31,7 +31,7 @@ namespace Pipes.Utils
         {
             var pipeGo = _engine.CreateGameObject();
             var render = pipeGo.Add<MeshRenderComponent>();
-            render.Shape = StraightPipeModel.Meshes[0];
+            render.Model = StraightPipeModel;
             render.Material.Ambient = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Diffuse = new Vector3(1.0f, 0.5f, 0.31f);
             render.Material.Specular = new Vector3(0.0f);
@@ -65,13 +65,13 @@ namespace Pipes.Utils
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Y, pipeGo.Position.Y, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = AngularPipeModel.Meshes[0];
+                        meshRender.Model = AngularPipeModel;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = AngularPipeModel.Meshes[0];
+                        meshRender.Model = AngularPipeModel;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                 }
@@ -80,7 +80,7 @@ namespace Pipes.Utils
                     if (!MathHelper.ApproximatelyEqualEpsilon(_tail.Position.Z, pipeGo.Position.Z, Epsilon))
                     {
                         var meshRender = _prev!.Get<MeshRenderComponent>()!;
-                        meshRender.Shape = AngularPipeModel.Meshes[0];
+                        meshRender.Model = AngularPipeModel;
                         _prev.Euler = GetLPipeRotation(_tail.Position, _prev.Position, pipeGo.Position);
                     }
                 }

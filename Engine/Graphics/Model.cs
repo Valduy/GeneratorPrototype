@@ -5,6 +5,7 @@ namespace GameEngine.Graphics
 {
     public class Model
     {
+        public static readonly Model Empty = new(Enumerable.Empty<Mesh>());
         public static readonly Model Cube = Load("Content/Cube.obj");
         public static readonly Model Pyramid = Load("Content/Pyramid.obj");
 

@@ -15,10 +15,13 @@
     <None Update="Content\.gitignore">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
-    <None Update="Content\IPipe.mtl">
+    <None Update="Content\Pear.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\IPipe.obj">
+    <None Update="Content\Pear.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Pear_Diffuse.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
