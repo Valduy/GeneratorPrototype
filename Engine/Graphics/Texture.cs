@@ -10,7 +10,7 @@ namespace GameEngine.Graphics
 
         public static readonly Texture Default = LoadFromFile("Content/default.png");
 
-        public static Texture LoadFromFile(string path)
+        public static Texture LoadFromFile(string path, bool isShouldFlip = false)
         {
             // Generate handle
             int handle = GL.GenTexture();
@@ -23,7 +23,7 @@ namespace GameEngine.Graphics
 
             // OpenGL has it's texture origin in the lower left corner instead of the top left corner,
             // so we tell StbImageSharp to flip the image when loading.
-            StbImage.stbi_set_flip_vertically_on_load(1);
+            StbImage.stbi_set_flip_vertically_on_load(isShouldFlip ? 1 : 0);
 
             // Here we open a stream to the file and pass it to StbImageSharp to load.
             using (Stream stream = File.OpenRead(path))

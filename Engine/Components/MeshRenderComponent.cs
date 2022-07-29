@@ -1,6 +1,7 @@
 ﻿using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using TextureUnit = OpenTK.Graphics.OpenGL4.TextureUnit;
 
@@ -77,15 +78,13 @@ namespace GameEngine.Components
             Shader.SetMatrix4("transform.projection", GameObject!.Engine.Camera.GetProjectionMatrix());
             Shader.SetVector3("viewPosition", GameObject!.Engine.Camera.Position);
 
-            Shader.SetVector3("material.ambient", Material.Ambient);
-            Shader.SetVector3("material.diffuse", Material.Diffuse);
-            Shader.SetVector3("material.specular", Material.Specular);
+            Shader.SetVector3("material.color", Material.Color);
+            Shader.SetFloat("material.ambient", Material.Ambient);
             Shader.SetFloat("material.shininess", Material.Shininess);
-
+            Shader.SetFloat("material.specular", Material.Specular);
+            
             Shader.SetVector3("light.position", GameObject!.Engine.Light.Position);
-            Shader.SetVector3("light.ambient", GameObject!.Engine.Light.Ambient);
-            Shader.SetVector3("light.diffuse", GameObject!.Engine.Light.Diffuse);
-            Shader.SetVector3("light.specular", GameObject!.Engine.Light.Specular);
+            Shader.SetVector3("light.color", GameObject!.Engine.Light.Color);
         }
 
         private void Register()
@@ -117,7 +116,7 @@ namespace GameEngine.Components
                 GL.EnableVertexAttribArray(normalLocation);
                 GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
 
-                var textureLocation = Shader.GetAttribLocation("vertexTexture");
+                var textureLocation = Shader.GetAttribLocation("vertexTextureCoord");
                 GL.EnableVertexAttribArray(textureLocation);
                 GL.VertexAttribPointer(textureLocation, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
 

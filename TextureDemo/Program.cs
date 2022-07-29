@@ -21,7 +21,7 @@ namespace TextureDemo
             var render = pearGo.Add<MeshRenderComponent>();
             render.Model = Model.Load("Content/Pear.obj");
             render.Texture = Texture.LoadFromFile("Content/Pear_Diffuse.jpg");
-            pearGo.Position = new(0, 1, 0);
+            pearGo.Position = new Vector3(0, 1, 0);
 
             engine.Run();
         }

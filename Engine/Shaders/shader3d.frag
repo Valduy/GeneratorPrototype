@@ -1,17 +1,17 @@
 ﻿#version 330 core
 
-struct Material {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+struct Material 
+{
+    vec3 color;
+    float ambient;
     float shininess;
+    float specular;    
 };
 
-struct Light {
+struct Light 
+{
     vec3 position;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+    vec3 color;
 };
 
 uniform Light light;
@@ -19,7 +19,7 @@ uniform Material material;
 uniform vec3 viewPosition;
 uniform sampler2D texture0;
 
-out vec4 color;
+out vec4 fragmentColor;
 
 in vec3 normal;
 in vec2 textureCoord;
@@ -27,21 +27,23 @@ in vec3 worldPosition;
 
 void main()
 {
+    vec4 color = texture(texture0, textureCoord) * vec4(material.color, 1.0);
+    vec3 lightDirection = normalize(worldPosition - light.position);
+
     //ambient
-    vec3 ambient = light.ambient * material.ambient;
+    vec3 ambient = material.ambient * light.color;
 
     //diffuse 
     vec3 norm = normalize(normal);
-    vec3 lightDir = normalize(light.position - worldPosition);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * (diff * material.diffuse);
+    vec3 toLightDirection = -lightDirection;
+    float diff = max(dot(norm, toLightDirection), 0.0);
+    vec3 diffuse = diff * light.color;
 
     //specular
-    vec3 viewDir = normalize(viewPosition - worldPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * (spec * material.specular);
+    vec3 viewDirection = normalize(viewPosition - worldPosition);
+    vec3 reflectDirection = reflect(toLightDirection, norm);
+    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), material.shininess);
+    vec3 specular = material.specular * spec * light.color;
 
-    vec3 result = ambient + diffuse + specular;
-    color = vec4(result, 1.0) * texture(texture0, textureCoord);
+    fragmentColor = vec4(ambient + diffuse + specular, 1.0) * color;
 }
