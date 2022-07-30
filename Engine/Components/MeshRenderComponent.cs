@@ -1,13 +1,12 @@
 ﻿using GameEngine.Core;
 using GameEngine.Graphics;
 using OpenTK.Graphics.OpenGL;
-using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using TextureUnit = OpenTK.Graphics.OpenGL4.TextureUnit;
 
 namespace GameEngine.Components
 {
-    public class MeshRenderComponent : Component
+    public abstract class MeshRenderComponent : Component
     {
         private struct MeshBuffers
         {
@@ -16,9 +15,11 @@ namespace GameEngine.Components
             public int VertexElementObject { get; set; }
         }
 
-        private static readonly Shader Shader = new("Shaders/shader3d.vert", "Shaders/shader3d.frag");
+        private const string VertexShaderPath = "Shaders/Mesh.vert";
 
-        private List<MeshBuffers> _modelBuffers = new();
+        public readonly Shader Shader;
+
+        private readonly List<MeshBuffers> _modelBuffers = new();
 
         private Model _model = Model.Empty;
 
@@ -34,12 +35,9 @@ namespace GameEngine.Components
             }
         }
 
-        public Texture Texture { get; set; } = Texture.Default;
-
-        public Material Material { get; set; } = new();
-
-        public MeshRenderComponent()
+        public MeshRenderComponent(string fragmentShaderPath)
         {
+            Shader = ShaderManager.GetShader(VertexShaderPath, fragmentShaderPath);
             Register();
         }
 
@@ -48,6 +46,8 @@ namespace GameEngine.Components
             Setup();
             Render();
         }
+
+        protected abstract void SetupFragmentShader();
 
         private float[] GetVertices(Mesh mesh)
         {
@@ -70,21 +70,11 @@ namespace GameEngine.Components
 
         private void Setup()
         {
-            Texture.Use(TextureUnit.Texture0);
-
             Shader.Use();
             Shader.SetMatrix4("transform.model", GameObject!.GetModelMatrix());
             Shader.SetMatrix4("transform.view", GameObject!.Engine.Camera.GetViewMatrix());
             Shader.SetMatrix4("transform.projection", GameObject!.Engine.Camera.GetProjectionMatrix());
-            Shader.SetVector3("viewPosition", GameObject!.Engine.Camera.Position);
-
-            Shader.SetVector3("material.color", Material.Color);
-            Shader.SetFloat("material.ambient", Material.Ambient);
-            Shader.SetFloat("material.shininess", Material.Shininess);
-            Shader.SetFloat("material.specular", Material.Specular);
-            
-            Shader.SetVector3("light.position", GameObject!.Engine.Light.Position);
-            Shader.SetVector3("light.color", GameObject!.Engine.Light.Color);
+            SetupFragmentShader();
         }
 
         private void Register()

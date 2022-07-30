@@ -1,6 +1,7 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
+using GameEngine.Utils;
 using OpenTK.Mathematics;
 
 namespace Scene3DDemo
@@ -19,21 +20,22 @@ namespace Scene3DDemo
             CreateCube(engine, new Vector3(0), Vector3.UnitY * 45, 1);
             CreateCube(engine, new Vector3(2, 0, 0), Vector3.Zero, 1);
             CreateCube(engine, new Vector3(2, 0, 2), Vector3.Zero, 1);
-
-
+            
             var lineGo = engine.CreateGameObject();
-            var render = lineGo.Add<ShapeRenderComponent>();
-            render.IsLinear = true;
+            var render = lineGo.Add<LineRenderComponent>();
             render.Color = Colors.Green;
-            render.Shape = new Shape(new float[]
+            render.Line = new Line(new List<Vector3>
             {
-                0, 0, 0,
-                5, 5, 5, 
-                10, 5, 5,
-                10, 5, 10,
-                10, 10, 10,
+                new(0,  0,  0 ),
+                new(5,  5,  5 ), 
+                new(10, 5,  5 ),
+                new(10, 5,  10),
+                new(10, 10, 10),
             });
 
+            var gird = engine.Grid(20);
+            var axis = engine.Axis(2);
+            axis.Position = new Vector3(-11.0f, 0.0f, - 11.0f);
             engine.Run();
         }
 
@@ -44,7 +46,7 @@ namespace Scene3DDemo
             go.Euler = rotation;
             go.Scale = new Vector3(scale);
 
-            var render = go.Add<MeshRenderComponent>();
+            var render = go.Add<MaterialRenderComponent>();
             render.Model = Model.Cube;
 
             return go;

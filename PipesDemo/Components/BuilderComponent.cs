@@ -126,7 +126,7 @@ namespace PipesDemo.Components
                 if (cell.IsWall())
                 {
                     var wallGo = Engine!.CreateGameObject();
-                    var render = wallGo.Add<MeshRenderComponent>();
+                    var render = wallGo.Add<MaterialRenderComponent>();
                     render.Model = Model.Cube;
                     wallGo.Position = cell.Position;
                 }
@@ -154,7 +154,7 @@ namespace PipesDemo.Components
         private GameObject CreateThermometer(Cell cell, Vector3 color)
         {
             var thermometer = Engine!.CreateGameObject();
-            var render = thermometer.Add<MeshRenderComponent>();
+            var render = thermometer.Add<MaterialRenderComponent>();
             render.Model = Model.Cube;
             render.Material.Color = color;
             thermometer.Position = cell.Position;
@@ -184,7 +184,7 @@ namespace PipesDemo.Components
         private void CreateVector(Vector3 position, Vector3 direction)
         {
             var vector = Engine!.CreateGameObject();
-            var render = vector.Add<MeshRenderComponent>();
+            var render = vector.Add<MaterialRenderComponent>();
             render.Model = Model.Pyramid;
             render.Material.Color = Colors.Blue;
             render.Material.Specular = 0.0f;

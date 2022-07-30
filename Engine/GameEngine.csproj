@@ -7,15 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Shaders\shader2d.frag" />
-    <None Remove="Shaders\shader2d.vert" />
+    <None Remove="Shaders\Shape.vert" />
+    <None Remove="Shaders\Solid.frag" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Shaders\shader2d.frag">
+    <Content Include="Shaders\Solid.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Shaders\shader2d.vert">
+    <Content Include="Shaders\Shape.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -42,10 +42,10 @@
     <None Update="Content\Pyramid.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\shader3d.frag">
+    <None Update="Shaders\Material.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\shader3d.vert">
+    <None Update="Shaders\Mesh.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

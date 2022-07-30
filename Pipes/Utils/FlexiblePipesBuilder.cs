@@ -28,8 +28,7 @@ namespace Pipes.Utils
         public void CreatePipeSegment(Vector3 position)
         {
             var lineGo = _engine.CreateGameObject();
-            var render = lineGo.Add<ShapeRenderComponent>();
-            render.IsLinear = true;
+            var render = lineGo.Add<LineRenderComponent>();
             render.Color = Colors.Green;
 
             if (_prevPosition == null)
@@ -44,7 +43,7 @@ namespace Pipes.Utils
             Vector3 currentDirection = position - prevPosition;
 
             var points = GetSegmentPoints(prevPosition, prevDirection, position, currentDirection);
-            render.Shape = new Shape(ToArray(points));
+            render.Line = new Line(points);
             SpawnRings(points);
 
             _prevPosition = position;
@@ -56,7 +55,7 @@ namespace Pipes.Utils
             for (int i = 0; i < points.Count - 1; i++)
             {
                 var ringGo = _engine.CreateGameObject();
-                var render = ringGo.Add<MeshRenderComponent>();
+                var render = ringGo.Add<MaterialRenderComponent>();
                 render.Model = RingModel;
                 render.Material.Color = new Vector3(1.0f, 0.5f, 0.31f);
                 render.Material.Specular = 0.0f;

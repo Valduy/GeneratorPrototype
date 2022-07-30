@@ -2,6 +2,7 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Mathematics;
+using GameEngine.Utils;
 using OpenTK.Mathematics;
 
 namespace SplineDemo
@@ -17,7 +18,7 @@ namespace SplineDemo
             operatorGo.Add<LightComponent>();
             operatorGo.Position = new Vector3(0, 1, 1);
 
-            var points = new List<float>();
+            var points = new List<Vector3>();
             var last = new Vector3(0, 0, 0);
 
             foreach (var segment in SegmentsEnumerator())
@@ -30,20 +31,20 @@ namespace SplineDemo
                 {
                     var t = (float) i / pointsPerSegment;
                     var point = Curves.Hermite(segment.p1, segment.p2, segment.t1, segment.t2, t);
-                    points.Add(point.X);
-                    points.Add(point.Y);
-                    points.Add(point.Z);
+                    points.Add(point);
                 }
             }
 
             CreateCube(engine, last, Vector3.Zero, 0.1f);
 
             var lineGo = engine.CreateGameObject();
-            var render = lineGo.Add<ShapeRenderComponent>();
-            render.IsLinear = true;
+            var render = lineGo.Add<LineRenderComponent>();
             render.Color = Colors.Green;
-            render.Shape = new Shape(points);
+            render.Line = new Line(points);
 
+            var gird = engine.Grid(10);
+            var axis = engine.Axis(2);
+            axis.Position = new Vector3(-6.0f, 0.0f, -6.0f);
             engine.Run();
         }
 
@@ -54,7 +55,7 @@ namespace SplineDemo
             go.Euler = rotation;
             go.Scale = new Vector3(scale);
 
-            var render = go.Add<MeshRenderComponent>();
+            var render = go.Add<MaterialRenderComponent>();
             render.Model = Model.Cube;
 
             return go;

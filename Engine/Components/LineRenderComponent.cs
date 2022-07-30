@@ -6,40 +6,42 @@ using OpenTK.Windowing.Common;
 
 namespace GameEngine.Components
 {
-    public class ShapeRenderComponent : Component
+    public class LineRenderComponent : Component
     {
-        private static readonly Shader _shader = new("Shaders/shader2d.vert", "Shaders/shader2d.frag");
+        private static readonly Shader _shader = new("Shaders/Shape.vert", "Shaders/Solid.frag");
         
         private int _vertexArrayObject;
         private int _vertexBufferObject;
         private int _count;
 
-        private Shape _shape = new(Enumerable.Empty<float>());
+        private Line _line = new(Enumerable.Empty<Vector3>());
 
-        public Shape Shape
+        public Line Line
         {
-            get => _shape;
+            get => _line;
             set
             {
-                if (_shape == value) return;
-                _shape = value;
+                if (_line == value) return;
+                _line = value;
                 Unregister();
-                Register(_shape.ToArray());
+                Register();
             }
         }
-        
+
+        public float Width { get; set; } = 1;
+
+        public bool IsDashed { get; set; } = false;
+
         public Vector3 Color { get; set; } = Colors.Gray;
 
-        public bool IsLinear { get; set; }
-
-        public ShapeRenderComponent()
+        public LineRenderComponent()
         {
-            Register(Shape.ToArray());
+            Register();
         }
 
         public override void RenderUpdate(FrameEventArgs args)
         {
-            //GL.LineWidth(10);
+            GL.LineWidth(Width);
             SetupShader();
             Render();
         }
@@ -48,6 +50,20 @@ namespace GameEngine.Components
         {
             GL.UseProgram(0);
             GL.DeleteProgram(_shader.Handle);
+        }
+
+        private float[] GetVertices(Line line)
+        {
+            var result = new List<float>();
+
+            foreach (var vertex in line)
+            {
+                result.Add(vertex.X);
+                result.Add(vertex.Y);
+                result.Add(vertex.Z);
+            }
+
+            return result.ToArray();
         }
 
         private void SetupShader()
@@ -59,8 +75,10 @@ namespace GameEngine.Components
             _shader.SetVector3("color", Color);
         }
 
-        private void Register(float[] vertices)
+        private void Register()
         {
+            float[] vertices = GetVertices(_line);
+
             _vertexArrayObject = GL.GenVertexArray();
             GL.BindVertexArray(_vertexArrayObject);
 
@@ -88,20 +106,7 @@ namespace GameEngine.Components
         private void Render()
         {
             GL.BindVertexArray(_vertexArrayObject);
-
-            switch (_count)
-            {
-                case 0:
-                case 1:
-                    return;
-                case 2:
-                    GL.DrawArrays(PrimitiveType.Lines, 0, _count);
-                    break;
-                default:
-                    GL.DrawArrays(IsLinear ? PrimitiveType.LineStrip : PrimitiveType.Triangles, 0, _count);
-                    break;
-            }
-
+            GL.DrawArrays(IsDashed ? PrimitiveType.Lines : PrimitiveType.LineStrip, 0, _count);
             GL.BindVertexArray(0);
         }
     }

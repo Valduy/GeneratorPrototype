@@ -8,7 +8,7 @@ namespace RelationshipDemo
 {
     public class RotationComponent : Component
     {
-        public float RotationSpeed { get; set; } = 1;
+        public float RotationSpeed { get; set; } = 10;
 
         public override void GameUpdate(FrameEventArgs args)
         {
@@ -52,22 +52,26 @@ namespace RelationshipDemo
             float distanceFromCamera = -10.0f;
 
             var centerGo = engine.CreateGameObject();
-            var centerRender = centerGo.Add<ShapeRenderComponent>();
+            var centerRender = centerGo.Add<SolidRenderComponent>();
             centerRender.Color = Colors.Lime;
-            centerRender.Shape = Shape.Square(10);
+            centerRender.Model = Model.Square(10);
             centerGo.Position = Vector3.UnitZ * distanceFromCamera;
 
             var axisGo = engine.CreateGameObject();
-            var axisRender = axisGo.Add<ShapeRenderComponent>();
+            var axisRender = axisGo.Add<LineRenderComponent>();
             axisRender.Color = Colors.Red;
-            axisRender.Shape = Shape.Line(new Vector2(0, 0), new Vector2(200, 0));
+            axisRender.Line = new Line(new List<Vector2>
+            {
+                new(0,   0), 
+                new(200, 0),
+            });
             axisGo.Add<RotationComponent>();
             axisGo.Position = new Vector3(50.0f, 50.0f, distanceFromCamera);
 
             var squareGo = engine.CreateGameObject();
-            var squareRender = squareGo.Add<ShapeRenderComponent>();
+            var squareRender = squareGo.Add<SolidRenderComponent>();
             squareRender.Color = Colors.Magenta;
-            squareRender.Shape = Shape.Square(20);
+            squareRender.Model = Model.Square(20);
             squareGo.Add<ZigZagComponent>();
             squareGo.Position = Vector3.UnitZ * distanceFromCamera;
 

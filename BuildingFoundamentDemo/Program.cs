@@ -53,10 +53,10 @@ namespace DrawDifferentFiguresDemo
         public override void Start()
         {
             bound = GameObject.Engine.CreateGameObject();
-            bound.Add(() => new ShapeRenderComponent(_renderer)
+            bound.Add(() => new LineRenderComponent(_renderer)
             {
                 Color = Colors.Magenta,
-                Shape = Shape.Square(600),
+                Line = Line.Square(600),
                 Layer = -99
             });
             bound.Position = new Vector2(0, 0);
@@ -101,16 +101,16 @@ namespace DrawDifferentFiguresDemo
                         for (int j = 0; j < yn; j++)
                         {
                             var block = GameObject.Engine.CreateGameObject();
-                            block.Add(() => new ShapeRenderComponent(_renderer)
+                            block.Add(() => new LineRenderComponent(_renderer)
                             {
                                 Color = Colors.Lime,
-                                Shape = Shape.Square(100)
+                                Line = Line.Square(100)
                             });
                             block.Position = new Vector2(x + i * 100, y - j * 100);
 
                             blocks.Insert(blocks.Count, block);
 
-                            if(!Mathematics.IsPolygonInsideConvexPolygon(bound.Get<ShapeRenderComponent>().Points, block.Get<ShapeRenderComponent>().Points))
+                            if(!Mathematics.IsPolygonInsideConvexPolygon(bound.Get<LineRenderComponent>().Points, block.Get<LineRenderComponent>().Points))
                             {
                                 //cxn--;
                                 //cxn--;
@@ -212,10 +212,10 @@ namespace DrawDifferentFiguresDemo
                     for (int j = 0; j < yn; j++)
                     {
                         var ff_block = GameObject.Engine.CreateGameObject();
-                        ff_block.Add(() => new ShapeRenderComponent(_renderer)
+                        ff_block.Add(() => new LineRenderComponent(_renderer)
                         {
                             Color = Colors.Lime,
-                            Shape = Shape.Square(100)
+                            Line = Line.Square(100)
                         });
                         ff_block.Position = new Vector2(x + 100 * i, y - 100 * j);
 
@@ -274,10 +274,10 @@ namespace DrawDifferentFiguresDemo
             });
 
             //var squareGo = engine.Engine.CreateGameObject();
-            //squareGo.Add(() => new ShapeRenderComponent(engine.Window.Renderer)
+            //squareGo.Add(() => new LineRenderComponent(engine.Window.Renderer)
             //{
             //    Color = Colors.Lime,
-            //    Shape = Shape.Square(100)
+            //    Line = Line.Square(100)
             //});
             //squareGo.Add(() => new BoundsComponent(new GameEngine.Bounds.RectangleBounds()
             //{
@@ -286,10 +286,10 @@ namespace DrawDifferentFiguresDemo
             //squareGo.Position = new Vector2(leftTopCornerX + 400, leftTopCornerY - 100);
 
             //var squareGo_1 = engine.Engine.CreateGameObject();
-            //squareGo_1.Add(() => new ShapeRenderComponent(engine.Window.Renderer)
+            //squareGo_1.Add(() => new LineRenderComponent(engine.Window.Renderer)
             //{
             //    Color = Colors.Magenta,
-            //    Shape = Shape.Square(100),
+            //    Line = Line.Square(100),
             //    Layer = -9
             //});
             //squareGo_1.Add(() => new BoundsComponent(new GameEngine.Bounds.RectangleBounds()
@@ -300,9 +300,9 @@ namespace DrawDifferentFiguresDemo
 
             //Console.WriteLine(Mathematics.IsBoundingBoxesIntersects(squareGo.Get<BoundsComponent>().Position, squareGo.Get<BoundsComponent>().Width, squareGo.Get<BoundsComponent>().Height, squareGo_1.Get<BoundsComponent>().Position, squareGo_1.Get<BoundsComponent>().Width, squareGo_1.Get<BoundsComponent>().Height));
 
-            //Console.WriteLine(Mathematics.IsPolygonInsideConvexPolygon(squareGo_1.Get<ShapeRenderComponent>().Points, squareGo.Get<ShapeRenderComponent>().Points));
+            //Console.WriteLine(Mathematics.IsPolygonInsideConvexPolygon(squareGo_1.Get<LineRenderComponent>().Points, squareGo.Get<LineRenderComponent>().Points));
 
-            //Console.WriteLine(Mathematics.IsConvexPolygonsIntersects(squareGo_1.Get<ShapeRenderComponent>().Points, squareGo.Get<ShapeRenderComponent>().Points));
+            //Console.WriteLine(Mathematics.IsConvexPolygonsIntersects(squareGo_1.Get<LineRenderComponent>().Points, squareGo.Get<LineRenderComponent>().Points));
 
 
 
@@ -313,10 +313,10 @@ namespace DrawDifferentFiguresDemo
             //    for (int j = 0; j < 4; j++)
             //    {
             //        var block = engine.Engine.CreateGameObject();
-            //        block.Add(() => new ShapeRenderComponent(engine.Window.Renderer)
+            //        block.Add(() => new LineRenderComponent(engine.Window.Renderer)
             //        {
             //            Color = Colors.Lime,
-            //            Shape = Shape.Square(100)
+            //            Line = Line.Square(100)
             //        });
             //        block.Position = new Vector2(leftTopCornerX + i*100 + 100, leftTopCornerY - j*100 - 100);
 

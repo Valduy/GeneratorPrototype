@@ -16,6 +16,79 @@ namespace GameEngine.Graphics
             Meshes = meshes.ToList();
         }
 
+        public static Model Triangle(float side)
+        {
+            var leg = side / 2;
+            
+            var vertices = new List<Vertex>
+            {
+                new(new Vector3(-leg,  -leg, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.0f, 0.0f)),
+                new(new Vector3( leg,  -leg, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(1.0f, 0.0f)),
+                new(new Vector3( 0.0f, leg,  0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.5f, 1.0f)),
+            };
+
+            var indices = new List<int> {0, 1, 2};
+            
+            var mesh = new Mesh(vertices, indices);
+            return new Model(new List<Mesh> {mesh});
+        }
+
+        public static Model Square(float side)
+        {
+            var half = side / 2;
+
+            var vertices = new List<Vertex>()
+            {
+                new(new Vector3(-half, -half, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.0f, 0.0f)),
+                new(new Vector3( half, -half, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(1.0f, 0.0f)),
+                new(new Vector3( half,  half, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(1.0f, 1.0f)),
+                new(new Vector3(-half,  half, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.0f, 1.0f)),
+            };
+
+            var indices = new List<int>
+            {
+                0, 1, 2,
+                0, 2, 3,
+            };
+
+            var mesh = new Mesh(vertices, indices);
+            return new Model(new List<Mesh> { mesh });
+        }
+
+        public static Model Rectangle(float width, float height)
+        {
+            var halfWidth = width / 2;
+            var halfHeight = height / 2;
+
+            var vertices = new List<Vertex>()
+            {
+                new(new Vector3(-halfWidth, -halfHeight, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.0f, 0.0f)),
+                new(new Vector3( halfWidth, -halfHeight, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(1.0f, 0.0f)),
+                new(new Vector3( halfWidth,  halfHeight, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(1.0f, 1.0f)),
+                new(new Vector3(-halfWidth,  halfHeight, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.0f, 1.0f)),
+            };
+
+            var indices = new List<int>
+            {
+                0, 1, 2,
+                0, 2, 3,
+            };
+
+            var mesh = new Mesh(vertices, indices);
+            return new Model(new List<Mesh> { mesh });
+        }
+
+        public static Model FromPoly(IEnumerable<Vector2> points)
+        {
+            var pointsList = points.ToList();
+            var vertices = pointsList.Select(p =>
+                new Vertex(new Vector3(p.X, p.Y, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector2(0.0f, 0.0f)));
+            var indices = Mathematics.Mathematics.Triangulate(pointsList);
+
+            var mesh = new Mesh(vertices, indices);
+            return new Model(new List<Mesh> { mesh });
+        }
+
         public static Model Load(string path)
         {
             var aiImporter = new AssimpContext();

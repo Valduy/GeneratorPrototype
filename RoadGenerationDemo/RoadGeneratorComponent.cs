@@ -61,9 +61,9 @@ namespace RoadGenerationDemo
         private void OnConnected(object? source, ConnectionEventArgs<Sucessor> args)
         {
             var roadGo = GameObject!.Engine.CreateGameObject();
-            var roadRender = roadGo.Add<ShapeRenderComponent>();
+            var roadRender = roadGo.Add<LineRenderComponent>();
             roadRender.Color = IsMain(args.Node1, args.Node2) ? Colors.Red : Colors.White;
-            roadRender.Shape = Shape.Line(args.Node1.Item.Position, args.Node2.Item.Position);
+            roadRender.Line = new Line(new List<Vector2> { args.Node1.Item.Position, args.Node2.Item.Position });
             roadGo.Position = Vector3.UnitZ * -10;
         }
 
@@ -74,9 +74,9 @@ namespace RoadGenerationDemo
         private void CreateTriangle(Vector2 position, Vector3 color)
         {
             var triangleGo = GameObject!.Engine.CreateGameObject();
-            var render = triangleGo.Add<ShapeRenderComponent>();
+            var render = triangleGo.Add<SolidRenderComponent>();
             render.Color = color;
-            render.Shape = Shape.Triangle(20);
+            render.Model = Model.Triangle(20);
             triangleGo.Position = new Vector3(position.X, position.Y, -9.0f);
         }
 

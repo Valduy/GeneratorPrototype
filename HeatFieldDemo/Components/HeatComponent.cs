@@ -48,7 +48,7 @@ namespace HeatFieldDemo.Components
         private GameObject CreateThermometer(Cell cell, Vector3 color)
         {
             var thermometer = Engine!.CreateGameObject();
-            var render = thermometer.Add<MeshRenderComponent>();
+            var render = thermometer.Add<MaterialRenderComponent>();
             render.Model = Model.Cube;
             render.Material.Color = color;
             thermometer.Position = cell.Position;
@@ -69,7 +69,7 @@ namespace HeatFieldDemo.Components
         private void OnTemperatureChanged(Cell cell)
         {
             var thermometer = _thermometers[cell.Position.X, cell.Position.Y, cell.Position.Z];
-            var render = thermometer.Get<MeshRenderComponent>();
+            var render = thermometer.Get<MaterialRenderComponent>();
             var color = GetColor(cell);
             render!.Material.Color = color;
         }

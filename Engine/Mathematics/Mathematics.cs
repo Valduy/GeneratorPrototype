@@ -9,10 +9,10 @@ namespace GameEngine.Mathematics
         // NOTE: I use words "points" and "polygon" as synonyms.
 
         /// <summary>
-        /// Method triangulate <see cref="Shape"/>.
+        /// Method triangulate <see cref="Line"/>.
         /// Use "Ear clipping" method (https://en.wikipedia.org/wiki/Polygon_triangulation).
         /// </summary>
-        /// <param name="points"><see cref="Shape"/> for triangulation.</param>
+        /// <param name="points"><see cref="Line"/> for triangulation.</param>
         /// <returns>Indices, which defines triangles vertexes in original points vertexes.</returns>
         /// <exception cref="ArgumentException">Trow, if points has <= then three vertexes.</exception>
         public static int[] Triangulate(IReadOnlyList<Vector2> points)

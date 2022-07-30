@@ -12,8 +12,8 @@ namespace DifferentLayersDemo
             using var engine = new Engine();
             engine.Camera.Projection = Projection.Orthographic;
 
-            CreateTriangle(engine, new Vector2(0), 0, 100, -10, Colors.Yellow);
-            CreateTriangle(engine, new Vector2(0, -50), 180, 100, -9, Colors.Red);
+            CreateTriangle(engine, new Vector2(0,  0 ), 0,   100, -10, Colors.Yellow);
+            CreateTriangle(engine, new Vector2(0, -50), 180, 100, -9,  Colors.Red);
 
             engine.Run();
         }
@@ -22,9 +22,9 @@ namespace DifferentLayersDemo
         {
             var go = engine.CreateGameObject();
             
-            var render2d = go.Add<ShapeRenderComponent>();
+            var render2d = go.Add<SolidRenderComponent>();
             render2d.Color = color;
-            render2d.Shape = Shape.Triangle(size);
+            render2d.Model = Model.Triangle(size);
 
             go.Position = new Vector3(position.X, position.Y, distance);
             go.Euler = new Vector3(0, 0, rotation);

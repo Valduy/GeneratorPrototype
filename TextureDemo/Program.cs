@@ -37,14 +37,14 @@ namespace TextureDemo
             operatorGo.Position = new Vector3(0, 0, 0);
 
             var pearGo = engine.CreateGameObject();
-            var pearRender = pearGo.Add<MeshRenderComponent>();
+            var pearRender = pearGo.Add<MaterialRenderComponent>();
             pearRender.Model = Model.Load("Content/Pear.obj");
             //pearRender.Texture = Texture.LoadFromFile("Content/Pear_Diffuse.jpg");
             pearRender.Texture = Texture.LoadFromMemory(GenerateRandomTexture(128), 128, 128);
             pearGo.Position = new Vector3(5, 0, 0);
 
             var structureGo = engine.CreateGameObject();
-            var structureRender = structureGo.Add<MeshRenderComponent>();
+            var structureRender = structureGo.Add<MaterialRenderComponent>();
             structureRender.Model = Model.Load("Content/Structure.obj");
             structureRender.Texture = Texture.LoadFromFile("Content/Texture.png");
             //structureRender.Texture = Texture.LoadFromMemory(GenerateRandomTexture(128), 128, 128);
