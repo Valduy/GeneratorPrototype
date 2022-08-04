@@ -89,11 +89,12 @@ namespace GameEngine.Graphics
             return new Model(new List<Mesh> { mesh });
         }
 
-        public static Model Load(string path)
+        public static Model Load(
+            string path, 
+            PostProcessSteps flags = PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder)
         {
             var aiImporter = new AssimpContext();
-            Scene aiScene = aiImporter.ImportFile(path,
-                PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            Scene aiScene = aiImporter.ImportFile(path, flags);
 
             return ProcessNode(aiScene, aiScene.RootNode);
         }

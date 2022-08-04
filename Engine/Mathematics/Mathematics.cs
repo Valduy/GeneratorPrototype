@@ -214,6 +214,13 @@ namespace GameEngine.Mathematics
                    && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
         }
 
+        public static bool Equal(Vector3 a, Vector3 b, float epsilon)
+        {
+            return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon)
+                   && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon)
+                   && MathHelper.ApproximatelyEqualEpsilon(a.Z, b.Z, epsilon);
+        }
+
         public static bool IsBoundingBoxesIntersects(
             Vector2 position1, float width1, float height1,
             Vector2 position2, float width2, float height2)

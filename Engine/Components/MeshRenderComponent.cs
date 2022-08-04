@@ -2,7 +2,6 @@
 using GameEngine.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
-using TextureUnit = OpenTK.Graphics.OpenGL4.TextureUnit;
 
 namespace GameEngine.Components
 {
@@ -138,7 +137,7 @@ namespace GameEngine.Components
             {
                 GL.BindVertexArray(_modelBuffers[i].VertexArrayObject);
                 Setup();
-                GL.DrawElements(PrimitiveType.Triangles, _model.Meshes[i].Indices.Count, DrawElementsType.UnsignedInt, 0);
+                GL.DrawElements(BeginMode.Triangles, _model.Meshes[i].Indices.Count, DrawElementsType.UnsignedInt, 0);
                 GL.BindVertexArray(0);
             }
         }
