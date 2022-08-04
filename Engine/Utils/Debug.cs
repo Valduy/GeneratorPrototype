@@ -36,9 +36,9 @@ namespace GameEngine.Utils
         {
             var go = engine.CreateGameObject();
 
-            var x = engine.Axis(Vector3.UnitX * size, Colors.Red  );
-            var y = engine.Axis(Vector3.UnitY * size, Colors.Green);
-            var z = engine.Axis(Vector3.UnitZ * size, Colors.Blue );
+            var x = engine.Line(Vector3.Zero, Vector3.UnitX * size, Colors.Red  );
+            var y = engine.Line(Vector3.Zero, Vector3.UnitY * size, Colors.Green);
+            var z = engine.Line(Vector3.Zero, Vector3.UnitZ * size, Colors.Blue );
 
             go.AddChild(x);
             go.AddChild(y);
@@ -47,13 +47,13 @@ namespace GameEngine.Utils
             return go;
         }
 
-        private static GameObject Axis(this Engine engine, Vector3 direction, Vector3 color)
+        public static GameObject Line(this Engine engine, Vector3 a, Vector3 b, Vector3 color)
         {
-            var axis = engine.CreateGameObject();
-            var render = axis.Add<LineRenderComponent>();
+            var lineGo = engine.CreateGameObject();
+            var render = lineGo.Add<LineRenderComponent>();
             render.Color = color;
-            render.Line = new Line(new List<Vector3> {Vector3.Zero, direction});
-            return axis;
+            render.Line = new Line(new List<Vector3> { a, b });
+            return lineGo;
         }
     }
 }
