@@ -57,6 +57,10 @@
             {
                 throw new InvalidOperationException();
             }
+            if (lhs.Linked.Contains(rhs) && rhs.Linked.Contains(lhs))
+            {
+                return;
+            }
 
             lhs.LinkedNodes.Add(rhs);
             rhs.LinkedNodes.Add(lhs);

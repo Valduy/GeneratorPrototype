@@ -1,7 +1,9 @@
-﻿using Assimp;
+﻿using System.Drawing;
+using Assimp;
 using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
+using GameEngine.Helpers;
 using GameEngine.Utils;
 using GridDemo.Graph;
 using OpenTK.Mathematics;
@@ -11,9 +13,9 @@ namespace GridDemo
 {
     class Program
     {
-
         public class Node
         {
+            public Vector3 Color { get; set; }
             public Vector3 Position { get; set; }
         }
 
@@ -31,22 +33,22 @@ namespace GridDemo
 
                 if (!nodes.TryGetValue(vertex1.Position, out var node1))
                 {
-                    node1 = graph.Add(new Node { Position = vertex1.Position });
+                    node1 = graph.Add(new Node { Color = Colors.Black, Position = vertex1.Position });
                     nodes[vertex1.Position] = node1;
                 }
                 if (!nodes.TryGetValue(vertex2.Position, out var node2))
                 {
-                    node2 = graph.Add(new Node { Position = vertex2.Position });
+                    node2 = graph.Add(new Node { Color = Colors.Black, Position = vertex2.Position });
                     nodes[vertex2.Position] = node2;
                 }
                 if (!nodes.TryGetValue(vertex3.Position, out var node3))
                 {
-                    node3 = graph.Add(new Node { Position = vertex3.Position });
+                    node3 = graph.Add(new Node { Color = Colors.Black, Position = vertex3.Position });
                     nodes[vertex3.Position] = node3;
                 }
                 if (!nodes.TryGetValue(vertex4.Position, out var node4))
                 {
-                    node4 = graph.Add(new Node { Position = vertex4.Position });
+                    node4 = graph.Add(new Node { Color = Colors.Black, Position = vertex4.Position });
                     nodes[vertex4.Position] = node4;
                 }
 
@@ -57,6 +59,107 @@ namespace GridDemo
             }
 
             return graph;
+        }
+
+        public static void FindColorsWithWfc(UndirectedGraph<Node> graph)
+        {
+            var rules = new[]
+            {
+                new Rule {Color = Colors.Blue, Neighbours = new List<Vector3> {Colors.Green, Colors.Yellow, Colors.White}},
+                new Rule {Color = Colors.Green, Neighbours = new List<Vector3> {Colors.Blue, Colors.Yellow, Colors.White}},
+                new Rule {Color = Colors.Yellow, Neighbours = new List<Vector3> {Colors.Green, Colors.Blue, Colors.White}},
+                new Rule {Color = Colors.White, Neighbours = new List<Vector3> {Colors.Blue, Colors.Green, Colors.Yellow}},
+            };
+            //var rules = new[]
+            //{
+            //    new Rule {Color = Colors.Blue, Neighbours = new List<Vector3> {Colors.Green, Colors.Yellow}},
+            //    new Rule {Color = Colors.Green, Neighbours = new List<Vector3> {Colors.Blue, Colors.Yellow}},
+            //    new Rule {Color = Colors.Yellow, Neighbours = new List<Vector3> {Colors.Green, Colors.Blue}},
+            //};
+
+            var possibilities = new Dictionary<GraphNode<Node>, List<Rule>>();
+            var forRecalculation = new List<GraphNode<Node>>();
+
+            foreach (var node in graph.Nodes)
+            {
+                possibilities[node] = new List<Rule>(rules);
+            }
+
+            var nodes = graph.Nodes.ToList();
+            var initial = nodes.GetRandom();
+            var rule = possibilities[initial].GetRandom();
+            possibilities[initial] = new List<Rule> {rule};
+
+            forRecalculation.AddRange(initial.Linked);
+
+            while (true)
+            {
+                while (forRecalculation.Count > 0)
+                {
+                    var node = forRecalculation[0];
+                    forRecalculation.Remove(node);
+
+                    var possibleHere = possibilities[node];
+                    var filtered = FilterPossible(possibilities, possibleHere, node);
+
+                    if (possibleHere.Count > filtered.Count)
+                    {
+                        forRecalculation.AddRange(node.Linked);
+                    }
+
+                    possibilities[node] = filtered;
+                }
+
+                var maxNode = possibilities.First().Key;
+                int maxPossibilities = possibilities.First().Value.Count;
+
+                foreach (var pair in possibilities)
+                {
+                    if (pair.Value.Count > maxPossibilities)
+                    {
+                        maxNode = pair.Key;
+                        maxPossibilities = pair.Value.Count;
+                    }
+                }
+
+                if (maxPossibilities <= 1)
+                {
+                    break;
+                }
+
+                rule = possibilities[maxNode].GetRandom();
+                possibilities[maxNode] = new List<Rule> {rule};
+                forRecalculation.AddRange(maxNode.Linked);
+            }
+
+            foreach (var pair in possibilities)
+            {
+                pair.Key.Data.Color = pair.Value[0].Color;
+            }
+        }
+
+        public static List<Rule> FilterPossible(
+            Dictionary<GraphNode<Node>, List<Rule>> possibilities, 
+            List<Rule> rules, 
+            GraphNode<Node> node) 
+            => rules.Where(r => IsPossible(possibilities, r, node)).ToList();
+
+        public static bool IsPossible(
+            Dictionary<GraphNode<Node>, List<Rule>> possibilities, 
+            Rule rule, 
+            GraphNode<Node> node)
+        {
+            foreach (var neighbour in node.Linked)
+            {
+                var rules = possibilities[neighbour];
+
+                if (rules.All(r => !rule.Neighbours.Contains(r.Color)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public static GameObject CreateMeshVisualization(Engine engine, UndirectedGraph<Node> graph)
@@ -74,6 +177,7 @@ namespace GridDemo
                 var cube = engine.CreateGameObject();
                 var render = cube.Add<MaterialRenderComponent>();
                 render.Model = Model.Cube;
+                render.Material.Color = node.Data.Color;
                 cube.Scale = new Vector3(0.1f);
                 cube.Position = node.Data.Position;
                 go.AddChild(cube);
@@ -97,6 +201,7 @@ namespace GridDemo
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             var graph = CreateGraph(quadModel.Meshes[0]);
+            FindColorsWithWfc(graph);
             var visualization = CreateMeshVisualization(engine, graph);
             visualization.Position = new Vector3(0, 1, 0);
 
