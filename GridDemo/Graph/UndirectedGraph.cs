@@ -6,6 +6,11 @@
 
         public IReadOnlyCollection<GraphNode<T>> Nodes => _nodes;
 
+        public bool IsLinked(GraphNode<T> lhs, GraphNode<T> rhs)
+        {
+            return lhs.Linked.Contains(rhs) && rhs.Linked.Contains(lhs);
+        }
+
         public GraphNode<T> Add(T data)
         {
             var node = new GraphNode<T>(data);
@@ -49,17 +54,9 @@
             {
                 throw new InvalidOperationException();
             }
-            //if (lhs.Linked.Contains(rhs) || rhs.Linked.Contains(lhs))
-            //{
-            //    throw new InvalidOperationException();
-            //}
             if (!(_nodes.Contains(lhs) && _nodes.Contains(rhs)))
             {
                 throw new InvalidOperationException();
-            }
-            if (lhs.Linked.Contains(rhs) && rhs.Linked.Contains(lhs))
-            {
-                return;
             }
 
             lhs.LinkedNodes.Add(rhs);
@@ -91,9 +88,9 @@
 
             foreach (var node in _nodes)
             {
-                foreach (var neighbour in node.Linked.Except(visited))
+                foreach (var linked in node.Linked.Except(visited))
                 {
-                    yield return (node, neighbour);
+                    yield return (node, linked);
                 }
 
                 visited.Add(node);
