@@ -100,7 +100,6 @@ namespace GridDemo
             var initial = nodes.GetRandom();
             var rule = possibilities[initial].GetRandom();
             possibilities[initial] = new List<Rule> {rule};
-
             forRecalculation.AddRange(initial.Linked);
 
             while (true)
