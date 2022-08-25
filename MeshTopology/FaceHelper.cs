@@ -1,9 +1,28 @@
-﻿using OpenTK.Mathematics;
+﻿using GameEngine.Graphics;
+using OpenTK.Mathematics;
 
 namespace MeshTopology
 {
     public static class FaceHelper
     {
+        public static List<Face> ExtractFaces(this Mesh mesh)
+        {
+            var result = new List<Face>();
+
+            for (int i = 0; i < mesh.Indices.Count; i += 4)
+            {
+                result.Add(new Face(new List<Vertex>
+                {
+                    mesh.Vertices[i + 0],
+                    mesh.Vertices[i + 1],
+                    mesh.Vertices[i + 2],
+                    mesh.Vertices[i + 3]
+                }));
+            }
+
+            return result;
+        }
+
         public static IEnumerable<(Vector3 A, Vector3 B)> EnumerateEdges(this Face face)
         {
             for (int i = 0; i < face.Vertices.Count; i++)

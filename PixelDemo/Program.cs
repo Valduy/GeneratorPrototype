@@ -34,6 +34,19 @@ namespace PixelDemo
                 }
             }
 
+            //if (x.Colors.Count != y.Colors.Count)
+            //{
+            //    return false;
+            //}
+
+            //for (int i = 0; i < x.Colors.Count; i++)
+            //{
+            //    if (!x.Colors[i].IsSame(y.Colors[i]))
+            //    {
+            //        return false;
+            //    }
+            //}
+
             return true;
         }
 
@@ -57,6 +70,8 @@ namespace PixelDemo
             lhs.R == rhs.R &&
             lhs.G == rhs.G &&
             lhs.B == rhs.B;
+
+        public static bool IsTransparent(this Color color) => color.A == 0;
     }
 
     public static class TextureHelper
@@ -87,7 +102,14 @@ namespace PixelDemo
             {
                 for (int y = 0; y < bmp.Height; y++)
                 {
-                    var rule = new Rule { Color = bmp.GetPixel(x, y) };
+                    var color = bmp.GetPixel(x, y);
+
+                    //if (color.IsTransparent())
+                    //{
+                    //    continue;
+                    //}
+
+                    var rule = new Rule { Color = color };
 
                     rule.Colors.Add(x + 1 >= bmp.Width
                         ? bmp.GetPixel(0, y)
@@ -202,7 +224,7 @@ namespace PixelDemo
                 //var nodeIndex = neighbour.Neighbours.IndexOf(node);
                 //var neighbourRules = possibilities[neighbour];
 
-                //if (neighbourRules.All(r => !IsSame(r.Colors[nodeIndex], rule.Color)))
+                //if (neighbourRules.All(r => !r.Colors[nodeIndex].IsSame(rule.Color)))
                 //{
                 //    return false;
                 //}
@@ -260,7 +282,7 @@ namespace PixelDemo
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             var topology = new Topology<Rule>(quadModel.Meshes[0]);
-            var rules = CreateRules("Content/Sample2.png");
+            var rules = CreateRules("Content/Sample1 .png");
             Wfc(topology, rules);
             var texture = GenerateTexture(topology, 1000);
 

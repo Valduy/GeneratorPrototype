@@ -11,7 +11,7 @@ namespace MeshTopology
 
         public Topology(Mesh mesh)
         {
-            var faces = ExtractFaces(mesh);
+            var faces = mesh.ExtractFaces();
 
             foreach (var face in faces)
             {
@@ -43,24 +43,6 @@ namespace MeshTopology
                     return i1.CompareTo(i2);
                 });
             }
-        }
-
-        private List<Face> ExtractFaces(Mesh mesh)
-        {
-            var result = new List<Face>();
-
-            for (int i = 0; i < mesh.Indices.Count; i += 4)
-            {
-                result.Add(new Face(new List<Vertex>
-                {
-                    mesh.Vertices[i + 0],
-                    mesh.Vertices[i + 1],
-                    mesh.Vertices[i + 2],
-                    mesh.Vertices[i + 3]
-                }));
-            }
-
-            return result;
         }
 
         public TopologyNode<T> this[int index] 
