@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using Assimp;
+﻿using Assimp;
 using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
@@ -17,7 +16,7 @@ namespace FacesDemo
 
     class Program
     {
-        public static void Wfc(Topology<Rule> topology)
+        public static Dictionary<TopologyNode, Rule> Wfc(Topology topology)
         {
             var rules = new[]
             {
@@ -38,8 +37,8 @@ namespace FacesDemo
                 new Rule {Indices = {0, 1, 2, 3}},
             };
 
-            var possibilities = new Dictionary<TopologyNode<Rule>, List<Rule>>();
-            var forRecalculation = new List<TopologyNode<Rule>>();
+            var possibilities = new Dictionary<TopologyNode, List<Rule>>();
+            var forRecalculation = new List<TopologyNode>();
 
             foreach (var node in topology)
             {
@@ -104,22 +103,19 @@ namespace FacesDemo
                 forRecalculation.AddRange(maxNode.Neighbours);
             }
 
-            foreach (var pair in possibilities)
-            {
-                pair.Key.Data = pair.Value[0];
-            }
+            return possibilities.ToDictionary(kvp => kvp.Key, kvp => kvp.Value[0]);
         }
 
         public static List<Rule> FilterPossible(
-            Dictionary<TopologyNode<Rule>, List<Rule>> possibilities,
+            Dictionary<TopologyNode, List<Rule>> possibilities,
             List<Rule> rules,
-            TopologyNode<Rule> node)
+            TopologyNode node)
             => rules.Where(r => IsPossible(possibilities, r, node)).ToList();
         
         public static bool IsPossible(
-            Dictionary<TopologyNode<Rule>, List<Rule>> possibilities,
+            Dictionary<TopologyNode, List<Rule>> possibilities,
             Rule rule,
-            TopologyNode<Rule> node)
+            TopologyNode node)
         {
             for (int i = 0; i < node.Neighbours.Count; i++)
             {
@@ -146,9 +142,9 @@ namespace FacesDemo
         }
 
         public static State GetState(
-            Dictionary<TopologyNode<Rule>, List<Rule>> possibilities, 
-            TopologyNode<Rule> pivot, 
-            TopologyNode<Rule> node)
+            Dictionary<TopologyNode, List<Rule>> possibilities, 
+            TopologyNode pivot, 
+            TopologyNode node)
         {
             var index = pivot.Neighbours.IndexOf(node);
             var rules = possibilities[pivot];
@@ -166,7 +162,7 @@ namespace FacesDemo
             return state;
         }
 
-        public static GameObject CreateTopologyVisualization(Engine engine, Topology<Rule> topology)
+        public static GameObject CreateTopologyVisualization(Engine engine, Topology topology, Dictionary<TopologyNode, Rule> collapsed)
         {
             var go = engine.CreateGameObject();
 
@@ -181,11 +177,12 @@ namespace FacesDemo
 
             foreach (var node in topology)
             {
-                var centroid = node.Face.Vertices
+                var centroid = node.Face
                     .Select(v => v.Position)
-                    .Aggregate((p1, p2) => p1 + p2) / node.Face.Vertices.Count;
+                    .Aggregate((p1, p2) => p1 + p2) / node.Face.Count;
+                var rule = collapsed[node];
 
-                foreach (var index in node.Data.Indices)
+                foreach (var index in rule.Indices)
                 {
                     var edge = node.Face.GetEdgeByIndex(index);
                     var from = (edge.A + edge.B) / 2;
@@ -211,9 +208,9 @@ namespace FacesDemo
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var topology = new Topology<Rule>(quadModel.Meshes[0]);
-            Wfc(topology);
-            var visualization = CreateTopologyVisualization(engine, topology);
+            var topology = new Topology(quadModel.Meshes[0]);
+            var collapsed = Wfc(topology);
+            var visualization = CreateTopologyVisualization(engine, topology, collapsed);
             visualization.Position = Vector3.UnitY;
 
             engine.Run();

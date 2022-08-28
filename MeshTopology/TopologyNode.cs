@@ -1,17 +1,11 @@
 ﻿namespace MeshTopology
 {
-    public class TopologyNode<T>
+    public class TopologyNode
     {
-        internal List<TopologyNode<T>> _neighbours = new();
+        internal List<TopologyNode> _neighbours = new();
 
-        public T? Data { get; set; }
         public Face Face { get; }
-        public IReadOnlyList<TopologyNode<T>> Neighbours => _neighbours;
-
-        public TopologyNode(Face face, T data) : this(face)
-        {
-            Data = data;
-        }
+        public IReadOnlyList<TopologyNode> Neighbours => _neighbours;
 
         public TopologyNode(Face face)
         {

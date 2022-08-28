@@ -16,9 +16,9 @@ namespace MeshVisualization
 
             foreach (var face in faces)
             {
-                var centroid = face.Vertices
+                var centroid = face
                     .Select(v => v.Position)
-                    .Aggregate((p1, p2) => p1 + p2) / face.Vertices.Count;
+                    .Aggregate((p1, p2) => p1 + p2) / face.Count;
                 
                 foreach (var edge in face.EnumerateEdges())
                 {

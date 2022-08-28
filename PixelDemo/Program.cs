@@ -4,6 +4,7 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Utils;
+using TextureUtils;
 using MeshTopology;
 using OpenTK.Mathematics;
 using System.Diagnostics.CodeAnalysis;
@@ -63,34 +64,6 @@ namespace PixelDemo
         }
     }
 
-    public static class ColorHelper
-    {
-        public static bool IsSame(this Color lhs, Color rhs) =>
-            lhs.A == rhs.A &&
-            lhs.R == rhs.R &&
-            lhs.G == rhs.G &&
-            lhs.B == rhs.B;
-
-        public static bool IsTransparent(this Color color) => color.A == 0;
-    }
-
-    public static class TextureHelper
-    {
-        public static void SetColor(this byte[] data, int size, Vector2 position, Color color)
-            => data.SetColor(size, (int)position.X, (int)position.Y, color);
-
-        public static void SetColor(this byte[] data, int size, int x, int y, Color color)
-        {
-            x = Math.Clamp(x, 0, size - 1);
-            y = Math.Clamp(y, 0, size - 1);
-
-            data[4 * x + 4 * size * y + 0] = color.R;
-            data[4 * x + 4 * size * y + 1] = color.G;
-            data[4 * x + 4 * size * y + 2] = color.B;
-            data[4 * x + 4 * size * y + 3] = color.A;
-        }
-    }
-
     public class Program
     {
         public static List<Rule> CreateRules(string path)
@@ -134,10 +107,10 @@ namespace PixelDemo
             return rules.ToList();
         }
 
-        public static void Wfc(Topology<Rule> topology, List<Rule> rules)
+        public static Dictionary<TopologyNode, Rule> Wfc(Topology topology, List<Rule> rules)
         {
-            var possibilities = new Dictionary<TopologyNode<Rule>, List<Rule>>();
-            var forRecalculation = new List<TopologyNode<Rule>>();
+            var possibilities = new Dictionary<TopologyNode, List<Rule>>();
+            var forRecalculation = new List<TopologyNode>();
 
             foreach (var node in topology)
             {
@@ -202,22 +175,19 @@ namespace PixelDemo
                 forRecalculation.AddRange(maxNode.Neighbours);
             }
 
-            foreach (var pair in possibilities)
-            {
-                pair.Key.Data = pair.Value[0];
-            }
+            return possibilities.ToDictionary(kvp => kvp.Key, kvp => kvp.Value[0]);
         }
 
         public static List<Rule> FilterPossible(
-            Dictionary<TopologyNode<Rule>, List<Rule>> possibilities,
+            Dictionary<TopologyNode, List<Rule>> possibilities,
             List<Rule> rules,
-            TopologyNode<Rule> node)
+            TopologyNode node)
             => rules.Where(r => IsPossible(possibilities, r, node)).ToList();
 
         public static bool IsPossible(
-            Dictionary<TopologyNode<Rule>, List<Rule>> possibilities,
+            Dictionary<TopologyNode, List<Rule>> possibilities,
             Rule rule,
-            TopologyNode<Rule> node)
+            TopologyNode node)
         {
             foreach (var neighbour in node.Neighbours)
             {
@@ -239,18 +209,18 @@ namespace PixelDemo
             return true;
         }
 
-        public static byte[] GenerateTexture(Topology<Rule> topology, int size)
+        public static byte[] GenerateTexture(Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
         {
             var texture = new byte[size * size * 4];
             
             foreach (var node in topology)
             {
-                float[] horisontalCoords = node.Face.Vertices
+                float[] horisontalCoords = node.Face
                     .Select(v => v.TextureCoords.X)
                     .OrderBy(x => x)
                     .ToArray();
 
-                float[] verticalCoords = node.Face.Vertices
+                float[] verticalCoords = node.Face
                     .Select(v => v.TextureCoords.Y)
                     .OrderBy(x => x)
                     .ToArray();
@@ -259,7 +229,7 @@ namespace PixelDemo
                 {
                     for (int y = (int)(verticalCoords.First() * size); y < verticalCoords.Last() * size; y++)
                     {
-                        texture.SetColor(size, x, y, node.Data.Color);
+                        texture.SetColor(size, x, y, collapsed[node].Color);
                     }
                 }
             }
@@ -281,10 +251,10 @@ namespace PixelDemo
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var topology = new Topology<Rule>(quadModel.Meshes[0]);
-            var rules = CreateRules("Content/Sample1 .png");
-            Wfc(topology, rules);
-            var texture = GenerateTexture(topology, 1000);
+            var topology = new Topology(quadModel.Meshes[0]);
+            var rules = CreateRules("Content/Sample1.png");
+            var collapsed = Wfc(topology, rules);
+            var texture = GenerateTexture(topology, collapsed, 1000);
 
             var structureGo = engine.CreateGameObject();
             var structureRender = structureGo.Add<MaterialRenderComponent>();

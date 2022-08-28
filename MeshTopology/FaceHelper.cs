@@ -25,9 +25,9 @@ namespace MeshTopology
 
         public static IEnumerable<(Vector3 A, Vector3 B)> EnumerateEdges(this Face face)
         {
-            for (int i = 0; i < face.Vertices.Count; i++)
+            for (int i = 0; i < face.Count; i++)
             {
-                yield return (face.Vertices[i].Position, face.Vertices[(i + 1) % face.Vertices.Count].Position);
+                yield return (face[i].Position, face[(i + 1) % face.Count].Position);
             }
         }
 
@@ -65,10 +65,10 @@ namespace MeshTopology
 
         public static int GetEdgeIndex(this Face face, (Vector3 A, Vector3 B) edge)
         {
-            for (int i = 0; i < face.Vertices.Count; i++)
+            for (int i = 0; i < face.Count; i++)
             {
-                Vector3 a = face.Vertices[i].Position;
-                Vector3 b = face.Vertices[(i + 1) % face.Vertices.Count].Position;
+                Vector3 a = face[i].Position;
+                Vector3 b = face[(i + 1) % face.Count].Position;
 
                 if (IsEquivalent(a, b, edge.A, edge.B))
                 {
@@ -81,8 +81,8 @@ namespace MeshTopology
 
         public static (Vector3 A, Vector3 B) GetEdgeByIndex(this Face face, int index)
         {
-            Vector3 a = face.Vertices[index].Position;
-            Vector3 b = face.Vertices[(index + 1) % face.Vertices.Count].Position;
+            Vector3 a = face[index].Position;
+            Vector3 b = face[(index + 1) % face.Count].Position;
             return (a, b);
         }
 

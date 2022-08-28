@@ -3,9 +3,9 @@ using System.Collections;
 
 namespace MeshTopology
 {
-    public class Topology<T> : IReadOnlyList<TopologyNode<T>>
+    public class Topology : IReadOnlyList<TopologyNode>
     {
-        private List<TopologyNode<T>> _nodes = new();
+        private List<TopologyNode> _nodes = new();
 
         public int Count => _nodes.Count;
 
@@ -15,7 +15,7 @@ namespace MeshTopology
 
             foreach (var face in faces)
             {
-                _nodes.Add(new TopologyNode<T>(face));
+                _nodes.Add(new TopologyNode(face));
             }
 
             foreach (var node in _nodes)
@@ -45,10 +45,10 @@ namespace MeshTopology
             }
         }
 
-        public TopologyNode<T> this[int index] 
+        public TopologyNode this[int index] 
             => _nodes[index];
 
-        public IEnumerator<TopologyNode<T>> GetEnumerator()
+        public IEnumerator<TopologyNode> GetEnumerator()
             => _nodes.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
