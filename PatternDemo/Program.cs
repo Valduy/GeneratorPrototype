@@ -15,48 +15,71 @@ namespace PatternDemo
 {
     public class Rule
     {
-        public readonly Color[,] Colors = new Color[3, 3];
+        public const int RuleResolution = 5;
+
+        public readonly Color[,] Colors = new Color[RuleResolution, RuleResolution];
 
         public Color[] this[int index] 
         { 
             get 
             {
+                var result = new Color[RuleResolution];
+
                 switch (index)
                 {
                     case 0:
-                        return new Color[3] { Colors[0, 0], Colors[1, 0], Colors[2, 0] };
+                        for (int i = 0; i < RuleResolution; i++)
+                        {
+                            result[i] = Colors[i, 0];
+                        }
+
+                        break;
                     case 1:
-                        return new Color[3] { Colors[0, 0], Colors[0, 1], Colors[0, 2] };
+                        for (int i = 0; i < RuleResolution; i++)
+                        {
+                            result[i] = Colors[0, i];
+                        }
+
+                        break;
                     case 2:
-                        return new Color[3] { Colors[0, 2], Colors[1, 2], Colors[2, 2] };
+                        for (int i = 0; i < RuleResolution; i++)
+                        {
+                            result[i] = Colors[i, RuleResolution - 1];
+                        }
+
+                        break;
                     case 3:
-                        return new Color[3] { Colors[2, 0], Colors[2, 1], Colors[2, 2] };
+                        for (int i = 0; i < RuleResolution; i++)
+                        {
+                            result[i] = Colors[RuleResolution - 1, i];
+                        }
+
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException("index");
                 }
-                return new Color[3];
+
+                return result;
             } 
         }
     }
 
     public class Program
     {
-        public const int PatternSize = 3;
-
         public static List<Rule> CreateRules(string path)
         {
             var bmp = new Bitmap(path);
             var rules = new List<Rule>();
 
-            for (int x = 0; x < bmp.Width; x += PatternSize)
+            for (int x = 0; x < bmp.Width; x += Rule.RuleResolution)
             {
-                for (int y = 0; y < bmp.Height; y += PatternSize)
+                for (int y = 0; y < bmp.Height; y += Rule.RuleResolution)
                 {
                     var rule = new Rule();
 
-                    for (int i = 0; i < PatternSize; i++)
+                    for (int i = 0; i < Rule.RuleResolution; i++)
                     {
-                        for (int j = 0; j < PatternSize; j++)
+                        for (int j = 0; j < Rule.RuleResolution; j++)
                         {
                             rule.Colors[i, j] = bmp.GetPixel(x + i, y + j);                            
                         }
@@ -67,59 +90,6 @@ namespace PatternDemo
             }
 
             return rules;
-        }
-
-        public static Mesh SortTextureCoords(Mesh mesh)
-        {
-            var vertices = new List<Vertex>();
-            var indices = new List<int>();
-
-            for (int i = 0; i < mesh.Indices.Count; i += 4)
-            {
-                indices.Add(i + 0);
-                indices.Add(i + 1);
-                indices.Add(i + 2);
-                indices.Add(i + 3);
-
-                var v0 = mesh.Vertices[mesh.Indices[i + 0]];
-                var v1 = mesh.Vertices[mesh.Indices[i + 1]];
-                var v2 = mesh.Vertices[mesh.Indices[i + 2]];
-                var v3 = mesh.Vertices[mesh.Indices[i + 3]];
-
-                var face = new Vertex[4] { v0, v1, v2, v3 };
-
-                float x1 = v0.TextureCoords.X;
-                float y1 = v0.TextureCoords.Y;
-                float x2 = v0.TextureCoords.X;
-                float y2 = v0.TextureCoords.Y;
-
-                foreach (Vertex v in face)
-                {
-                    if (x1 > v.TextureCoords.X)
-                    {
-                        x1 = v.TextureCoords.X;
-                    }
-                    if (y1 > v.TextureCoords.Y)
-                    {
-                        y1 = v.TextureCoords.Y;
-                    }
-                    if (x2 < v.TextureCoords.X) 
-                    { 
-                        x2 = v.TextureCoords.X;
-                    }
-                    if (y2 < v.TextureCoords.Y)
-                    {
-                        y2 = v.TextureCoords.Y;
-                    }
-                }
-
-                vertices.Add(new Vertex(v0.Position, v0.Normal, new Vector2(x2, y1)));
-                vertices.Add(new Vertex(v1.Position, v1.Normal, new Vector2(x1, y1)));
-                vertices.Add(new Vertex(v2.Position, v2.Normal, new Vector2(x1, y2)));
-                vertices.Add(new Vertex(v3.Position, v3.Normal, new Vector2(x2, y2)));
-            }
-
-            return new Mesh(vertices, indices);
         }
 
         public static int DefineTextureSize(Mesh mesh)
@@ -246,41 +216,6 @@ namespace PatternDemo
             }
 
             return true;
-
-            //foreach (var neighbour in node.Neighbours)
-            //{
-            //    var index = neighbour.Neighbours.IndexOf(node);
-            //}
-
-            //var upRules = possibilities[node.Neighbours[0]];
-
-            //if (!upRules.Any(r => IsSame(rule.Top, r.Bottom)))
-            //{
-            //    return false;
-            //}
-
-            //var leftRules = possibilities[node.Neighbours[1]];
-
-            //if (!leftRules.Any(r => IsSame(rule.Left, r.Right)))
-            //{
-            //    return false;
-            //}
-
-            //var bottomRules = possibilities[node.Neighbours[2]];
-
-            //if (!bottomRules.Any(r => IsSame(rule.Bottom, r.Top)))
-            //{
-            //    return false;
-            //}
-
-            //var rightRules = possibilities[node.Neighbours[3]];
-
-            //if (!rightRules.Any(r => IsSame(rule.Right, r.Left)))
-            //{
-            //    return false;
-            //}
-
-            //return true;
         }
 
         public static bool IsSame(Color[] lhs, Color[] rhs)
@@ -325,7 +260,7 @@ namespace PatternDemo
                     for (int y = 0; y < square.Y; y++)
                     {
                         int colorY = (int)(y * rule.Colors.GetLength(1) / square.Y);
-                        var color = rule.Colors[2 - colorX, colorY];
+                        var color = rule.Colors[rule.Colors.GetLength(0) - 1 - colorX, colorY];
                         var position = from + horizontalAxis * x + verticalAxis * y;
                         texture.SetColor(size, (int)position.X, (int)position.Y, color);
                     }
@@ -400,7 +335,7 @@ namespace PatternDemo
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             //var topology = new Topology(SortTextureCoords(quadModel.Meshes[0]));
             var topology = new Topology(quadModel.Meshes[0]);
-            var rules = CreateRules("Content/Sample.png");
+            var rules = CreateRules("Content/Sample2.png");
             var collapsed = Wfc(topology, rules);
             var textureSize = DefineTextureSize(quadModel.Meshes[0]);
             var texture = CreateTexture(topology, collapsed, textureSize);
