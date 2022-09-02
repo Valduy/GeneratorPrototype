@@ -15,43 +15,45 @@ namespace PatternDemo
 {
     public class Rule
     {
-        public const int RuleResolution = 5;
+        public const int LogicalResolution = 3;
+        public const int DetailedResolution = 20;
 
-        public readonly Color[,] Colors = new Color[RuleResolution, RuleResolution];
+        public readonly Color[,] Logical = new Color[LogicalResolution, LogicalResolution];
+        public readonly Color[,] Detailed = new Color[DetailedResolution, DetailedResolution];
 
         public Color[] this[int index] 
         { 
             get 
             {
-                var result = new Color[RuleResolution];
+                var result = new Color[LogicalResolution];
 
                 switch (index)
                 {
                     case 0:
-                        for (int i = 0; i < RuleResolution; i++)
+                        for (int i = 0; i < LogicalResolution; i++)
                         {
-                            result[i] = Colors[i, 0];
+                            result[i] = Logical[i, 0];
                         }
 
                         break;
                     case 1:
-                        for (int i = 0; i < RuleResolution; i++)
+                        for (int i = 0; i < LogicalResolution; i++)
                         {
-                            result[i] = Colors[0, i];
+                            result[i] = Logical[0, i];
                         }
 
                         break;
                     case 2:
-                        for (int i = 0; i < RuleResolution; i++)
+                        for (int i = 0; i < LogicalResolution; i++)
                         {
-                            result[i] = Colors[i, RuleResolution - 1];
+                            result[i] = Logical[i, LogicalResolution - 1];
                         }
 
                         break;
                     case 3:
-                        for (int i = 0; i < RuleResolution; i++)
+                        for (int i = 0; i < LogicalResolution; i++)
                         {
-                            result[i] = Colors[RuleResolution - 1, i];
+                            result[i] = Logical[LogicalResolution - 1, i];
                         }
 
                         break;
@@ -66,26 +68,49 @@ namespace PatternDemo
 
     public class Program
     {
-        public static List<Rule> CreateRules(string path)
+        //public const int TileshealdWidth = 11;
+        //public const int TileshealdHeight = 6;
+        public const int TileshealdWidth = 5;
+        public const int TileshealdHeight = 3;
+
+        public static List<Rule> CreateRules(string logicalPath, string detailedPath)
         {
-            var bmp = new Bitmap(path);
+            var logicalBmp = new Bitmap(logicalPath);
+            var detailedBmp = new Bitmap(detailedPath);
             var rules = new List<Rule>();
 
-            for (int x = 0; x < bmp.Width; x += Rule.RuleResolution)
+            for (int x = 0; x < TileshealdWidth; x ++)
             {
-                for (int y = 0; y < bmp.Height; y += Rule.RuleResolution)
+                for (int y = 0; y < TileshealdHeight; y ++)
                 {
                     var rule = new Rule();
 
-                    for (int i = 0; i < Rule.RuleResolution; i++)
+                    for (int i = 0; i < Rule.LogicalResolution; i++)
                     {
-                        for (int j = 0; j < Rule.RuleResolution; j++)
+                        for (int j = 0; j < Rule.LogicalResolution; j++)
                         {
-                            rule.Colors[i, j] = bmp.GetPixel(x + i, y + j);                            
+                            int bmpX = Rule.LogicalResolution * x + i;
+                            int bmpY = Rule.LogicalResolution * y + j;
+                            var color = logicalBmp.GetPixel(bmpX, bmpY);
+                            rule.Logical[i, j] = color;                            
                         }
                     }
 
-                    rules.Add(rule);
+                    for (int i = 0; i < Rule.DetailedResolution; i++)
+                    {
+                        for (int j = 0; j < Rule.DetailedResolution; j++)
+                        {
+                            int bmpX = Rule.DetailedResolution * x + i;
+                            int bmpY = Rule.DetailedResolution * y + j;
+                            var color = detailedBmp.GetPixel(bmpX, bmpY);
+                            rule.Detailed[i, j] = color;
+                        }
+                    }
+                                  
+                    if (!rule.Logical.Enumerate().All(c => c.IsTransparent()))
+                    {
+                        rules.Add(rule);
+                    }                    
                 }
             }
 
@@ -102,7 +127,8 @@ namespace PatternDemo
                 degree = Math.Max(degree, GetDecimalPlaces(v.TextureCoords.Y));
             }
 
-            return (int)Math.Pow(10, degree);
+            //return (int)Math.Pow(10, degree);
+            return 2048;
         }
 
         public static int GetDecimalPlaces(float n)
@@ -125,7 +151,7 @@ namespace PatternDemo
         {
             var possibilities = new Dictionary<TopologyNode, List<Rule>>();
             var forRecalculation = new List<TopologyNode>();
-
+ 
             foreach (var node in topology)
             {
                 possibilities[node] = new List<Rule>(rules);
@@ -255,19 +281,66 @@ namespace PatternDemo
 
                 for (int x = 0; x < square.X; x++)
                 {
-                    int colorX = (int)(x * rule.Colors.GetLength(0) / square.X);
+                    int colorX = (int)(x * rule.Detailed.GetLength(0) / square.X);
 
                     for (int y = 0; y < square.Y; y++)
                     {
-                        int colorY = (int)(y * rule.Colors.GetLength(1) / square.Y);
-                        var color = rule.Colors[rule.Colors.GetLength(0) - 1 - colorX, colorY];
+                        int colorY = (int)(y * rule.Detailed.GetLength(1) / square.Y);
+                        var color = rule.Detailed[rule.Detailed.GetLength(0) - 1 - colorX, colorY];
                         var position = from + horizontalAxis * x + verticalAxis * y;
                         texture.SetColor(size, (int)position.X, (int)position.Y, color);
                     }
                 }
+
+                //for (int x = 0; x < square.X; x++)
+                //{
+                //    int colorX = (int)(x * rule.Logical.GetLength(0) / square.X);
+
+                //    for (int y = 0; y < square.Y; y++)
+                //    {
+                //        int colorY = (int)(y * rule.Logical.GetLength(1) / square.Y);
+                //        var color = rule.Logical[rule.Logical.GetLength(0) - 1 - colorX, colorY];
+                //        var position = from + horizontalAxis * x + verticalAxis * y;
+                //        texture.SetColor(size, (int)position.X, (int)position.Y, color);
+                //    }
+                //}
             }
 
             return texture;
+        }
+
+        public static GameObject CreateTopologyDebugVisualization(Engine engine, Topology topology)
+        {
+            var go = engine.CreateGameObject();
+
+            foreach (var node in topology)
+            {
+                foreach (var edge in node.Face.EnumerateEdges())
+                {
+                    var line = engine.Line(edge.A, edge.B, Colors.Green);
+                    go.AddChild(line);
+                }
+            }
+
+            foreach (var node in topology)
+            {
+                var centroid = node.Face
+                    .Select(v => v.Position)
+                    .Aggregate((p1, p2) => p1 + p2) / node.Face.Count;
+
+                if (node.Neighbours.Count > 4)
+                {
+                    var cube = engine.CreateGameObject();
+                    var render = cube.Add<MaterialRenderComponent>();
+                    render.Model = Model.Cube;
+                    render.Material.Color = Colors.Red;
+                    cube.Scale = new Vector3(0.1f);
+                    cube.Position = centroid;
+                    go.AddChild(cube);
+                }
+            }
+
+            return go;
         }
 
         public static GameObject CreateTopologyVisualization(Engine engine, Topology topology, Dictionary<TopologyNode, Rule> collapsed)
@@ -332,10 +405,11 @@ namespace PatternDemo
             var axis = engine.Axis(2);
             axis.Position = new Vector3(-11, 0, -11);
 
-            var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            //var topology = new Topology(SortTextureCoords(quadModel.Meshes[0]));
+            var quadModel = Model.Load("Content/Room.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            //var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             var topology = new Topology(quadModel.Meshes[0]);
-            var rules = CreateRules("Content/Sample2.png");
+
+            var rules = CreateRules("Content/Sample1.png", "Content/SimplePipes.png");
             var collapsed = Wfc(topology, rules);
             var textureSize = DefineTextureSize(quadModel.Meshes[0]);
             var texture = CreateTexture(topology, collapsed, textureSize);
@@ -344,10 +418,11 @@ namespace PatternDemo
 
             var structureGo = engine.CreateGameObject();
             var structureRender = structureGo.Add<MaterialRenderComponent>();
-            structureRender.Model = Model.Load("Content/Structure.obj");
+            structureRender.Model = Model.Load("Content/Room.obj");
+            //structureRender.Model = Model.Load("Content/Structure.obj");
             structureRender.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);            
-            structureGo.Scale = new Vector3(0.9f);
-            structureGo.Position = new Vector3(-5.25f, 1.15f, 0.25f);
+            structureGo.Scale = new Vector3(1.0f);
+            structureGo.Position = new Vector3(0.0f, 1.0f, 0.0f);
             structureGo.AddChild(engine.Axis(5));
 
             //var vis = CreateTopologyVisualization(engine, topology, collapsed);
