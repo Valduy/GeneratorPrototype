@@ -15,7 +15,8 @@ namespace PatternDemo
 {
     public class Rule
     {
-        public const int LogicalResolution = 3;
+        //public const int LogicalResolution = 3;
+        public const int LogicalResolution = 4;
         public const int DetailedResolution = 20;
 
         public readonly Color[,] Logical = new Color[LogicalResolution, LogicalResolution];
@@ -68,10 +69,11 @@ namespace PatternDemo
 
     public class Program
     {
-        //public const int TileshealdWidth = 11;
-        //public const int TileshealdHeight = 6;
-        public const int TileshealdWidth = 5;
-        public const int TileshealdHeight = 3;
+        public const int TileshealdWidth = 11;
+        public const int TileshealdHeight = 6;
+        //public const int TileshealdWidth = 5;
+        //public const int TileshealdWidth = 6;
+        //public const int TileshealdHeight = 3;
 
         public static List<Rule> CreateRules(string logicalPath, string detailedPath)
         {
@@ -128,7 +130,7 @@ namespace PatternDemo
             }
 
             //return (int)Math.Pow(10, degree);
-            return 2048;
+            return 4096;
         }
 
         public static int GetDecimalPlaces(float n)
@@ -164,6 +166,9 @@ namespace PatternDemo
 
             while (true)
             {
+                int trashold = 1000;
+                int failes = 0;
+
                 while (forRecalculation.Count > 0)
                 {
                     var node = forRecalculation[0];
@@ -175,6 +180,19 @@ namespace PatternDemo
                     // Deadlock resolution
                     if (filtered.Count == 0)
                     {
+                        failes += 1;
+
+                        if (failes >= trashold)
+                        {
+                            foreach (var n in topology)
+                            {
+                                possibilities[n] = new List<Rule>(rules);
+                            }
+
+                            forRecalculation.Clear();
+                            break;
+                        }
+
                         possibilities[node] = new List<Rule>(rules);
 
                         foreach (var neighbour in node.Neighbours)
@@ -195,6 +213,7 @@ namespace PatternDemo
 
                 var maxNode = possibilities.First().Key;
                 int maxPossibilities = possibilities.First().Value.Count;
+                int resolved = 0;
 
                 foreach (var pair in possibilities)
                 {
@@ -203,7 +222,14 @@ namespace PatternDemo
                         maxNode = pair.Key;
                         maxPossibilities = pair.Value.Count;
                     }
+
+                    if (pair.Value.Count == 1)
+                    {
+                        resolved += 1;
+                    }
                 }
+
+                Console.WriteLine(resolved);
 
                 if (maxPossibilities <= 1)
                 {
@@ -409,7 +435,9 @@ namespace PatternDemo
             //var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             var topology = new Topology(quadModel.Meshes[0]);
 
-            var rules = CreateRules("Content/Sample1.png", "Content/SimplePipes.png");
+            //var rules = CreateRules("Content/PipesSample.png", "Content/Pipes.png");
+            //var rules = CreateRules("Content/NetworkSample.png", "Content/Network.png");
+            var rules = CreateRules("Content/SquareSample.png", "Content/Network.png");
             var collapsed = Wfc(topology, rules);
             var textureSize = DefineTextureSize(quadModel.Meshes[0]);
             var texture = CreateTexture(topology, collapsed, textureSize);
