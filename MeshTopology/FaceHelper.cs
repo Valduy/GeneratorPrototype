@@ -23,6 +23,9 @@ namespace MeshTopology
             return result;
         }
 
+        public static Vector3 Centroid(this Face face)
+            => face.Select(v => v.Position).Aggregate((p1, p2) => p1 + p2) / face.Count;
+
         public static IEnumerable<(Vector3 A, Vector3 B)> EnumerateEdges(this Face face)
         {
             for (int i = 0; i < face.Count; i++)

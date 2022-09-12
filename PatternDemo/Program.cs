@@ -70,7 +70,7 @@ namespace PatternDemo
     public class Program
     {
         public const int TileshealdWidth = 11;
-        public const int TileshealdHeight = 6;
+        public const int TileshealdHeight = 9;
         //public const int TileshealdWidth = 5;
         //public const int TileshealdWidth = 6;
         //public const int TileshealdHeight = 3;
@@ -149,14 +149,14 @@ namespace PatternDemo
             return decimalPlaces;
         }
 
-        public static Dictionary<TopologyNode, Rule> Wfc(Topology topology, List<Rule> rules)
+        public static Dictionary<TopologyNode, Rule> Wfc(Topology topology, List<Rule> wallRules, List<Rule> floorRules)
         {
             var possibilities = new Dictionary<TopologyNode, List<Rule>>();
             var forRecalculation = new List<TopologyNode>();
  
             foreach (var node in topology)
             {
-                possibilities[node] = new List<Rule>(rules);
+                possibilities[node] = new List<Rule>(SelectRuleSet(node, floorRules, wallRules));
             }
 
             var initial = topology.GetRandom();
@@ -186,18 +186,18 @@ namespace PatternDemo
                         {
                             foreach (var n in topology)
                             {
-                                possibilities[n] = new List<Rule>(rules);
+                                possibilities[n] = new List<Rule>(SelectRuleSet(n, floorRules, wallRules)); 
                             }
 
                             forRecalculation.Clear();
                             break;
                         }
 
-                        possibilities[node] = new List<Rule>(rules);
+                        possibilities[node] = new List<Rule>(SelectRuleSet(node, floorRules, wallRules));
 
                         foreach (var neighbour in node.Neighbours)
                         {
-                            possibilities[neighbour] = new List<Rule>(rules);
+                            possibilities[neighbour] = new List<Rule>(SelectRuleSet(neighbour, floorRules, wallRules));
                         }
 
                         continue;
@@ -242,6 +242,15 @@ namespace PatternDemo
             }
 
             return possibilities.ToDictionary(kvp => kvp.Key, kvp => kvp.Value[0]);
+        }
+
+        public static List<Rule> SelectRuleSet(TopologyNode node, List<Rule> wallRules, List<Rule> floorRules)
+        {
+            var centroid = node.Face.Centroid();
+            var a = (node.Face[0].Position - centroid).Normalized();
+            var b = (node.Face[1].Position - centroid).Normalized();
+            var c = Vector3.Cross(a, b);
+            return new List<Rule>((c.Y == 0) ? floorRules : wallRules);
         }
 
         public static List<Rule> FilterPossible(
@@ -435,10 +444,9 @@ namespace PatternDemo
             //var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             var topology = new Topology(quadModel.Meshes[0]);
 
-            //var rules = CreateRules("Content/PipesSample.png", "Content/Pipes.png");
-            //var rules = CreateRules("Content/NetworkSample.png", "Content/Network.png");
-            var rules = CreateRules("Content/SquareSample.png", "Content/Network.png");
-            var collapsed = Wfc(topology, rules);
+            var wallRules = CreateRules("Content/Samples/1/WallLogical.png", "Content/Samples/1/WallDetailed.png");
+            var floorRules = CreateRules("Content/Samples/1/FloorLogical.png", "Content/Samples/1/FloorDetailed.png");
+            var collapsed = Wfc(topology, wallRules, floorRules);
             var textureSize = DefineTextureSize(quadModel.Meshes[0]);
             var texture = CreateTexture(topology, collapsed, textureSize);
 
