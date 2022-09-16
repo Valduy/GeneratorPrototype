@@ -4,6 +4,9 @@
     {
         private static Random random = new();
 
+        public static void UseSeed(int seed) 
+            => random = new Random(seed);
+
         public static T GetCircular<T>(this IList<T> list, int index)
             => index >= list.Count ? list[index % list.Count]
                 : index < 0 ? list[index % list.Count + list.Count] : list[index];

@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace TextureUtils
 {
@@ -26,6 +27,21 @@ namespace TextureUtils
             data[4 * x + 4 * size * y + 1] = color.G;
             data[4 * x + 4 * size * y + 2] = color.B;
             data[4 * x + 4 * size * y + 3] = color.A;
+        }
+
+        public static Bitmap TextureToBitmap(byte[] texture, int size)
+        {
+            var bmp = new Bitmap(size, size);
+
+            for (int x = 0; x < size; x++)
+            {
+                for (int y = 0; y < size; y++)
+                {
+                    bmp.SetPixel(x, y, texture.GetColor(size, x, y));
+                }
+            }
+
+            return bmp;
         }
     }
 }

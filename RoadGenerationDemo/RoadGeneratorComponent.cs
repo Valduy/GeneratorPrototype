@@ -17,9 +17,6 @@ namespace RoadGenerationDemo
 
         private bool _isKeyPressed = false;
 
-        private Engine Engine => GameObject!.Engine;
-        private KeyboardState Inputs => Engine.Window.KeyboardState;
-
         public RoadGeneratorComponent()
         {
             _inputData = CreateInputData();
