@@ -72,6 +72,12 @@
     <None Update="Content\Samples\2\WallLogical.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Samples\BigTilesDetailed.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Samples\BigTilesLogical.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\SimplePipes.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

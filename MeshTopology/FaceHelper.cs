@@ -3,6 +3,12 @@ using OpenTK.Mathematics;
 
 namespace MeshTopology
 {
+    public enum FaceOrientation
+    {
+        Wall,
+        Floor,
+    }
+
     public static class FaceHelper
     {
         public static List<Face> ExtractFaces(this Mesh mesh)
@@ -13,10 +19,10 @@ namespace MeshTopology
             {
                 result.Add(new Face(new List<Vertex>
                 {
-                    mesh.Vertices[i + 0],
-                    mesh.Vertices[i + 1],
-                    mesh.Vertices[i + 2],
-                    mesh.Vertices[i + 3]
+                    mesh.Vertices[mesh.Indices[i + 0]],
+                    mesh.Vertices[mesh.Indices[i + 1]],
+                    mesh.Vertices[mesh.Indices[i + 2]],
+                    mesh.Vertices[mesh.Indices[i + 3]],
                 }));
             }
 
@@ -25,6 +31,15 @@ namespace MeshTopology
 
         public static Vector3 Centroid(this Face face)
             => face.Select(v => v.Position).Aggregate((p1, p2) => p1 + p2) / face.Count;
+
+        public static FaceOrientation GetFaceOrientation(this Face face)
+        {
+            var centroid = face.Centroid();
+            var a = (face[0].Position - centroid).Normalized();
+            var b = (face[1].Position - centroid).Normalized();
+            var c = Vector3.Cross(a, b);
+            return (c.Y != 0) ? FaceOrientation.Floor : FaceOrientation.Wall;
+        }
 
         public static IEnumerable<(Vector3 A, Vector3 B)> EnumerateEdges(this Face face)
         {

@@ -14,6 +14,33 @@
         public static T GetRandom<T>(this IReadOnlyList<T> list)
             => list[random.Next(0, list.Count)];
 
+        public static void ShiftRight<T>(this IList<T> list)
+        {
+            var last = list[list.Count - 1];
+
+            for (int j = list.Count - 1; j > 0; j--)
+            {
+                list[j] = list[j - 1];
+            }
+
+            list[0] = last;
+        }
+
+        public static IEnumerable<TResult> Zip<TFirst, TSecond, TThird, TResult>(
+            this IEnumerable<TFirst> source, IEnumerable<TSecond> second, 
+            IEnumerable<TThird> third, 
+            Func<TFirst, TSecond, TThird, TResult> selector)
+        {
+            using IEnumerator<TFirst> iterator1 = source.GetEnumerator();
+            using IEnumerator<TSecond> iterator2 = second.GetEnumerator();
+            using IEnumerator<TThird> iterator3 = third.GetEnumerator();
+
+            while (iterator1.MoveNext() && iterator2.MoveNext() && iterator3.MoveNext())
+            {
+                yield return selector(iterator1.Current, iterator2.Current, iterator3.Current);
+            }
+        }
+
         public static int IndexOf<T>(this IReadOnlyList<T> list, T item)
         {
             for (int i = 0; i < list.Count; i++)

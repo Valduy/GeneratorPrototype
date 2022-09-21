@@ -141,11 +141,15 @@ namespace PatternDemo
 
         public static List<Rule> SelectRuleSet(TopologyNode node, List<Rule> wallRules, List<Rule> floorRules)
         {
-            var centroid = node.Face.Centroid();
-            var a = (node.Face[0].Position - centroid).Normalized();
-            var b = (node.Face[1].Position - centroid).Normalized();
-            var c = Vector3.Cross(a, b);
-            return new List<Rule>((c.Y != 0) ? floorRules : wallRules);
+            switch (node.Face.GetFaceOrientation())
+            {
+                case FaceOrientation.Wall:
+                    return wallRules;
+                case FaceOrientation.Floor:
+                    return floorRules;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         public static List<Rule> FilterPossible(
@@ -213,13 +217,15 @@ namespace PatternDemo
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Room.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            //var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            quadModel = new Model(quadModel.Meshes[0].SortVertices());
             var topology = new Topology(quadModel.Meshes[0]);
+
+            var bigTiles = RulesLoader.ReadBigTiles("Content/Samples/BigTilesLogical.png", "Content/Samples/BigTilesDetailed.png");
 
             var wallRules = RulesLoader.CreateRules("Content/Samples/1/WallLogical.png", "Content/Samples/1/WallDetailed.png");
             var floorRules = RulesLoader.CreateRules("Content/Samples/1/FloorLogical.png", "Content/Samples/1/FloorDetailed.png");
             var collapsed = Wfc(topology, wallRules, floorRules);
-            
+
             var textureSize = DefineTextureSize(quadModel.Meshes[0]);
             var detailedTextureData = TextureCreator.CreateDetailedTexture(topology, collapsed, textureSize);
             var logicalTextureData = TextureCreator.CreateLogicalTexture(topology, collapsed, textureSize);
@@ -228,11 +234,9 @@ namespace PatternDemo
 
             var structureGo = engine.CreateGameObject();
             var structureRender = structureGo.Add<MaterialRenderComponent>();
-            structureRender.Model = Model.Load("Content/Room.obj");
-            //structureRender.Model = Model.Load("Content/Structure.obj");
-            structureRender.Texture = detailedTexture;            
+            structureRender.Model = new Model(quadModel.Meshes[0].TriangulateQuadMesh());
+            structureRender.Texture = detailedTexture;
             structureGo.Scale = new Vector3(1.0f);
-            //structureGo.Position = new Vector3(0.0f, 1.0f, 0.0f);
             structureGo.AddChild(engine.Axis(5));
 
             var switcher = operatorGo.Add<DebugerComponent>();

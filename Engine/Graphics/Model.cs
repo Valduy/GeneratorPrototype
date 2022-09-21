@@ -11,6 +11,11 @@ namespace GameEngine.Graphics
 
         public readonly IReadOnlyList<Mesh> Meshes;
 
+        public Model(Mesh meshes)
+        {
+            Meshes = new List<Mesh> { meshes };
+        }
+
         public Model(IEnumerable<Mesh> meshes)
         {
             Meshes = meshes.ToList();
