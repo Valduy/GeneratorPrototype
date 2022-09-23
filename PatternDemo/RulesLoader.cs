@@ -103,7 +103,7 @@ namespace PatternDemo
                 .Select(r => coords[r!])
                 .ToList());
 
-            while (definedRules.Count > 0)
+            while (definedRules.Any()   )
             {
                 var initial = definedRules.First();
                 var group = rules.ExtractGroup(initial);
@@ -141,7 +141,10 @@ namespace PatternDemo
                 }
             }
 
-            return group.OrderBy(c => c.X).ThenBy(c => c.Y).ToList();
+            return group
+                .OrderBy(c => c.X)
+                .ThenBy(c => c.Y)
+                .ToList();
         }
 
         private static List<Rule?[,]> CreateTiles(Rule?[,] rules, List<List<Vector2i>> groups)

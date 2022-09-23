@@ -8,7 +8,7 @@ namespace PatternDemo
     {
         XY,
         XZ,
-        ZY,
+        YZ,
     }
 
     public static class MeshHelper
@@ -53,7 +53,7 @@ namespace PatternDemo
                             sortedUvs.Add(uv);
                         }
                         break;
-                    case MeshOrientation.ZY:
+                    case MeshOrientation.YZ:
                         foreach (var position in positions)
                         {
                             var uv = uvs.First(uv =>
@@ -90,7 +90,7 @@ namespace PatternDemo
                 switch (GetPolyOrientation(positions))
                 {
                     case MeshOrientation.XY:
-                    case MeshOrientation.ZY:
+                    case MeshOrientation.YZ:
                         {
                             var maxY = positions.Max(p => p.Y);
                         
@@ -120,7 +120,7 @@ namespace PatternDemo
             }
 
             return new Mesh(mesh.Vertices, indices);
-        }
+        }   
 
         public static Mesh TriangulateQuadMesh(this Mesh mesh)
         {
@@ -160,7 +160,7 @@ namespace PatternDemo
                 return MeshOrientation.XZ;
             }
 
-            return MeshOrientation.ZY;
+            return MeshOrientation.YZ;
         }
 
         private static (List<Vector3> Positions, List<Vector3> normals, List<Vector2> UVs) ExtractComponents(this Mesh mesh, int from, int count)

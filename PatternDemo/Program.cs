@@ -12,8 +12,24 @@ using Mesh = GameEngine.Graphics.Mesh;
 
 namespace PatternDemo
 {
+    public static class TopologyNodeHepler
+    {
+        private static HashSet<TopologyNode> _defenitions = new();
+
+        public static bool IsDefined(this TopologyNode node) 
+            => _defenitions.Contains(node);
+
+        public static void Define(this TopologyNode node) 
+            => _defenitions.Add(node);
+
+        public static void Undefine(this TopologyNode node) 
+            => _defenitions.Remove(node);
+    }
+
     public class Program
     {
+        static Engine Engine;
+
         public static int DefineTextureSize(Mesh mesh)
         {
             int degree = 0;
@@ -44,20 +60,36 @@ namespace PatternDemo
             return decimalPlaces;
         }
 
-        public static Dictionary<TopologyNode, Rule> Wfc(Topology topology, List<Rule> wallRules, List<Rule> floorRules)
+        public static Dictionary<TopologyNode, Rule> Wfc(
+            Topology topology, 
+            List<Rule> wallRules, 
+            List<Rule> floorRules,
+            List<Rule?[,]> bigTiles)
         {
             var possibilities = new Dictionary<TopologyNode, List<Rule>>();
             var forRecalculation = new List<TopologyNode>();
- 
-            foreach (var node in topology)
+            
+            foreach (var node in topology.Where(n => !n.IsDefined()))
             {
                 possibilities[node] = new List<Rule>(SelectRuleSet(node, wallRules, floorRules));
             }
 
-            var initial = topology.GetRandom();
-            var rule = possibilities[initial].GetRandom();
-            possibilities[initial] = new List<Rule> { rule };
-            forRecalculation.AddRange(initial.Neighbours);
+            if (bigTiles.Any())
+            {
+                PlaceBigTiles(topology, possibilities, bigTiles);
+
+                foreach (var defined in topology.Where(n => n.IsDefined()))
+                {
+                    forRecalculation.AddRange(defined.Neighbours.Where(n => !n.IsDefined()));
+                }
+            }
+            else
+            {
+                var initial = topology.GetRandom();
+                var rule = possibilities[initial].GetRandom();
+                possibilities[initial] = new List<Rule> { rule };
+                forRecalculation.AddRange(initial.Neighbours);
+            }
 
             while (true)
             {
@@ -79,7 +111,7 @@ namespace PatternDemo
 
                         if (failes >= trashold)
                         {
-                            foreach (var n in topology)
+                            foreach (var n in topology.Where(n => !n.IsDefined()))
                             {
                                 possibilities[n] = new List<Rule>(SelectRuleSet(n, wallRules, floorRules)); 
                             }
@@ -90,7 +122,7 @@ namespace PatternDemo
 
                         possibilities[node] = new List<Rule>(SelectRuleSet(node, wallRules, floorRules));
 
-                        foreach (var neighbour in node.Neighbours)
+                        foreach (var neighbour in node.Neighbours.Where(n => !n.IsDefined()))
                         {
                             possibilities[neighbour] = new List<Rule>(SelectRuleSet(neighbour, wallRules, floorRules));
                         }
@@ -100,7 +132,7 @@ namespace PatternDemo
 
                     if (possibleHere.Count > filtered.Count)
                     {
-                        forRecalculation.AddRange(node.Neighbours);
+                        forRecalculation.AddRange(node.Neighbours.Where(n => !n.IsDefined()));
                     }
 
                     possibilities[node] = filtered;
@@ -131,21 +163,100 @@ namespace PatternDemo
                     break;
                 }
 
-                rule = possibilities[maxNode].GetRandom();
+                var rule = possibilities[maxNode].GetRandom();
                 possibilities[maxNode] = new List<Rule> { rule };
-                forRecalculation.AddRange(maxNode.Neighbours);
+                forRecalculation.AddRange(maxNode.Neighbours.Where(n => !n.IsDefined()));
             }
 
             return possibilities.ToDictionary(kvp => kvp.Key, kvp => kvp.Value[0]);
+        }
+
+        public static void PlaceBigTiles(
+            Topology topology, 
+            Dictionary<TopologyNode, List<Rule>> possibilities, 
+            List<Rule?[,]> bigTiles)
+        {
+            int margin = 1;
+            var walls = topology.ExtractXyGroups();
+            walls.AddRange(topology.ExtractYzGroups());
+
+            foreach (var wall in walls)
+            {
+                var randomTile = bigTiles.GetRandom();
+
+                if (wall.GetLength(0) < randomTile.GetLength(0) + margin * 2 || 
+                    wall.GetLength(1) < randomTile.GetLength(1) + margin * 2)
+                {
+                    continue;
+                }
+
+                var avaliablePlaces = FindAvaliablePlaces(wall, randomTile, margin);
+
+                if (avaliablePlaces.Count == 0)
+                {
+                    continue;
+                }
+
+                var randomPlace = avaliablePlaces.GetRandom();
+
+                for (int x = 0; x < randomTile.GetLength(0); x++)
+                {
+                    for (int y = 0; y < randomTile.GetLength(1); y++)
+                    {
+                        if (randomTile[x, y] != null)
+                        {
+                            var node = wall[randomPlace.X + x, randomPlace.Y + y]!;
+                            var rule = randomTile[x, y]!;
+                            possibilities[node] = new List<Rule> { rule };
+                            node.Define();
+                        }
+                    }
+                }
+            }
+        }
+
+        public static bool IsAllNotNullInWindow<T>(T?[,] matrix, int fromX, int fromY, int toX, int toY)
+        {
+            for (int x = fromX; x <= toX; x++)
+            {
+                for (int y = fromY; y <= toY; y++)
+                {
+                    if (matrix[x, y] == null)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static List<Vector2i> FindAvaliablePlaces(TopologyNode?[,] wall, Rule?[,] bigTile, int margin)
+        {
+            var avaliablePlaces = new List<Vector2i>();
+
+            for (int i = margin; i < wall.GetLength(0) - bigTile.GetLength(0) - margin; i++)
+            {
+                for (int j = margin; j < wall.GetLength(1) - bigTile.GetLength(1) - margin; j++) 
+                {
+                    if (IsAllNotNullInWindow(wall, i - margin, j - margin, i + bigTile.GetLength(0) + margin, j + bigTile.GetLength(1) + margin))
+                    {
+                        avaliablePlaces.Add(new Vector2i(i, j));
+                    }
+                }          
+            }
+
+            return avaliablePlaces;
         }
 
         public static List<Rule> SelectRuleSet(TopologyNode node, List<Rule> wallRules, List<Rule> floorRules)
         {
             switch (node.Face.GetFaceOrientation())
             {
-                case FaceOrientation.Wall:
+                case FaceOrientation.XY:
+                case FaceOrientation.YZ:
                     return wallRules;
-                case FaceOrientation.Floor:
+                case FaceOrientation.XZ:
                     return floorRules;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -206,6 +317,7 @@ namespace PatternDemo
             //Utils.UseSeed(96350589);
 
             using var engine = new Engine();
+            Engine = engine;
 
             var operatorGo = engine.CreateGameObject();
             operatorGo.Add<Operator3DComponent>();
@@ -221,10 +333,9 @@ namespace PatternDemo
             var topology = new Topology(quadModel.Meshes[0]);
 
             var bigTiles = RulesLoader.ReadBigTiles("Content/Samples/BigTilesLogical.png", "Content/Samples/BigTilesDetailed.png");
-
             var wallRules = RulesLoader.CreateRules("Content/Samples/1/WallLogical.png", "Content/Samples/1/WallDetailed.png");
             var floorRules = RulesLoader.CreateRules("Content/Samples/1/FloorLogical.png", "Content/Samples/1/FloorDetailed.png");
-            var collapsed = Wfc(topology, wallRules, floorRules);
+            var collapsed = Wfc(topology, wallRules, floorRules, bigTiles);
 
             var textureSize = DefineTextureSize(quadModel.Meshes[0]);
             var detailedTextureData = TextureCreator.CreateDetailedTexture(topology, collapsed, textureSize);
