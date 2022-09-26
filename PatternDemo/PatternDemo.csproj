@@ -78,6 +78,18 @@
     <None Update="Content\Samples\BigTilesLogical.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Samples\FloorBigTilesDetailed.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Samples\FloorBigTilesLogical.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Samples\WallBigTilesDetailed.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Samples\WallBigTilesLogical.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\SimplePipes.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

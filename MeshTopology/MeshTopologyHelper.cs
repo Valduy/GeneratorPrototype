@@ -156,9 +156,6 @@ namespace MeshTopology
 
         public static List<TopologyNode?[,]> ExtractXzGroups(this Topology topology)
         {
-            throw new NotImplementedException();
-            // TODO: normal mirroring like in other methods.
-            
             var walls = new List<TopologyNode?[,]>();
             var groups = topology.ExtractFacesGroups(n => n.Face.GetFaceOrientation() == FaceOrientation.XZ);
 
@@ -169,10 +166,14 @@ namespace MeshTopology
                 var height = (int)MathF.Round((Max.Z - Min.Z) / EdgeLength);
                 var wall = new TopologyNode?[width, height];
 
+                var notNullNode = group.First(n => n != null)!;
+                bool isMirror = notNullNode.Face.GetNormal().Y > 0;
+
                 foreach (var node in group)
                 {
                     var i = (int)MathF.Round((node.Face.Min(v => v.Position.X) - Min.X) / EdgeLength);
                     var j = (int)MathF.Round(height - (node.Face.Min(v => v.Position.Z) - Min.Z) / EdgeLength - 1);
+                    i = isMirror ? width - i - 1 : i;
                     wall[i, j] = node;
                 }
 
