@@ -62,6 +62,7 @@ namespace PatternDemo
             Topology topology, 
             List<Rule> wallRules, 
             List<Rule> floorRules,
+            List<Rule> ceilRules,
             List<Rule?[,]> wallBigTiles,
             List<Rule?[,]> floorBigTiles)
         {
@@ -70,7 +71,7 @@ namespace PatternDemo
             
             foreach (var node in topology.Where(n => !n.IsDefined()))
             {
-                possibilities[node] = new List<Rule>(SelectRuleSet(node, wallRules, floorRules));
+                possibilities[node] = new List<Rule>(SelectRuleSet(node, wallRules, floorRules, ceilRules));
             }
 
             if (wallBigTiles.Any())
@@ -123,18 +124,18 @@ namespace PatternDemo
                         {
                             foreach (var n in topology.Where(n => !n.IsDefined()))
                             {
-                                possibilities[n] = new List<Rule>(SelectRuleSet(n, wallRules, floorRules)); 
+                                possibilities[n] = new List<Rule>(SelectRuleSet(n, wallRules, floorRules, ceilRules)); 
                             }
 
                             forRecalculation.Clear();
                             break;
                         }
 
-                        possibilities[node] = new List<Rule>(SelectRuleSet(node, wallRules, floorRules));
+                        possibilities[node] = new List<Rule>(SelectRuleSet(node, wallRules, floorRules, ceilRules));
 
                         foreach (var neighbour in node.Neighbours.Where(n => !n.IsDefined()))
                         {
-                            possibilities[neighbour] = new List<Rule>(SelectRuleSet(neighbour, wallRules, floorRules));
+                            possibilities[neighbour] = new List<Rule>(SelectRuleSet(neighbour, wallRules, floorRules, ceilRules));
                         }
 
                         continue;
@@ -186,7 +187,7 @@ namespace PatternDemo
             Dictionary<TopologyNode, List<Rule>> possibilities, 
             List<Rule?[,]> bigTiles)
         {
-            int margin = 1;
+            int margin = 2;
             var walls = topology.ExtractXyGroups();
             walls.AddRange(topology.ExtractYzGroups());
 
@@ -198,8 +199,11 @@ namespace PatternDemo
             Dictionary<TopologyNode, List<Rule>> possibilities,
             List<Rule?[,]> bigTiles)
         {
-            int margin = 0;
-            PlaceBigTiles(possibilities, topology.ExtractXzGroups(), bigTiles, margin);
+            int margin = 1;
+            PlaceBigTiles(possibilities, topology
+                .ExtractXzGroups()
+                .Where(g => g.Enumerate().First(n => n != null)!.Face.GetNormal().Y < 0)
+                .ToList(), bigTiles, margin);
         }
 
         public static void PlaceBigTiles(
@@ -277,7 +281,11 @@ namespace PatternDemo
             return avaliablePlaces;
         }
 
-        public static List<Rule> SelectRuleSet(TopologyNode node, List<Rule> wallRules, List<Rule> floorRules)
+        public static List<Rule> SelectRuleSet(
+            TopologyNode node, 
+            List<Rule> wallRules, 
+            List<Rule> floorRules,
+            List<Rule> ceilRules)
         {
             switch (node.Face.GetFaceOrientation())
             {
@@ -285,7 +293,8 @@ namespace PatternDemo
                 case FaceOrientation.YZ:
                     return wallRules;
                 case FaceOrientation.XZ:
-                    return floorRules;
+                    var normal = node.Face.GetNormal();
+                    return (normal.Y > 0) ? ceilRules : floorRules;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -361,9 +370,12 @@ namespace PatternDemo
 
             var wallBigTiles = RulesLoader.ReadBigTiles("Content/Samples/WallBigTilesLogical.png", "Content/Samples/WallBigTilesDetailed.png");
             var floorBigTiles = RulesLoader.ReadBigTiles("Content/Samples/FloorBigTilesLogical.png", "Content/Samples/FloorBigTilesDetailed.png");
+            //var wallBigTiles = new List<Rule?[,]>();
+            //var floorBigTiles = new List<Rule?[,]>();
             var wallRules = RulesLoader.CreateRules("Content/Samples/1/WallLogical.png", "Content/Samples/1/WallDetailed.png");
             var floorRules = RulesLoader.CreateRules("Content/Samples/1/FloorLogical.png", "Content/Samples/1/FloorDetailed.png");
-            var collapsed = Wfc(topology, wallRules, floorRules, wallBigTiles, floorBigTiles);
+            var ceilRules = RulesLoader.CreateRules("Content/Samples/1/CeilLogical.png", "Content/Samples/1/CeilDetailed.png");
+            var collapsed = Wfc(topology, wallRules, floorRules, ceilRules, wallBigTiles, floorBigTiles);
 
             var textureSize = DefineTextureSize(quadModel.Meshes[0]);
             var detailedTextureData = TextureCreator.CreateDetailedTexture(topology, collapsed, textureSize);

@@ -228,6 +228,13 @@ namespace MeshTopology
             return groups;
         }
 
+        public static Vector3 GetNormal(this Face face)
+        {
+            var a = (face[1].Position - face[0].Position).Normalized();
+            var b = (face[2].Position - face[0].Position).Normalized();
+            return Vector3.Cross(a, b);
+        }
+
         private static (Vector3 Min, Vector3 Max) GetMinMaxXy(List<TopologyNode> group)
         {
             var minX = group[0].Face[0].Position.X;
@@ -322,13 +329,6 @@ namespace MeshTopology
             }
 
             return group.ToList();
-        }
-
-        private static Vector3 GetNormal(this Face face)
-        {
-            var a = (face[1].Position - face[0].Position).Normalized();
-            var b = (face[2].Position - face[0].Position).Normalized();
-            return Vector3.Cross(a, b);
         }
     }
 }

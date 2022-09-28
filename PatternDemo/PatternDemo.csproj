@@ -48,6 +48,12 @@
     <None Update="Content\Sample3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Samples\1\CeilDetailed.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Samples\1\CeilLogical.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Samples\1\FloorDetailed.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -23,7 +23,6 @@ namespace PatternDemo
                 var (positions, normals, uvs) = mesh.ExtractComponents(i, polyVerticesCount);
                 var positionCentroid = positions.Aggregate((a, b) => a + b) / positions.Count;
                 var uvsCentroid = uvs.Aggregate((a, b) => a + b) / uvs.Count;
-                bool isHorisontal = IsHorisontal(positions);
 
                 var a = (positions[1] - positions[0]).Normalized();
                 var b = (positions[2] - positions[0]).Normalized();
