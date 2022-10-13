@@ -1,103 +1,145 @@
 ﻿using GameEngine.Core;
 using GameEngine.Graphics;
-using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 
 namespace GameEngine.Components
 {
-    public class MeshRenderComponent : Component
+    public abstract class MeshRenderComponent : Component
     {
-        private static readonly Shader _shader = new("Shaders/shader3d.vert", "Shaders/shader3d.frag");
-
-        private int _vertexArrayObject;
-        private int _vertexBufferObject;
-        private int _count;
-
-        private Mesh _shape = new(Array.Empty<float>());
-
-        public Mesh Shape
+        private struct MeshBuffers
         {
-            get => _shape;
+            public int VertexArrayObject { get; set; }
+            public int VertexBufferObject { get; set; }
+            public int VertexElementObject { get; set; }
+        }
+
+        private const string VertexShaderPath = "Shaders/Mesh.vert";
+
+        public readonly Shader Shader;
+
+        private readonly List<MeshBuffers> _modelBuffers = new();
+
+        private Model _model = Model.Empty;
+
+        public Model Model
+        {
+            get => _model;
             set
             {
-                if (_shape == value) return;
-                _shape = value;
+                if (_model == value) return;
+                _model = value;
                 Unregister();
-                Register(Shape.ToArray());
+                Register();
             }
         }
 
-        public Material Material { get; set; } = new();
-
-        public MeshRenderComponent()
+        public MeshRenderComponent(string fragmentShaderPath)
         {
-            Register(Shape.ToArray());
+            Shader = ShaderManager.GetShader(VertexShaderPath, fragmentShaderPath);
+            Register();
         }
 
         public override void RenderUpdate(FrameEventArgs args)
         {
-            SetupShader();
+            Setup();
             Render();
         }
 
-        private void SetupShader()
+        protected abstract void SetupFragmentShader();
+
+        private float[] GetVertices(Mesh mesh)
         {
-            _shader.Use();
-            _shader.SetMatrix4("model", GameObject!.GetModelMatrix());
-            _shader.SetMatrix4("view", GameObject!.Engine.Camera.GetViewMatrix());
-            _shader.SetMatrix4("projection", GameObject!.Engine.Camera.GetProjectionMatrix());
-            _shader.SetVector3("viewPos", GameObject!.Engine.Camera.Position);
+            var result = new List<float>();
 
-            _shader.SetVector3("material.ambient", Material.Ambient);
-            _shader.SetVector3("material.diffuse", Material.Diffuse);
-            _shader.SetVector3("material.specular", Material.Specular);
-            _shader.SetFloat("material.shininess", Material.Shininess);
+            foreach (var vertex in mesh.Vertices)
+            {
+                result.Add(vertex.Position.X);
+                result.Add(vertex.Position.Y);
+                result.Add(vertex.Position.Z);
+                result.Add(vertex.Normal.X);
+                result.Add(vertex.Normal.Y);
+                result.Add(vertex.Normal.Z);
+                result.Add(vertex.TextureCoords.X);
+                result.Add(vertex.TextureCoords.Y);
+            }
 
-            _shader.SetVector3("light.position", GameObject!.Engine.Light.Position);
-            _shader.SetVector3("light.ambient", GameObject!.Engine.Light.Ambient);
-            _shader.SetVector3("light.diffuse", GameObject!.Engine.Light.Diffuse);
-            _shader.SetVector3("light.specular", GameObject!.Engine.Light.Specular);
+            return result.ToArray();
         }
 
-        private void Register(float[] vertices)
+        private void Setup()
         {
-            _vertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(_vertexArrayObject);
+            Shader.Use();
+            Shader.SetMatrix4("transform.model", GameObject!.GetModelMatrix());
+            Shader.SetMatrix4("transform.view", GameObject!.Engine.Camera.GetViewMatrix());
+            Shader.SetMatrix4("transform.projection", GameObject!.Engine.Camera.GetProjectionMatrix());
+            SetupFragmentShader();
+        }
 
-            _vertexBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+        private void Register()
+        {
+            _modelBuffers.Clear();
 
-            var positionLocation = _shader.GetAttribLocation("aPos");
-            GL.EnableVertexAttribArray(positionLocation);
-            GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            foreach (var mesh in _model.Meshes)
+            {
+                float[] vertices = GetVertices(mesh);
+                int[] indices = mesh.Indices.ToArray();
+                var meshBuffers = new MeshBuffers();
 
-            var normalLocation = _shader.GetAttribLocation("aNormal");
-            GL.EnableVertexAttribArray(normalLocation);
-            GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+                meshBuffers.VertexArrayObject = GL.GenVertexArray();
+                GL.BindVertexArray(meshBuffers.VertexArrayObject);
 
-            GL.EnableVertexAttribArray(0);
-            _count = vertices.Length / 6;
+                meshBuffers.VertexBufferObject = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, meshBuffers.VertexBufferObject);
+                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+                meshBuffers.VertexElementObject = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, meshBuffers.VertexElementObject);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+
+                var positionLocation = Shader.GetAttribLocation("vertexPosition");
+                GL.EnableVertexAttribArray(positionLocation);
+                GL.VertexAttribPointer(positionLocation, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
+
+                var normalLocation = Shader.GetAttribLocation("vertexNormal");
+                GL.EnableVertexAttribArray(normalLocation);
+                GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
+
+                var textureLocation = Shader.GetAttribLocation("vertexTextureCoord");
+                GL.EnableVertexAttribArray(textureLocation);
+                GL.VertexAttribPointer(textureLocation, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
+
+                GL.EnableVertexAttribArray(0);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.BindVertexArray(0);
+
+                _modelBuffers.Add(meshBuffers);
+            }
         }
 
         private void Unregister()
         {
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindVertexArray(0);
+            foreach (var meshBuffers in _modelBuffers)
+            {
+                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+                GL.BindVertexArray(0);
 
-            GL.DeleteBuffer(_vertexBufferObject);
-            GL.DeleteVertexArray(_vertexArrayObject);
+                GL.DeleteBuffer(meshBuffers.VertexBufferObject);
+                GL.DeleteBuffer(meshBuffers.VertexElementObject);
+                GL.DeleteVertexArray(meshBuffers.VertexArrayObject);
+            }
+
         }
 
         private void Render()
         {
-            GL.BindVertexArray(_vertexArrayObject);
-
-            SetupShader();
-            GL.DrawArrays(PrimitiveType.Triangles, 0, _count);
-
-            GL.BindVertexArray(0);
+            for (int i = 0; i < _modelBuffers.Count; i++)
+            {
+                GL.BindVertexArray(_modelBuffers[i].VertexArrayObject);
+                Setup();
+                GL.DrawElements(BeginMode.Triangles, _model.Meshes[i].Indices.Count, DrawElementsType.UnsignedInt, 0);
+                GL.BindVertexArray(0);
+            }
         }
     }
 }

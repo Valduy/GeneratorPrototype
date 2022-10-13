@@ -1,4 +1,6 @@
-﻿using OpenTK.Windowing.Common;
+﻿using GameEngine.Graphics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace GameEngine.Core
 {
@@ -16,6 +18,8 @@ namespace GameEngine.Core
         public GameObject? GameObject { get; internal set; }
         
         public Engine? Engine => GameObject?.Engine;
+        public KeyboardState? Inputs => Engine?.Window?.KeyboardState;
+        public Camera? Camera => Engine?.Camera;
 
         /// <summary>
         /// Method which called when component instantiated and/or <see cref="Engine"/> has started.

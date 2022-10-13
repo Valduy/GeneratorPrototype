@@ -9,10 +9,10 @@ namespace GameEngine.Mathematics
         // NOTE: I use words "points" and "polygon" as synonyms.
 
         /// <summary>
-        /// Method triangulate <see cref="Shape"/>.
+        /// Method triangulate <see cref="Line"/>.
         /// Use "Ear clipping" method (https://en.wikipedia.org/wiki/Polygon_triangulation).
         /// </summary>
-        /// <param name="points"><see cref="Shape"/> for triangulation.</param>
+        /// <param name="points"><see cref="Line"/> for triangulation.</param>
         /// <returns>Indices, which defines triangles vertexes in original points vertexes.</returns>
         /// <exception cref="ArgumentException">Trow, if points has <= then three vertexes.</exception>
         public static int[] Triangulate(IReadOnlyList<Vector2> points)
@@ -212,6 +212,13 @@ namespace GameEngine.Mathematics
         {
             return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon) 
                    && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
+        }
+
+        public static bool Equal(Vector3 a, Vector3 b, float epsilon)
+        {
+            return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon)
+                   && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon)
+                   && MathHelper.ApproximatelyEqualEpsilon(a.Z, b.Z, epsilon);
         }
 
         public static bool IsBoundingBoxesIntersects(

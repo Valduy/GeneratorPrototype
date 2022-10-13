@@ -7,28 +7,45 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Shaders\shader2d.frag" />
-    <None Remove="Shaders\shader2d.vert" />
+    <None Remove="Shaders\Shape.vert" />
+    <None Remove="Shaders\Solid.frag" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Shaders\shader2d.frag">
+    <Content Include="Shaders\Solid.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Shaders\shader2d.vert">
+    <Content Include="Shaders\Shape.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AssimpNet" Version="4.1.0" />
     <PackageReference Include="OpenTK" Version="4.6.7" />
+    <PackageReference Include="StbImageSharp" Version="2.27.11" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Shaders\shader3d.frag">
+    <None Update="Content\Cube.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\shader3d.vert">
+    <None Update="Content\Cube.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\default.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Pyramid.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Pyramid.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\Material.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\Mesh.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
