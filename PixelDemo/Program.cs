@@ -251,7 +251,7 @@ namespace PixelDemo
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var topology = new Topology(quadModel.Meshes[0]);
+            var topology = new Topology(quadModel.Meshes[0], 4);
             var rules = CreateRules("Content/Sample1.png");
             var collapsed = Wfc(topology, rules);
             var texture = GenerateTexture(topology, collapsed, 1000);

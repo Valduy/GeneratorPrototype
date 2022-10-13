@@ -366,7 +366,7 @@ namespace PatternDemo
 
             var quadModel = Model.Load("Content/Room.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             quadModel = new Model(quadModel.Meshes[0].SortVertices());
-            var topology = new Topology(quadModel.Meshes[0]);
+            var topology = new Topology(quadModel.Meshes[0], 4);
 
             var wallBigTiles = RulesLoader.ReadBigTiles("Content/Samples/WallBigTilesLogical.png", "Content/Samples/WallBigTilesDetailed.png");
             var floorBigTiles = RulesLoader.ReadBigTiles("Content/Samples/FloorBigTilesLogical.png", "Content/Samples/FloorBigTilesDetailed.png");

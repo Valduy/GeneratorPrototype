@@ -66,7 +66,7 @@ namespace MeshVisualization
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var faces = quadModel.Meshes[0].ExtractFaces();
+            var faces = quadModel.Meshes[0].ExtractFaces(4);
             var go = CreateFacesVisualization(engine, faces);
             go.Position = Vector3.UnitY;
 

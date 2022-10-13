@@ -55,7 +55,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MeshVisualization", "MeshVi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TextureUtils", "TextureUtils\TextureUtils.csproj", "{D93F083B-1F4E-4043-A9A6-C0C760AF7844}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PatternDemo", "PatternDemo\PatternDemo.csproj", "{4E8D0DEF-B8FC-4BF5-86A2-F3B840C67447}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PatternDemo", "PatternDemo\PatternDemo.csproj", "{4E8D0DEF-B8FC-4BF5-86A2-F3B840C67447}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriangulatedTopology", "TriangulatedTopology\TriangulatedTopology.csproj", "{8F130F5D-A4A6-427A-B426-C706EE03870A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -151,6 +153,10 @@ Global
 		{4E8D0DEF-B8FC-4BF5-86A2-F3B840C67447}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E8D0DEF-B8FC-4BF5-86A2-F3B840C67447}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E8D0DEF-B8FC-4BF5-86A2-F3B840C67447}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F130F5D-A4A6-427A-B426-C706EE03870A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F130F5D-A4A6-427A-B426-C706EE03870A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F130F5D-A4A6-427A-B426-C706EE03870A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F130F5D-A4A6-427A-B426-C706EE03870A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -176,6 +182,7 @@ Global
 		{D34C5950-F49F-46E4-9208-CE944387A69C} = {C28E6FD7-5869-4AEC-BCBE-88CC12BC7212}
 		{D93F083B-1F4E-4043-A9A6-C0C760AF7844} = {C28E6FD7-5869-4AEC-BCBE-88CC12BC7212}
 		{4E8D0DEF-B8FC-4BF5-86A2-F3B840C67447} = {C28E6FD7-5869-4AEC-BCBE-88CC12BC7212}
+		{8F130F5D-A4A6-427A-B426-C706EE03870A} = {C28E6FD7-5869-4AEC-BCBE-88CC12BC7212}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2E8EA375-1FF9-420C-A6AC-CBB14D5C3F00}

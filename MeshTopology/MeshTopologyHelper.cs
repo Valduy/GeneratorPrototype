@@ -14,19 +14,20 @@ namespace MeshTopology
     {
         public const float EdgeLength = 1;
 
-        public static List<Face> ExtractFaces(this Mesh mesh)
+        public static List<Face> ExtractFaces(this Mesh mesh, int verticesPerFace)
         {
             var result = new List<Face>();
 
-            for (int i = 0; i < mesh.Indices.Count; i += 4)
+            for (int i = 0; i < mesh.Indices.Count; i += verticesPerFace)
             {
-                result.Add(new Face(new List<Vertex>
+                var vertices = new List<Vertex>();
+
+                for (int j = 0; j < verticesPerFace; j++)
                 {
-                    mesh.Vertices[mesh.Indices[i + 0]],
-                    mesh.Vertices[mesh.Indices[i + 1]],
-                    mesh.Vertices[mesh.Indices[i + 2]],
-                    mesh.Vertices[mesh.Indices[i + 3]],
-                }));
+                    vertices.Add(mesh.Vertices[mesh.Indices[i + j]]);
+                }
+
+                result.Add(new Face(vertices));
             }
 
             return result;

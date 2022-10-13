@@ -7,11 +7,13 @@ namespace MeshTopology
     {
         private List<TopologyNode> _nodes = new();
 
+        public int VerticesPerFace;
         public int Count => _nodes.Count;
 
-        public Topology(Mesh mesh)
+        public Topology(Mesh mesh, int verticesPerFace)
         {
-            var faces = mesh.ExtractFaces();
+            VerticesPerFace = verticesPerFace;
+            var faces = mesh.ExtractFaces(VerticesPerFace);
 
             foreach (var face in faces)
             {

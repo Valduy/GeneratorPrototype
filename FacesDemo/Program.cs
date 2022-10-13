@@ -208,7 +208,7 @@ namespace FacesDemo
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var topology = new Topology(quadModel.Meshes[0]);
+            var topology = new Topology(quadModel.Meshes[0], 4);
             var collapsed = Wfc(topology);
             var visualization = CreateTopologyVisualization(engine, topology, collapsed);
             visualization.Position = Vector3.UnitY;
