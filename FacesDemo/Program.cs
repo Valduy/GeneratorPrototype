@@ -16,7 +16,7 @@ namespace FacesDemo
 
     class Program
     {
-        public static Dictionary<TopologyNode, Rule> Wfc(Topology topology)
+        public static Dictionary<TopologyNode, Rule> Wfc(MeshTopology.MeshTopology topology)
         {
             var rules = new[]
             {
@@ -162,7 +162,7 @@ namespace FacesDemo
             return state;
         }
 
-        public static GameObject CreateTopologyVisualization(Engine engine, Topology topology, Dictionary<TopologyNode, Rule> collapsed)
+        public static GameObject CreateTopologyVisualization(Engine engine, MeshTopology.MeshTopology topology, Dictionary<TopologyNode, Rule> collapsed)
         {
             var go = engine.CreateGameObject();
 
@@ -208,7 +208,7 @@ namespace FacesDemo
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var topology = new Topology(quadModel.Meshes[0], 4);
+            var topology = new MeshTopology.MeshTopology(quadModel.Meshes[0], 4);
             var collapsed = Wfc(topology);
             var visualization = CreateTopologyVisualization(engine, topology, collapsed);
             visualization.Position = Vector3.UnitY;

@@ -10,22 +10,22 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ExtractSurfaces
 {
-    public class EdgeComparer : IEqualityComparer<(Vector3 v1, Vector3 v2)>
+    public class EdgeComparer : IEqualityComparer<(Vector3 A, Vector3 B)>
     {
-        public bool Equals((Vector3 v1, Vector3 v2)x, (Vector3 v1, Vector3 v2)y)
+        public bool Equals((Vector3 A, Vector3 B) x, (Vector3 A, Vector3 B) y)
         {
-            return x.v1 == y.v1 && x.v2 == y.v2 || x.v1 == y.v2 && x.v2 == y.v1;
+            return x.A == y.A && x.B == y.B || x.A == y.B && x.B == y.A;
         }
 
-        public int GetHashCode([DisallowNull] (Vector3 v1, Vector3 v2) obj)
+        public int GetHashCode([DisallowNull] (Vector3 A, Vector3 B) obj)
         {
-            return obj.v1.GetHashCode() ^ obj.v2.GetHashCode();
+            return obj.A.GetHashCode() ^ obj.B.GetHashCode();
         }
     }
 
     public class Program
     {
-        public static List<List<(Vector3, Vector3)>> ExtractPolies(Topology topology)
+        public static List<List<(Vector3 A, Vector3 B)>> ExtractPolies(MeshTopology.MeshTopology topology)
         {
             var groups = topology.ExtractFacesGroups((reference, node) =>
             {
@@ -35,12 +35,12 @@ namespace ExtractSurfaces
                     0.1f);
             });
             
-            var polies = new List<List<(Vector3, Vector3)>>();
+            var polies = new List<List<(Vector3 A, Vector3 B)>>();
 
             foreach (var group in groups)
             {
-                var repeates = new HashSet<(Vector3, Vector3)>(new EdgeComparer());
-                var edges = new HashSet<(Vector3, Vector3)>(new EdgeComparer());
+                var repeates = new HashSet<(Vector3 A, Vector3 B)>(new EdgeComparer());
+                var edges = new HashSet<(Vector3 A, Vector3 B)>(new EdgeComparer());
 
                 foreach (var node in group)
                 {
@@ -58,12 +58,13 @@ namespace ExtractSurfaces
                 }
 
                 edges.ExceptWith(repeates);
-                var poly = new List<(Vector3, Vector3)>() { edges.First() };
+
+                var poly = new List<(Vector3 A, Vector3 B)>() { edges.First() };
                 edges.Remove(edges.First());
 
                 while (edges.Count > 0)
                 {
-                    var next = edges.First(e => e.Item1 == poly.Last().Item2);
+                    var next = edges.First(e => e.A == poly.Last().B);
                     poly.Add(next);
                     edges.Remove(next);
                 }
@@ -74,7 +75,7 @@ namespace ExtractSurfaces
             return polies;
         }
 
-        public static GameObject CreatePoliesVisualization(Engine engine, List<List<(Vector3, Vector3)>> polies)
+        public static GameObject CreatePoliesVisualization(Engine engine, List<List<(Vector3 A, Vector3 B)>> polies)
         {
             var go = engine.CreateGameObject();
 
@@ -84,7 +85,7 @@ namespace ExtractSurfaces
 
                 foreach (var edge in poly)
                 {
-                    var edgeGo = engine.Line(edge.Item1, edge.Item2, Colors.Purple);
+                    var edgeGo = engine.Line(edge.A, edge.B, Colors.Purple);
                     polyGo.AddChild(edgeGo);
                 } 
                 
@@ -113,17 +114,11 @@ namespace ExtractSurfaces
             axis.Position = new Vector3(-11, 0, -11);
 
             var model = Model.Load("Content/UVExperiments.obj");
-            var topology = new Topology(model.Meshes[0], 3);
+            var topology = new MeshTopology.MeshTopology(model.Meshes[0], 3);
             var polies = ExtractPolies(topology);
 
             var poliesGo = CreatePoliesVisualization(engine, polies);
             poliesGo.Position = Vector3.UnitY * 3;
-
-            //var structureGo = engine.CreateGameObject();
-            //var structureRender = structureGo.Add<MaterialRenderComponent>();
-            //structureRender.Model = model;
-            //structureGo.Scale = new Vector3(1.0f);
-            //structureGo.AddChild(engine.Axis(5));
 
             engine.Run();
         }

@@ -3,14 +3,14 @@ using System.Collections;
 
 namespace MeshTopology
 {
-    public class Topology : IReadOnlyList<TopologyNode>
+    public class MeshTopology : IReadOnlyList<TopologyNode>
     {
         private List<TopologyNode> _nodes = new();
 
         public int VerticesPerFace;
         public int Count => _nodes.Count;
 
-        public Topology(Mesh mesh, int verticesPerFace)
+        public MeshTopology(Mesh mesh, int verticesPerFace)
         {
             VerticesPerFace = verticesPerFace;
             var faces = mesh.ExtractFaces(VerticesPerFace);

@@ -59,7 +59,7 @@ namespace PatternDemo
         }
 
         public static Dictionary<TopologyNode, Rule> Wfc(
-            Topology topology, 
+            MeshTopology.MeshTopology topology, 
             List<Rule> wallRules, 
             List<Rule> floorRules,
             List<Rule> ceilRules,
@@ -183,7 +183,7 @@ namespace PatternDemo
         }
 
         public static void PlaceWallBigTiles(
-            Topology topology, 
+            MeshTopology.MeshTopology topology, 
             Dictionary<TopologyNode, List<Rule>> possibilities, 
             List<Rule?[,]> bigTiles)
         {
@@ -195,7 +195,7 @@ namespace PatternDemo
         }
 
         public static void PlaceFloorBigTiles(
-            Topology topology,
+            MeshTopology.MeshTopology topology,
             Dictionary<TopologyNode, List<Rule>> possibilities,
             List<Rule?[,]> bigTiles)
         {
@@ -366,7 +366,7 @@ namespace PatternDemo
 
             var quadModel = Model.Load("Content/Room.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             quadModel = new Model(quadModel.Meshes[0].SortVertices());
-            var topology = new Topology(quadModel.Meshes[0], 4);
+            var topology = new MeshTopology.MeshTopology(quadModel.Meshes[0], 4);
 
             var wallBigTiles = RulesLoader.ReadBigTiles("Content/Samples/WallBigTilesLogical.png", "Content/Samples/WallBigTilesDetailed.png");
             var floorBigTiles = RulesLoader.ReadBigTiles("Content/Samples/FloorBigTilesLogical.png", "Content/Samples/FloorBigTilesDetailed.png");

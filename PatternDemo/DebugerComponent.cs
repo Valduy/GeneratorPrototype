@@ -16,7 +16,7 @@ namespace PatternDemo
         public Texture DetailedTexture { get; set; }
         public Texture LogicalTexture { get; set; }
         public GameObject Model { get; set; }
-        public Topology MeshTopology { get; set; }
+        public MeshTopology.MeshTopology MeshTopology { get; set; }
 
         public override void Start()
         {

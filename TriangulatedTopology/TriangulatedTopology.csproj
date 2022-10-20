@@ -7,4 +7,18 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Engine\GameEngine.csproj" />
+    <ProjectReference Include="..\MeshTopology\MeshTopology.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Content\Room.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Room.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

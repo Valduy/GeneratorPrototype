@@ -9,7 +9,7 @@ namespace PatternDemo
 {
     public static class DebugVisualizer
     {
-        public static GameObject DebugMeshTopologyInvalidNeighboursCount(Engine engine, Topology topology)
+        public static GameObject DebugMeshTopologyInvalidNeighboursCount(Engine engine, MeshTopology.MeshTopology topology)
         {
             var go = engine.CreateGameObject();
 
@@ -43,7 +43,7 @@ namespace PatternDemo
             return go;
         }
 
-        public static GameObject CreateFacesOrientationVisualization(Engine engine, Topology topology)
+        public static GameObject CreateFacesOrientationVisualization(Engine engine, MeshTopology.MeshTopology topology)
         {
             var go = engine.CreateGameObject();
 
@@ -84,7 +84,7 @@ namespace PatternDemo
             return go;
         }
 
-        public static GameObject CreateWfcResultDebugVisualization(Engine engine, Topology topology, Dictionary<TopologyNode, Rule> collapsed)
+        public static GameObject CreateWfcResultDebugVisualization(Engine engine, MeshTopology.MeshTopology topology, Dictionary<TopologyNode, Rule> collapsed)
         {
             var go = engine.CreateGameObject();
 
