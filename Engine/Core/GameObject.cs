@@ -99,6 +99,7 @@ namespace GameEngine.Core
             Engine = engine;
         }
 
+        // TODO: replace with Parent property.
         public void AddChild(GameObject go)
         {
             if (go.Parent == this) return;
@@ -190,11 +191,6 @@ namespace GameEngine.Core
             if (_componentsMap.TryGetValue(componentType, out var component))
             {
                 _componentsMap.Remove(componentType);
-
-                if (Engine.IsRun)
-                {
-                    component.Stop();
-                }
 
                 if (Engine.IsRun)
                 {

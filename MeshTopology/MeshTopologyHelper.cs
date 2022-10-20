@@ -1,5 +1,7 @@
 ﻿using GameEngine.Graphics;
 using OpenTK.Mathematics;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MeshTopology
 {
@@ -8,6 +10,19 @@ namespace MeshTopology
         XY,
         XZ,
         YZ,
+    }
+
+    public class VertexComparer : IEqualityComparer<Vertex>
+    {
+        public bool Equals(Vertex x, Vertex y)
+        {
+            return x.Position.Equals(y.Position);
+        }
+
+        public int GetHashCode([DisallowNull] Vertex obj)
+        {
+            return obj.Position.GetHashCode();
+        }
     }
 
     public static class MeshTopologyHelper
@@ -221,7 +236,23 @@ namespace MeshTopology
             while (faces.Any())
             {
                 var initial = faces.First();
-                var group = topology.ExtractGroup(initial, filter);
+                var group =  ExtractGroup(initial, filter);
+                faces.ExceptWith(group);
+                groups.Add(group);
+            }
+
+            return groups;
+        }
+
+        public static List<List<TopologyNode>> ExtractFacesGroups(this Topology topology, Func<TopologyNode, TopologyNode, bool> filter)
+        {
+            var groups = new List<List<TopologyNode>>();
+            var faces = new HashSet<TopologyNode>(topology);
+
+            while (faces.Any())
+            {
+                var initial = faces.First();
+                var group = ExtractGroup(initial, filter);
                 faces.ExceptWith(group);
                 groups.Add(group);
             }
@@ -234,6 +265,45 @@ namespace MeshTopology
             var a = (face[1].Position - face[0].Position).Normalized();
             var b = (face[2].Position - face[0].Position).Normalized();
             return Vector3.Cross(a, b);
+        }
+
+        public static Mesh ToMesh(this IEnumerable<TopologyNode> nodes)
+        {
+            var verticesSet = new HashSet<Vertex>(new VertexComparer());
+
+            foreach (var node in nodes)
+            {
+                var normal = node.Face.GetNormal().Normalized();
+
+                foreach (var vertex in node.Face)
+                {
+                    verticesSet.Add(new Vertex(vertex.Position, normal, Vector2.Zero));
+                }                
+            }
+
+            var vertices = verticesSet.ToList();
+            var indices = new List<int>();
+
+            foreach (var node in nodes)
+            {
+                foreach (var vertex in node.Face)
+                {
+                    int index = -1;
+
+                    for(int i = 0; i < vertices.Count; i++)
+                    {
+                        if (vertices[i].Position.Equals(vertex.Position))
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+
+                    indices.Add(index);
+                }                
+            }
+
+            return new Mesh(vertices, indices);
         }
 
         private static (Vector3 Min, Vector3 Max) GetMinMaxXy(List<TopologyNode> group)
@@ -300,7 +370,6 @@ namespace MeshTopology
         }
 
         private static List<TopologyNode> ExtractGroup(
-            this Topology topology, 
             TopologyNode initial, 
             Func<TopologyNode, bool> filter)
         {
@@ -322,6 +391,33 @@ namespace MeshTopology
                 foreach (var neighbour in node.Neighbours)
                 {
                     if (!visited.Contains(neighbour) && filter(neighbour))
+                    {
+                        queue.Enqueue(neighbour);
+                        visited.Add(neighbour);
+                    }
+                }
+            }
+
+            return group.ToList();
+        }
+
+        private static List<TopologyNode> ExtractGroup(
+            TopologyNode initial,
+            Func<TopologyNode, TopologyNode, bool> filter)
+        {
+            var group = new HashSet<TopologyNode>();
+            var visited = new HashSet<TopologyNode> { initial };
+            var queue = new Queue<TopologyNode>();
+            queue.Enqueue(initial);
+
+            while (queue.Count > 0)
+            {
+                var node = queue.Dequeue();
+                group.Add(node);
+
+                foreach (var neighbour in node.Neighbours)
+                {
+                    if (!visited.Contains(neighbour) && filter(initial, neighbour))
                     {
                         queue.Enqueue(neighbour);
                         visited.Add(neighbour);

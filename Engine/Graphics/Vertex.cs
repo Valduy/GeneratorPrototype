@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GameEngine.Graphics
 {
@@ -14,5 +15,28 @@ namespace GameEngine.Graphics
             Normal = normal;
             TextureCoords = textureCoords;
         }
+
+        public override int GetHashCode()
+        {
+            return Position.GetHashCode() ^ Normal.GetHashCode() ^ TextureCoords.GetHashCode();
+        }
+
+        public override bool Equals([NotNullWhen(true)] object? other)
+        {
+            if (!(other is Vertex))
+            {
+                return false;
+            }
+
+            return Equals((Vertex)other);
+        }
+
+        public bool Equals(Vertex other)
+        {
+            return Position.Equals(other) 
+                && Normal.Equals(other)
+                && TextureCoords.Equals(other);
+        }
+
     }
 }

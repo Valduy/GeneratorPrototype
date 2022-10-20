@@ -57,7 +57,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TextureUtils", "TextureUtil
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PatternDemo", "PatternDemo\PatternDemo.csproj", "{4E8D0DEF-B8FC-4BF5-86A2-F3B840C67447}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriangulatedTopology", "TriangulatedTopology\TriangulatedTopology.csproj", "{8F130F5D-A4A6-427A-B426-C706EE03870A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExtractSurfaces", "TriangulatedTopology\ExtractSurfaces.csproj", "{8F130F5D-A4A6-427A-B426-C706EE03870A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriangulatedTopology", "TriangulatedTopology\TriangulatedTopology.csproj", "{C13AE4CE-157D-44C6-A5DF-B970955ADFEA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -157,6 +159,10 @@ Global
 		{8F130F5D-A4A6-427A-B426-C706EE03870A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F130F5D-A4A6-427A-B426-C706EE03870A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8F130F5D-A4A6-427A-B426-C706EE03870A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C13AE4CE-157D-44C6-A5DF-B970955ADFEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C13AE4CE-157D-44C6-A5DF-B970955ADFEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C13AE4CE-157D-44C6-A5DF-B970955ADFEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C13AE4CE-157D-44C6-A5DF-B970955ADFEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -183,6 +189,7 @@ Global
 		{D93F083B-1F4E-4043-A9A6-C0C760AF7844} = {C28E6FD7-5869-4AEC-BCBE-88CC12BC7212}
 		{4E8D0DEF-B8FC-4BF5-86A2-F3B840C67447} = {C28E6FD7-5869-4AEC-BCBE-88CC12BC7212}
 		{8F130F5D-A4A6-427A-B426-C706EE03870A} = {C28E6FD7-5869-4AEC-BCBE-88CC12BC7212}
+		{C13AE4CE-157D-44C6-A5DF-B970955ADFEA} = {C28E6FD7-5869-4AEC-BCBE-88CC12BC7212}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2E8EA375-1FF9-420C-A6AC-CBB14D5C3F00}

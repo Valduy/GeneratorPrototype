@@ -7,12 +7,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Engine\GameEngine.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Content\" />
-  </ItemGroup>
-
 </Project>
