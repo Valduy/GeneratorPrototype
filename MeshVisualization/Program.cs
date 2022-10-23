@@ -23,22 +23,22 @@ namespace MeshVisualization
                 foreach (var edge in face.EnumerateEdges())
                 {
                     var line = engine.Line(
-                        centroid + (edge.A - centroid).Normalized() * (edge.A - centroid).Length * 0.8f,
-                        centroid + (edge.B - centroid).Normalized() * (edge.B - centroid).Length * 0.8f,
+                        centroid + (edge.A.Position - centroid).Normalized() * (edge.A.Position - centroid).Length * 0.8f,
+                        centroid + (edge.B.Position - centroid).Normalized() * (edge.B.Position - centroid).Length * 0.8f,
                         Colors.Green);
 
                     go.AddChild(line);
                 }
 
                 var first = face.GetEdgeByIndex(0);
-                var firstCenter = (first.A + first.B) / 2;
+                var firstCenter = (first.A.Position + first.B.Position) / 2;
                 var up = engine.Line(
                     centroid + (firstCenter - centroid).Normalized() * (firstCenter - centroid).Length * 0.8f,
                     firstCenter + (firstCenter - centroid).Normalized() * 0.1f,
                     Colors.Cyan);
 
                 var second = face.GetEdgeByIndex(1);
-                var secondCenter = (second.A + second.B) / 2;
+                var secondCenter = (second.A.Position + second.B.Position) / 2;
                 var right = engine.Line(
                     centroid + (secondCenter - centroid).Normalized() * (secondCenter - centroid).Length * 0.8f,
                     secondCenter + (secondCenter - centroid).Normalized() * 0.1f,

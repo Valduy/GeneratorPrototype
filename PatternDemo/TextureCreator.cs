@@ -7,17 +7,17 @@ namespace PatternDemo
 {
     public static class TextureCreator
     {
-        public static byte[] CreateDetailedTexture(MeshTopology.MeshTopology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
+        public static byte[] CreateDetailedTexture(MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
         {
             return CreateTexture(topology, collapsed, size, r => r.Detailed);
         }
 
-        public static byte[] CreateLogicalTexture(MeshTopology.MeshTopology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
+        public static byte[] CreateLogicalTexture(MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
         {
             return CreateTexture(topology, collapsed, size, r => r.Logical);
         }
 
-        private static byte[] CreateTexture(MeshTopology.MeshTopology topology, Dictionary<TopologyNode, Rule> collapsed, int size, Func<Rule, Color[,]> acessor)
+        private static byte[] CreateTexture(MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size, Func<Rule, Color[,]> acessor)
         {
             var texture = new byte[size * size * 4];
 

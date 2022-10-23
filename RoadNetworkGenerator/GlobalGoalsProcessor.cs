@@ -106,7 +106,7 @@ namespace RoadNetworkGenerator
                 switch (neighbour.Item.SucessorType)
                 {
                     case SucessorType.Pivot:
-                        return Mathematics.Equal(neighbour.Item.Position, node.Item.Goal, Constants.FloatEpsilon);
+                        return Mathematics.ApproximatelyEqualEpsilon(neighbour.Item.Position, node.Item.Goal, Constants.FloatEpsilon);
                     case SucessorType.Main when IsGoalAchievable(node.Item.Goal, visited, neighbour):
                         return true;
                 }
@@ -124,7 +124,7 @@ namespace RoadNetworkGenerator
                 switch (neighbour.Item.SucessorType)
                 {
                     case SucessorType.Pivot:
-                        return Mathematics.Equal(neighbour.Item.Position, goal, Constants.FloatEpsilon);
+                        return Mathematics.ApproximatelyEqualEpsilon(neighbour.Item.Position, goal, Constants.FloatEpsilon);
                     case SucessorType.Main when IsGoalAchievable(goal, visited, neighbour):
                         return true;
                 }
@@ -134,7 +134,7 @@ namespace RoadNetworkGenerator
         }
 
         private bool IsGoalAchieved(Sucessor sucessor) 
-            => _pivots.Any(pivot => Mathematics.Equal(pivot, sucessor.Position, Constants.FloatEpsilon));
+            => _pivots.Any(pivot => Mathematics.ApproximatelyEqualEpsilon(pivot, sucessor.Position, Constants.FloatEpsilon));
 
         private Sucessor CreateNewGlobalBranch(Node<Sucessor> node, Vector2 newGlobalGoal) => new()
         {

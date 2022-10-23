@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 
-namespace TextureUtils
+namespace GameEngine.Helpers
 {
     public static class MatrixHelper
     {

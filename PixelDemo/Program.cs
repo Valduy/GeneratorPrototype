@@ -107,7 +107,7 @@ namespace PixelDemo
             return rules.ToList();
         }
 
-        public static Dictionary<TopologyNode, Rule> Wfc(MeshTopology.MeshTopology topology, List<Rule> rules)
+        public static Dictionary<TopologyNode, Rule> Wfc(MeshTopology.Topology topology, List<Rule> rules)
         {
             var possibilities = new Dictionary<TopologyNode, List<Rule>>();
             var forRecalculation = new List<TopologyNode>();
@@ -209,7 +209,7 @@ namespace PixelDemo
             return true;
         }
 
-        public static byte[] GenerateTexture(MeshTopology.MeshTopology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
+        public static byte[] GenerateTexture(MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
         {
             var texture = new byte[size * size * 4];
             
@@ -251,7 +251,7 @@ namespace PixelDemo
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var topology = new MeshTopology.MeshTopology(quadModel.Meshes[0], 4);
+            var topology = new MeshTopology.Topology(quadModel.Meshes[0], 4);
             var rules = CreateRules("Content/Sample1.png");
             var collapsed = Wfc(topology, rules);
             var texture = GenerateTexture(topology, collapsed, 1000);

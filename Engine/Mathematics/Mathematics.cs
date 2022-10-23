@@ -92,7 +92,7 @@ namespace GameEngine.Mathematics
         /// </summary>
         /// <param name="vertices">Vertexes.</param>
         /// <returns>True, if vertexes contains neighboring edges and false in other case.</returns>
-        public static bool IsContainsCollinearNeighboringEdges(IList<Vector2> vertices)
+        public static bool IsContainsCollinearNeighboringEdges(IReadOnlyList<Vector2> vertices)
         {
             for (int i = 0; i < vertices.Count; i++)
             {
@@ -146,7 +146,7 @@ namespace GameEngine.Mathematics
         /// <param name="p">Point.</param>
         /// <param name="polygon">Polygon's points.</param>
         /// <returns>True if point inside polygon, false in other case.</returns>
-        public static bool IsPointInConvexPolygon(Vector2 p, IList<Vector2> polygon)
+        public static bool IsPointInConvexPolygon(Vector2 p, IReadOnlyList<Vector2> polygon)
         {
             for (int i = 0; i < polygon.Count; i++)
             {
@@ -168,7 +168,7 @@ namespace GameEngine.Mathematics
         /// <param name="thisPolygon">Polygon that we check if it is inside another.</param>
         /// <param name="otherPolygon">Other convex polygon.</param>
         /// <returns>True, if polygon inside other convex polygon, else in other case.</returns>
-        public static bool IsPolygonInsideConvexPolygon(IList<Vector2> thisPolygon, IList<Vector2> otherPolygon) 
+        public static bool IsPolygonInsideConvexPolygon(IReadOnlyList<Vector2> thisPolygon, IReadOnlyList<Vector2> otherPolygon) 
             => thisPolygon.All(p => IsPointInConvexPolygon(p, otherPolygon));
 
         /// <summary>
@@ -177,7 +177,7 @@ namespace GameEngine.Mathematics
         /// <param name="thisPolygon">First convex polygon.</param>
         /// <param name="otherPolygon">Second convex polygon.</param>
         /// <returns>True if intersect, false in other case.</returns>
-        public static bool IsConvexPolygonsIntersects(IList<Vector2> thisPolygon, IList<Vector2> otherPolygon) 
+        public static bool IsConvexPolygonsIntersects(IReadOnlyList<Vector2> thisPolygon, IReadOnlyList<Vector2> otherPolygon) 
             => thisPolygon.Any(p => IsPointInConvexPolygon(p, otherPolygon))
                || otherPolygon.Any(p => IsPointInConvexPolygon(p, thisPolygon));
 
@@ -208,17 +208,17 @@ namespace GameEngine.Mathematics
             return new Vector2(vector3d.X, vector3d.Y);
         }
 
-        public static bool Equal(Vector2 a, Vector2 b, float epsilon)
+        public static bool ApproximatelyEqualEpsilon(Vector2 a, Vector2 b, float epsilon)
         {
             return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon) 
-                   && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
+                && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
         }
 
-        public static bool Equal(Vector3 a, Vector3 b, float epsilon)
+        public static bool ApproximatelyEqualEpsilon(Vector3 a, Vector3 b, float epsilon)
         {
             return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon)
-                   && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon)
-                   && MathHelper.ApproximatelyEqualEpsilon(a.Z, b.Z, epsilon);
+                && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon)
+                && MathHelper.ApproximatelyEqualEpsilon(a.Z, b.Z, epsilon);
         }
 
         public static bool IsBoundingBoxesIntersects(
@@ -226,7 +226,7 @@ namespace GameEngine.Mathematics
             Vector2 position2, float width2, float height2)
         {
             return Math.Abs(position1.X - position2.X) * 2 < (width1 + width2)
-                   && Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
+                && Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
         }
 
         public static Quaternion GetRotation(Vector3 from, Vector3 to)

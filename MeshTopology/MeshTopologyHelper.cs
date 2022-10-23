@@ -1,7 +1,7 @@
 ﻿using GameEngine.Graphics;
 using OpenTK.Mathematics;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using GameEngine.Helpers;
 
 namespace MeshTopology
 {
@@ -74,11 +74,11 @@ namespace MeshTopology
 
         #region Edges
 
-        public static IEnumerable<(Vector3 A, Vector3 B)> EnumerateEdges(this Face face)
+        public static IEnumerable<Edge> EnumerateEdges(this Face face)
         {
             for (int i = 0; i < face.Count; i++)
             {
-                yield return (face[i].Position, face[(i + 1) % face.Count].Position);
+                yield return new Edge(face[i], face.GetCircular(i + 1));
             }
         }
 
@@ -88,7 +88,7 @@ namespace MeshTopology
             {
                 foreach (var edge2 in other.EnumerateEdges())
                 {
-                    if (IsEquivalent(edge1, edge2))
+                    if (edge1.HasSamePositions(edge2))
                     {
                         return true;
                     }
@@ -98,13 +98,13 @@ namespace MeshTopology
             return false;
         }
 
-        public static (Vector3 A, Vector3 B) GetSharedEdge(this Face face, Face other)
+        public static Edge GetSharedEdge(this Face face, Face other)
         {
             foreach (var edge1 in face.EnumerateEdges())
             {
                 foreach (var edge2 in other.EnumerateEdges())
                 {
-                    if (IsEquivalent(edge1, edge2))
+                    if (edge1.HasSamePositions(edge2))
                     {
                         return edge1;
                     }
@@ -114,54 +114,35 @@ namespace MeshTopology
             throw new InvalidOperationException("There is no shared edge.");
         }
 
-        public static int GetEdgeIndex(this Face face, (Vector3 A, Vector3 B) edge)
+        public static bool TryGetSharedEdge(this Face face, Face other, out Edge? shared)
         {
-            for (int i = 0; i < face.Count; i++)
+            foreach (var edge1 in face.EnumerateEdges())
             {
-                Vector3 a = face[i].Position;
-                Vector3 b = face[(i + 1) % face.Count].Position;
-
-                if (IsEquivalent(a, b, edge.A, edge.B))
+                foreach (var edge2 in other.EnumerateEdges())
                 {
-                    return i;
+                    if (edge1.HasSamePositions(edge2))
+                    {
+                        shared = edge1;
+                        return true;
+                    }
                 }
             }
 
-            throw new InvalidOperationException("The face does not contain this edge.");
+            shared = null;
+            return false;
         }
-
-        public static (Vector3 A, Vector3 B) GetEdgeByIndex(this Face face, int index)
-        {
-            Vector3 a = face[index].Position;
-            Vector3 b = face[(index + 1) % face.Count].Position;
-            return (a, b);
-        }
-
-        public static bool IsEquivalent((Vector3 A, Vector3 B) pair1, (Vector3 A, Vector3 B) pair2)
-            => IsEquivalent(pair1.A, pair1.B, pair2.A, pair2.B);
-
-        public static bool IsEquivalent(Vector3 a1, Vector3 b1, Vector3 a2, Vector3 b2)
-            => a1 == a2 && b1 == b2 || a1 == b2 && b1 == a2;
 
         #endregion Edges
 
         #region UVs
 
-        public static IEnumerable<(Vector2 A, Vector2 B)> EnumerateUVEdges(this Face face)
-        {
-            for (int i = 0; i < face.Count; i++)
-            {
-                yield return (face[i].TextureCoords, face[(i + 1) % face.Count].TextureCoords);
-            }
-        }
-
         public static bool IsSharedUVEdgeExist(this Face face, Face other)
         {
-            foreach (var edge1 in face.EnumerateUVEdges())
+            foreach (var edge1 in face.EnumerateEdges())
             {
-                foreach (var edge2 in other.EnumerateUVEdges())
+                foreach (var edge2 in other.EnumerateEdges())
                 {
-                    if (IsEquivalent(edge1, edge2))
+                    if (edge1.HasSameUV(edge2))
                     {
                         return true;
                     }
@@ -171,30 +152,49 @@ namespace MeshTopology
             return false;
         }
 
-        public static (Vector2 A, Vector2 B) GetSharedUVEdge(this Face face, Face other)
+        public static Edge GetSharedUVEdge(this Face face, Face other)
         {
-            foreach (var edge1 in face.EnumerateUVEdges())
+            foreach (var edge1 in face.EnumerateEdges())
             {
-                foreach (var edge2 in other.EnumerateUVEdges())
+                foreach (var edge2 in other.EnumerateEdges())
                 {
-                    if (IsEquivalent(edge1, edge2))
+                    if (edge1.HasSameUV(edge2))
                     {
                         return edge1;
                     }
                 }
             }
 
-            throw new InvalidOperationException("There is no shared edge.");
+            throw new InvalidOperationException("There is no shared uv edge.");
         }
 
-        public static int GetUVEdgeIndex(this Face face, (Vector2 A, Vector2 B) edge)
+        public static bool TryGetSharedUVEdge(this Face face, Face other, out Edge? shared)
+        {
+            foreach (var edge1 in face.EnumerateEdges())
+            {
+                foreach (var edge2 in other.EnumerateEdges())
+                {
+                    if (edge1.HasSameUV(edge2))
+                    {
+                        shared = edge1;
+                        return true;
+                    }
+                }
+            }
+
+            shared = null;
+            return false;
+        }
+
+        #endregion UVs
+
+        public static int GetEdgeIndex(this Face face, Func<Edge, bool> predicate)
         {
             for (int i = 0; i < face.Count; i++)
             {
-                Vector2 a = face[i].TextureCoords;
-                Vector2 b = face[(i + 1) % face.Count].TextureCoords;
+                var edge = new Edge(face[i], face.GetCircular(i + 1));
 
-                if (IsEquivalent(a, b, edge.A, edge.B))
+                if (predicate(edge))
                 {
                     return i;
                 }
@@ -203,22 +203,12 @@ namespace MeshTopology
             throw new InvalidOperationException("The face does not contain this edge.");
         }
 
-        public static (Vector2 A, Vector2 B) GetUVEdgeByIndex(this Face face, int index)
+        public static Edge GetEdgeByIndex(this Face face, int index)
         {
-            Vector2 a = face[index].TextureCoords;
-            Vector2 b = face[(index + 1) % face.Count].TextureCoords;
-            return (a, b);
+            return new Edge(face[index], face.GetCircular(index + 1));
         }
 
-        public static bool IsEquivalent((Vector2 A, Vector2 B) pair1, (Vector2 A, Vector2 B) pair2)
-            => IsEquivalent(pair1.A, pair1.B, pair2.A, pair2.B);
-
-        public static bool IsEquivalent(Vector2 a1, Vector2 b1, Vector2 a2, Vector2 b2)
-            => a1 == a2 && b1 == b2 || a1 == b2 && b1 == a2;
-
-        #endregion UVs
-
-        public static List<TopologyNode?[,]> ExtractXyGroups(this MeshTopology topology)
+        public static List<TopologyNode?[,]> ExtractXyGroups(this Topology topology)
         {
             var walls = new List<TopologyNode?[,]>();
             var groups = topology.ExtractFacesGroups(n => n.Face.GetFaceOrientation() == FaceOrientation.XY);
@@ -247,7 +237,7 @@ namespace MeshTopology
             return walls;
         }
 
-        public static List<TopologyNode?[,]> ExtractXzGroups(this MeshTopology topology)
+        public static List<TopologyNode?[,]> ExtractXzGroups(this Topology topology)
         {
             var walls = new List<TopologyNode?[,]>();
             var groups = topology.ExtractFacesGroups(n => n.Face.GetFaceOrientation() == FaceOrientation.XZ);
@@ -276,7 +266,7 @@ namespace MeshTopology
             return walls;
         }
 
-        public static List<TopologyNode?[,]> ExtractYzGroups(this MeshTopology topology)
+        public static List<TopologyNode?[,]> ExtractYzGroups(this Topology topology)
         {
             var walls = new List<TopologyNode?[,]>();
             var groups = topology.ExtractFacesGroups(n => n.Face.GetFaceOrientation() == FaceOrientation.YZ);
@@ -305,7 +295,7 @@ namespace MeshTopology
             return walls;
         }
 
-        public static List<List<TopologyNode>> ExtractFacesGroups(this MeshTopology topology, Func<TopologyNode, bool> filter)
+        public static List<List<TopologyNode>> ExtractFacesGroups(this Topology topology, Func<TopologyNode, bool> filter)
         {
             var groups = new List<List<TopologyNode>>();
             var faces = new HashSet<TopologyNode>(topology.Where(filter));
@@ -321,7 +311,7 @@ namespace MeshTopology
             return groups;
         }
 
-        public static List<List<TopologyNode>> ExtractFacesGroups(this MeshTopology topology, Func<TopologyNode, TopologyNode, bool> filter)
+        public static List<List<TopologyNode>> ExtractFacesGroups(this Topology topology, Func<TopologyNode, TopologyNode, bool> filter)
         {
             var groups = new List<List<TopologyNode>>();
             var faces = new HashSet<TopologyNode>(topology);

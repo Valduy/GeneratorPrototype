@@ -16,7 +16,7 @@ namespace FacesDemo
 
     class Program
     {
-        public static Dictionary<TopologyNode, Rule> Wfc(MeshTopology.MeshTopology topology)
+        public static Dictionary<TopologyNode, Rule> Wfc(MeshTopology.Topology topology)
         {
             var rules = new[]
             {
@@ -162,7 +162,7 @@ namespace FacesDemo
             return state;
         }
 
-        public static GameObject CreateTopologyVisualization(Engine engine, MeshTopology.MeshTopology topology, Dictionary<TopologyNode, Rule> collapsed)
+        public static GameObject CreateTopologyVisualization(Engine engine, MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed)
         {
             var go = engine.CreateGameObject();
 
@@ -170,7 +170,7 @@ namespace FacesDemo
             {
                 foreach (var edge in node.Face.EnumerateEdges())
                 {
-                    var line = engine.Line(edge.A, edge.B, Colors.Green);
+                    var line = engine.Line(edge.A.Position, edge.B.Position, Colors.Green);
                     go.AddChild(line);
                 }
             }
@@ -185,7 +185,7 @@ namespace FacesDemo
                 foreach (var index in rule.Indices)
                 {
                     var edge = node.Face.GetEdgeByIndex(index);
-                    var from = (edge.A + edge.B) / 2;
+                    var from = (edge.A.Position + edge.B.Position) / 2;
                     var line = engine.Line(from, centroid, Colors.Blue);
                     go.AddChild(line);
                 }
@@ -208,7 +208,7 @@ namespace FacesDemo
             axis.Position = new Vector3(-11, 0, -11);
 
             var quadModel = Model.Load("Content/Structure.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var topology = new MeshTopology.MeshTopology(quadModel.Meshes[0], 4);
+            var topology = new MeshTopology.Topology(quadModel.Meshes[0], 4);
             var collapsed = Wfc(topology);
             var visualization = CreateTopologyVisualization(engine, topology, collapsed);
             visualization.Position = Vector3.UnitY;

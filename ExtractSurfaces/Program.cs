@@ -10,37 +10,47 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ExtractSurfaces
 {
-    public class EdgeComparer : IEqualityComparer<(Vector3 A, Vector3 B)>
+    public class EdgeComparer : IEqualityComparer<Edge>
     {
-        public bool Equals((Vector3 A, Vector3 B) x, (Vector3 A, Vector3 B) y)
+        public bool Equals(Edge? x, Edge? y)
         {
-            return x.A == y.A && x.B == y.B || x.A == y.B && x.B == y.A;
+            if (x == null && y == null)
+            {
+                return true;
+            }
+
+            if (x != null && y != null)
+            {
+                return x.HasSamePositions(y);
+            }
+
+            return false;
         }
 
-        public int GetHashCode([DisallowNull] (Vector3 A, Vector3 B) obj)
+        public int GetHashCode([DisallowNull] Edge edge)
         {
-            return obj.A.GetHashCode() ^ obj.B.GetHashCode();
+            return edge.A.GetHashCode() ^ edge.B.GetHashCode();
         }
     }
 
     public class Program
     {
-        public static List<List<(Vector3 A, Vector3 B)>> ExtractPolies(MeshTopology.MeshTopology topology)
+        public static List<List<Edge>> ExtractPolies(MeshTopology.Topology topology)
         {
             var groups = topology.ExtractFacesGroups((reference, node) =>
             {
-                return Mathematics.Equal(
+                return Mathematics.ApproximatelyEqualEpsilon(
                     reference.Face.GetNormal().Normalized(),
                     node.Face.GetNormal().Normalized(),
                     0.1f);
             });
             
-            var polies = new List<List<(Vector3 A, Vector3 B)>>();
+            var polies = new List<List<Edge>>();
 
             foreach (var group in groups)
             {
-                var repeates = new HashSet<(Vector3 A, Vector3 B)>(new EdgeComparer());
-                var edges = new HashSet<(Vector3 A, Vector3 B)>(new EdgeComparer());
+                var repeates = new HashSet<Edge>(new EdgeComparer());
+                var edges = new HashSet<Edge>(new EdgeComparer());
 
                 foreach (var node in group)
                 {
@@ -59,12 +69,12 @@ namespace ExtractSurfaces
 
                 edges.ExceptWith(repeates);
 
-                var poly = new List<(Vector3 A, Vector3 B)>() { edges.First() };
+                var poly = new List<Edge>() { edges.First() };
                 edges.Remove(edges.First());
 
                 while (edges.Count > 0)
                 {
-                    var next = edges.First(e => e.A == poly.Last().B);
+                    var next = edges.First(e => e.A.Position == poly.Last().B.Position);
                     poly.Add(next);
                     edges.Remove(next);
                 }
@@ -75,7 +85,7 @@ namespace ExtractSurfaces
             return polies;
         }
 
-        public static GameObject CreatePoliesVisualization(Engine engine, List<List<(Vector3 A, Vector3 B)>> polies)
+        public static GameObject CreatePoliesVisualization(Engine engine, List<List<Edge>> polies)
         {
             var go = engine.CreateGameObject();
 
@@ -85,7 +95,7 @@ namespace ExtractSurfaces
 
                 foreach (var edge in poly)
                 {
-                    var edgeGo = engine.Line(edge.A, edge.B, Colors.Purple);
+                    var edgeGo = engine.Line(edge.A.Position, edge.B.Position, Colors.Purple);
                     polyGo.AddChild(edgeGo);
                 } 
                 
@@ -97,11 +107,6 @@ namespace ExtractSurfaces
 
         public static void Main(string[] args)
         {
-            var random = new Random();
-            int seed = random.Next();
-            Console.WriteLine(seed);
-            Utils.UseSeed(seed);
-
             using var engine = new Engine();
 
             var operatorGo = engine.CreateGameObject();
@@ -114,7 +119,7 @@ namespace ExtractSurfaces
             axis.Position = new Vector3(-11, 0, -11);
 
             var model = Model.Load("Content/UVExperiments.obj");
-            var topology = new MeshTopology.MeshTopology(model.Meshes[0], 3);
+            var topology = new MeshTopology.Topology(model.Meshes[0], 3);
             var polies = ExtractPolies(topology);
 
             var poliesGo = CreatePoliesVisualization(engine, polies);

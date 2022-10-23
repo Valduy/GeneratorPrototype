@@ -165,7 +165,7 @@ namespace TextureDemo
                 var to = b.TextureCoords * TextureSize;
                 var step = (to - from).Normalized();
 
-                for (var temp = from; !Mathematics.Equal(to, temp, 0.001f); temp += step)
+                for (var temp = from; !Mathematics.ApproximatelyEqualEpsilon(to, temp, 0.001f); temp += step)
                 {
                     data.SetColor(TextureSize, temp, RandomColors[colorTemp]);
                     data.SetColor(TextureSize, temp + direction, RandomColors[colorTemp]);

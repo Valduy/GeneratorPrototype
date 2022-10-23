@@ -9,7 +9,7 @@ namespace PatternDemo
 {
     public static class DebugVisualizer
     {
-        public static GameObject DebugMeshTopologyInvalidNeighboursCount(Engine engine, MeshTopology.MeshTopology topology)
+        public static GameObject DebugMeshTopologyInvalidNeighboursCount(Engine engine, MeshTopology.Topology topology)
         {
             var go = engine.CreateGameObject();
 
@@ -17,7 +17,7 @@ namespace PatternDemo
             {
                 foreach (var edge in node.Face.EnumerateEdges())
                 {
-                    var line = engine.Line(edge.A, edge.B, Colors.Green);
+                    var line = engine.Line(edge.A.Position, edge.B.Position, Colors.Green);
                     go.AddChild(line);
                 }
             }
@@ -43,7 +43,7 @@ namespace PatternDemo
             return go;
         }
 
-        public static GameObject CreateFacesOrientationVisualization(Engine engine, MeshTopology.MeshTopology topology)
+        public static GameObject CreateFacesOrientationVisualization(Engine engine, MeshTopology.Topology topology)
         {
             var go = engine.CreateGameObject();
 
@@ -56,22 +56,22 @@ namespace PatternDemo
                 foreach (var edge in node.Face.EnumerateEdges())
                 {
                     var line = engine.Line(
-                        centroid + (edge.A - centroid).Normalized() * (edge.A - centroid).Length * 0.8f,
-                        centroid + (edge.B - centroid).Normalized() * (edge.B - centroid).Length * 0.8f,
+                        centroid + (edge.A.Position - centroid).Normalized() * (edge.A.Position - centroid).Length * 0.8f,
+                        centroid + (edge.B.Position - centroid).Normalized() * (edge.B.Position - centroid).Length * 0.8f,
                         Colors.Green);
 
                     go.AddChild(line);
                 }
 
                 var first = node.Face.GetEdgeByIndex(0);
-                var firstCenter = (first.A + first.B) / 2;
+                var firstCenter = (first.A.Position + first.B.Position) / 2;
                 var up = engine.Line(
                     centroid + (firstCenter - centroid).Normalized() * (firstCenter - centroid).Length * 0.8f,
                     firstCenter + (firstCenter - centroid).Normalized() * 0.1f,
                     Colors.Cyan);
 
                 var second = node.Face.GetEdgeByIndex(1);
-                var secondCenter = (second.A + second.B) / 2;
+                var secondCenter = (second.A.Position + second.B.Position) / 2;
                 var right = engine.Line(
                     centroid + (secondCenter - centroid).Normalized() * (secondCenter - centroid).Length * 0.8f,
                     secondCenter + (secondCenter - centroid).Normalized() * 0.1f,
@@ -84,7 +84,7 @@ namespace PatternDemo
             return go;
         }
 
-        public static GameObject CreateWfcResultDebugVisualization(Engine engine, MeshTopology.MeshTopology topology, Dictionary<TopologyNode, Rule> collapsed)
+        public static GameObject CreateWfcResultDebugVisualization(Engine engine, MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed)
         {
             var go = engine.CreateGameObject();
 
@@ -92,7 +92,7 @@ namespace PatternDemo
             {
                 foreach (var edge in node.Face.EnumerateEdges())
                 {
-                    var line = engine.Line(edge.A, edge.B, Colors.Green);
+                    var line = engine.Line(edge.A.Position, edge.B.Position, Colors.Green);
                     go.AddChild(line);
                 }
             }
@@ -107,7 +107,7 @@ namespace PatternDemo
                 for (int i = 0; i < node.Neighbours.Count; i++)
                 {
                     var edge = node.Face.GetEdgeByIndex(i);
-                    var from = (edge.A + edge.B) / 2;
+                    var from = (edge.A.Position + edge.B.Position) / 2;
                     var color = rule[i][1];
                     var line = engine.Line(from, centroid, new Vector3(color.R, color.G, color.B));
                     line.Get<LineRenderComponent>().Width = 10;

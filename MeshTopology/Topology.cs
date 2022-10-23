@@ -3,18 +3,19 @@ using System.Collections;
 
 namespace MeshTopology
 {
-    public class MeshTopology : IReadOnlyList<TopologyNode>
+    public class Topology : IReadOnlyList<TopologyNode>
     {
         private List<TopologyNode> _nodes = new();
 
         public int VerticesPerFace;
         public int Count => _nodes.Count;
 
-        public MeshTopology(Mesh mesh, int verticesPerFace)
-        {
-            VerticesPerFace = verticesPerFace;
-            var faces = mesh.ExtractFaces(VerticesPerFace);
+        public Topology(Mesh mesh, int verticesPerFace) 
+            : this(mesh.ExtractFaces(verticesPerFace))
+        { }
 
+        public Topology(List<Face> faces)
+        {
             foreach (var face in faces)
             {
                 _nodes.Add(new TopologyNode(face));
@@ -40,8 +41,12 @@ namespace MeshTopology
             {
                 node._neighbours.Sort((n1, n2) =>
                 {
-                    int i1 = node.Face.GetEdgeIndex(n1.Face.GetSharedEdge(node.Face));
-                    int i2 = node.Face.GetEdgeIndex(n2.Face.GetSharedEdge(node.Face));
+                    var shared1 = n1.Face.GetSharedEdge(node.Face);
+                    int i1 = node.Face.GetEdgeIndex(e => e.HasSamePositions(shared1));
+
+                    var shared2 = n2.Face.GetSharedEdge(node.Face);
+                    int i2 = node.Face.GetEdgeIndex(e => e.HasSamePositions(shared2));
+
                     return i1.CompareTo(i2);
                 });
             }

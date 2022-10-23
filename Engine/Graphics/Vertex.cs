@@ -33,9 +33,9 @@ namespace GameEngine.Graphics
 
         public bool Equals(Vertex other)
         {
-            return Position.Equals(other) 
-                && Normal.Equals(other)
-                && TextureCoords.Equals(other);
+            return Position.Equals(other.Position) 
+                && Normal.Equals(other.Normal)
+                && TextureCoords.Equals(other.TextureCoords);
         }
 
     }
