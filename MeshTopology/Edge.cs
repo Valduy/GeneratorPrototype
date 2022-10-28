@@ -1,5 +1,4 @@
 ﻿using GameEngine.Graphics;
-using GameEngine.Mathematics;
 
 namespace MeshTopology
 {
@@ -18,10 +17,6 @@ namespace MeshTopology
         {
             return this.A.Position == other.A.Position && this.B.Position == other.B.Position
                 || this.A.Position == other.B.Position && this.B.Position == other.A.Position;
-            //return Mathematics.ApproximatelyEqualEpsilon(this.A.Position, other.A.Position, 0.1f)
-            //    && Mathematics.ApproximatelyEqualEpsilon(this.B.Position, other.B.Position, 0.1f)
-            //    || Mathematics.ApproximatelyEqualEpsilon(this.A.Position, other.B.Position, 0.1f)
-            //    && Mathematics.ApproximatelyEqualEpsilon(this.B.Position, other.A.Position, 0.1f);
         }
 
         public bool HasSameUV(Edge other)

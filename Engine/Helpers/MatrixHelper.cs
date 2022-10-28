@@ -72,5 +72,49 @@ namespace GameEngine.Helpers
                 }
             }
         }
+
+        public static T[,] RotateMatrixClockwise<T>(this T[,] oldMatrix)
+        {
+            T[,] newMatrix = new T[oldMatrix.GetLength(1), oldMatrix.GetLength(0)];
+            int newColumn;
+            int newRow = 0;
+
+            for (int oldColumn = 0; oldColumn < oldMatrix.GetLength(1); oldColumn++)
+            {
+                newColumn = 0;
+
+                for (int oldRow = oldMatrix.GetLength(0) - 1; oldRow >= 0; oldRow--)
+                {
+                    newMatrix[newRow, newColumn] = oldMatrix[oldRow, oldColumn];
+                    newColumn++;
+                }
+
+                newRow++;
+            }
+
+            return newMatrix;
+        }
+
+        public static T[,] RotateMatrixCounterClockwise<T>(this T[,] oldMatrix)
+        {
+            T[,] newMatrix = new T[oldMatrix.GetLength(1), oldMatrix.GetLength(0)];
+            int newColumn;
+            int newRow = 0;
+
+            for (int oldColumn = oldMatrix.GetLength(1) - 1; oldColumn >= 0; oldColumn--)
+            {
+                newColumn = 0;
+
+                for (int oldRow = 0; oldRow < oldMatrix.GetLength(0); oldRow++)
+                {
+                    newMatrix[newRow, newColumn] = oldMatrix[oldRow, oldColumn];
+                    newColumn++;
+                }
+
+                newRow++;
+            }
+
+            return newMatrix;
+        }
     }
 }

@@ -201,6 +201,36 @@ namespace GameEngine.Mathematics
             return MathF.Acos(Math.Clamp(Vector2.Dot(a, b) / (a.Length * b.Length), -1, 1));
         }
 
+        public static int SumComponents(this Vector2i vector)
+        {
+            return vector.X + vector.Y;
+        }
+
+        public static int SumComponents(this Vector3i vector)
+        {
+            return vector.X + vector.Y + vector.Z;
+        }
+
+        public static float SumComponents(this Vector2 vector)
+        {
+            return vector.X + vector.Y;
+        }
+
+        public static float SumComponents(this Vector3 vector)
+        {
+            return vector.X + vector.Y + vector.Z;
+        }
+
+        public static double SumComponents(this Vector2d vector)
+        {
+            return vector.X + vector.Y;
+        }
+
+        public static double SumComponents(this Vector3d vector)
+        {
+            return vector.X + vector.Y + vector.Z;
+        }
+
         public static Vector2 Rotate(Vector2 vector, float angle)
         {
             var vector3d = new Vector3(vector.X, vector.Y, 1);
