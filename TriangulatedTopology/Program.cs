@@ -347,7 +347,7 @@ namespace TriangulatedTopology
                 var t = 0;
             }
 
-            // TODO: connect with other surfaces
+            // TODO: use cell adapters for cells (to rotate cells)
         }
 
         public static GameObject CreatePoliesVisualization(Engine engine, Topology topology)
