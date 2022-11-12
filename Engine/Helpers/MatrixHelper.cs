@@ -116,5 +116,20 @@ namespace GameEngine.Helpers
 
             return newMatrix;
         }
+
+        public static T[,] Transpose<T>(this T[,] oldMatrix)
+        {
+            T[,] newMatrix = new T[oldMatrix.GetLength(1), oldMatrix.GetLength(0)];
+
+            for (int x = 0; x < newMatrix.GetLength(0); x++)
+            {
+                for (int y = 0; y < newMatrix.GetLength(1); y++)
+                {
+                    newMatrix[x, y] = oldMatrix[y, x];
+                }
+            }
+
+            return newMatrix;
+        }
     }
 }

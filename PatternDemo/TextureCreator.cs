@@ -24,6 +24,7 @@ namespace PatternDemo
             foreach (var node in topology)
             {
                 var rule = collapsed[node];
+                var defenition = acessor(rule);
 
                 var from = node.Face[0].TextureCoords * size;
                 var to = node.Face[2].TextureCoords * size;
@@ -35,8 +36,7 @@ namespace PatternDemo
                 var square = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
 
                 for (int x = 0; x < square.X; x++)
-                {
-                    var defenition = acessor(rule);
+                {                    
                     int colorX = (int)(x * defenition.GetLength(0) / square.X);
 
                     for (int y = 0; y < square.Y; y++)

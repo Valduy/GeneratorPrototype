@@ -1,19 +1,22 @@
 ﻿using GameEngine.Helpers;
 using OpenTK.Mathematics;
 using System.Drawing;
-using TextureUtils;
 
-namespace PatternDemo
+namespace TextureUtils
 {
     public static class RulesLoader
     {
-        public static List<Rule> CreateRules(string logicalPath, string detailedPath)
+        public static List<Rule> CreateRules(
+            string logicalPath, 
+            string detailedPath, 
+            int logicalResolution, 
+            int detailedResolution)
         {
             var logicalBmp = new Bitmap(logicalPath);
             var detailedBmp = new Bitmap(detailedPath);
 
-            var logicalDefenitions = ReadDefenitions(logicalBmp, Rule.LogicalResolution);
-            var detailedDefenitions = ReadDefenitions(detailedBmp, Rule.DetailedResolution);
+            var logicalDefenitions = ReadDefenitions(logicalBmp, logicalResolution);
+            var detailedDefenitions = ReadDefenitions(detailedBmp, detailedResolution);
 
             return logicalDefenitions
                 .Zip(detailedDefenitions, (l, d) => new Rule(l, d))
@@ -21,23 +24,27 @@ namespace PatternDemo
                 .ToList();
         }
 
-        public static List<Rule?[,]> ReadBigTiles(string logicalPath, string detailedPath)
+        public static List<Rule?[,]> ReadBigTiles(
+            string logicalPath, 
+            string detailedPath, 
+            int logicalResolution,
+            int detailedResolution)
         {
             var logicalBmp = new Bitmap(logicalPath);
             var detailedBmp = new Bitmap(detailedPath);
 
-            if (logicalBmp.Width / Rule.LogicalResolution != detailedBmp.Width / Rule.DetailedResolution ||
-                logicalBmp.Height / Rule.LogicalResolution != detailedBmp.Height / Rule.DetailedResolution)
+            if (logicalBmp.Width / logicalResolution != detailedBmp.Width / detailedResolution ||
+                logicalBmp.Height / logicalResolution != detailedBmp.Height / detailedResolution)
             {
                 throw new ArgumentException("Sizes of bitmaps's isn't correct.");
             }
 
-            int columns = logicalBmp.Width / Rule.LogicalResolution;
-            int rows = logicalBmp.Height / Rule.LogicalResolution;
+            int columns = logicalBmp.Width / logicalResolution;
+            int rows = logicalBmp.Height / logicalResolution;
             var rules = new Rule?[rows, columns];
 
-            var logicalDefenitions = ReadDefenitions(logicalBmp, Rule.LogicalResolution);
-            var detailedDefenitions = ReadDefenitions(detailedBmp, Rule.DetailedResolution);
+            var logicalDefenitions = ReadDefenitions(logicalBmp, logicalResolution);
+            var detailedDefenitions = ReadDefenitions(detailedBmp, detailedResolution);
             var coords = new Dictionary<Rule, Vector2i>();
 
             for (int x = 0; x < rows; x++)
@@ -103,7 +110,7 @@ namespace PatternDemo
                 .Select(r => coords[r!])
                 .ToList());
 
-            while (definedRules.Any()   )
+            while (definedRules.Any())
             {
                 var initial = definedRules.First();
                 var group = rules.ExtractGroup(initial);

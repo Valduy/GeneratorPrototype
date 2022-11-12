@@ -2,6 +2,7 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Utils;
+using TextureUtils;
 using MeshTopology;
 using OpenTK.Mathematics;
 

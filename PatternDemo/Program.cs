@@ -28,6 +28,9 @@ namespace PatternDemo
 
     public class Program
     {
+        public const int LogicalResolution = 4;
+        public const int DetailedResolution = 20;
+
         public static int DefineTextureSize(Mesh mesh)
         {
             int degree = 0;
@@ -368,13 +371,36 @@ namespace PatternDemo
             quadModel = new Model(quadModel.Meshes[0].SortVertices());
             var topology = new Topology(quadModel.Meshes[0], 4);
 
-            var wallBigTiles = RulesLoader.ReadBigTiles("Content/Samples/WallBigTilesLogical.png", "Content/Samples/WallBigTilesDetailed.png");
-            var floorBigTiles = RulesLoader.ReadBigTiles("Content/Samples/FloorBigTilesLogical.png", "Content/Samples/FloorBigTilesDetailed.png");
-            //var wallBigTiles = new List<Rule?[,]>();
-            //var floorBigTiles = new List<Rule?[,]>();
-            var wallRules = RulesLoader.CreateRules("Content/Samples/1/WallLogical.png", "Content/Samples/1/WallDetailed.png");
-            var floorRules = RulesLoader.CreateRules("Content/Samples/1/FloorLogical.png", "Content/Samples/1/FloorDetailed.png");
-            var ceilRules = RulesLoader.CreateRules("Content/Samples/1/CeilLogical.png", "Content/Samples/1/CeilDetailed.png");
+            var wallBigTiles = RulesLoader.ReadBigTiles(
+                "Content/Samples/WallBigTilesLogical.png", 
+                "Content/Samples/WallBigTilesDetailed.png",
+                LogicalResolution, 
+                DetailedResolution);
+
+            var floorBigTiles = RulesLoader.ReadBigTiles(
+                "Content/Samples/FloorBigTilesLogical.png", 
+                "Content/Samples/FloorBigTilesDetailed.png", 
+                LogicalResolution, 
+                DetailedResolution);
+
+            var wallRules = RulesLoader.CreateRules(
+                "Content/Samples/1/WallLogical.png", 
+                "Content/Samples/1/WallDetailed.png", 
+                LogicalResolution, 
+                DetailedResolution);
+
+            var floorRules = RulesLoader.CreateRules(
+                "Content/Samples/1/FloorLogical.png", 
+                "Content/Samples/1/FloorDetailed.png", 
+                LogicalResolution, 
+                DetailedResolution);
+
+            var ceilRules = RulesLoader.CreateRules(
+                "Content/Samples/1/CeilLogical.png", 
+                "Content/Samples/1/CeilDetailed.png", 
+                LogicalResolution, 
+                DetailedResolution);
+
             var collapsed = Wfc(topology, wallRules, floorRules, ceilRules, wallBigTiles, floorBigTiles);
 
             var textureSize = DefineTextureSize(quadModel.Meshes[0]);

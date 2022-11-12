@@ -6,38 +6,19 @@ using TextureUtils;
 using GameEngine.Utils;
 using MeshTopology;
 using OpenTK.Mathematics;
-using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using TextureUtils;
 using Mathematics = GameEngine.Mathematics.Mathematics;
+using Face = MeshTopology.Face;
+using TriangulatedTopology.RulesAdapters;
+using GameEngine.Mathematics;
 
 namespace TriangulatedTopology
 {
-    public class EdgeComparer : IEqualityComparer<Edge>
-    {
-        public bool Equals(Edge? x, Edge? y)
-        {
-            if (x == null && y == null)
-            {
-                return true;
-            }
-
-            if (x != null && y != null)
-            {
-                return x.HasSamePositions(y);
-            }
-
-            return false;
-        }
-
-        public int GetHashCode([DisallowNull] Edge edge)
-        {
-            return edge.A.Position.GetHashCode() ^ edge.B.Position.GetHashCode();
-        }
-    }
-
     public class Program
     {
+        public const int LogicalResolution = 4;
+        public const int DetailedResolution = 20;
+
         public const float SideSize = 1.0f;
 
         public static List<Face> ExtractPolies(Topology topology)
@@ -63,7 +44,7 @@ namespace TriangulatedTopology
                         else
                         {
                             edges.Add(edge);
-                        }
+                        }                     
                     }
                 }
 
@@ -134,7 +115,7 @@ namespace TriangulatedTopology
             while (queue.Count > 0)
             {
                 var node = queue.Dequeue();
-                Slice(node, initials);
+                SliceSurface(node, initials);
 
                 foreach (var neighbour in node.Neighbours)
                 {
@@ -149,7 +130,7 @@ namespace TriangulatedTopology
             return initials;
         }
 
-        public static void Slice(TopologyNode node, Dictionary<TopologyNode, Vertex> initials)
+        public static void SliceSurface(TopologyNode node, Dictionary<TopologyNode, Vertex> initials)
         {
             var topAdapter = new VertexAdapter(node, node.Neighbours[0]);
             var bottomAdapter = new VertexAdapter(node, node.Neighbours[2]);
@@ -231,27 +212,38 @@ namespace TriangulatedTopology
                     var iland = node.Face.Select(v => v.TextureCoords * size).ToList();
 
                     var initialIndex = node.Face.IndexOf(initial);
-                    var from = node.Face[initialIndex].TextureCoords * size;
+                    var prev = node.Face.GetCircular(initialIndex - 1).TextureCoords * size;
+                    var from = node.Face.GetCircular(initialIndex).TextureCoords * size;
+                    var next = node.Face.GetCircular(initialIndex + 1).TextureCoords * size;
                     var to = node.Face.GetCircular(initialIndex + 2).TextureCoords * size;
-                    var direction = to - from;
-                    var bounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
-                    var axis = new Vector2i(MathF.Sign(direction.X), MathF.Sign(direction.Y));
 
-                    int width = (int)MathHelper.Ceiling(bounds.X / step);
-                    int height = (int)MathHelper.Ceiling(bounds.Y / step);
+                    var direction = to - from;
+                    var altBounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
+
+                    var x_direction = prev - from;
+                    var y_direction = next - from;
+
+                    var x_length = x_direction.Length;
+                    var y_length = y_direction.Length;
+
+                    var x_axis = x_direction.Normalized();
+                    var y_axis = y_direction.Normalized();
+
+                    int width = (int)MathHelper.Ceiling(x_length / step);
+                    int height = (int)MathHelper.Ceiling(y_length / step);
                     var grid = new Cell[width, height];
 
                     for (int x = 0; x < width; x++)
                     {
                         for (int y = 0; y < height; y++)
                         {
-                            float aa_x = step * x * axis.X;
-                            float aa_y = step * y * axis.Y;
-                            float bb_x = (x + 1 < width) ? step * (x + 1) * axis.X : bounds.X * axis.X;
-                            float bb_y = (y + 1 < height) ? step * (y + 1) * axis.Y : bounds.Y * axis.Y;
+                            Vector2 aa_x = step * x * x_axis;
+                            Vector2 aa_y = step * y * y_axis;
+                            Vector2 bb_x = (x + 1 < width) ? step * (x + 1) * x_axis : x_length * x_axis;
+                            Vector2 bb_y = (y + 1 < height) ? step * (y + 1) * y_axis : y_length * y_axis;
 
-                            var aa = from + new Vector2(aa_x, aa_y);
-                            var bb = from + new Vector2(bb_x, bb_y);                            
+                            var aa = from + aa_x + aa_y;
+                            var bb = from + bb_x + bb_y;                            
                             
                             var vertices = new List<Vector2>() 
                             {
@@ -286,23 +278,23 @@ namespace TriangulatedTopology
 
                     int expectedIndex = 1;
                     int actualIndex = node.Face.IndexOf(initial);
-                    int factor = actualIndex - expectedIndex;
 
+                    int factor = actualIndex - expectedIndex;
                     int rotationCount = MathHelper.Abs(factor);
                     var rotationDirection = factor < 0 
-                        ? RotationDirection.Сounterclockwise
-                        : RotationDirection.Clockwise;
+                        ? Orientation.Сounterclockwise
+                        : Orientation.Clockwise;
 
                     switch (rotationDirection)
                     {
-                        case RotationDirection.Clockwise:
+                        case Orientation.Clockwise:
                             for (int i = 0; i < rotationCount; i++)
                             {
                                 grid = grid.RotateMatrixClockwise();
                             }
 
                             break;
-                        case RotationDirection.Сounterclockwise:
+                        case Orientation.Сounterclockwise:
                             for (int i = 0; i < rotationCount; i++)
                             {
                                 grid = grid.RotateMatrixCounterClockwise();
@@ -320,227 +312,282 @@ namespace TriangulatedTopology
 
         public static void ConnectCells(Dictionary<TopologyNode, Cell[,]> grids)
         {
-            foreach (var grid in grids.Values)
+            foreach (var pair in grids)
             {
+                var node = pair.Key;
+                var grid = pair.Value;
+
                 for (int x = 0; x < grid.GetLength(0); x++)
                 {
                     for (int y = 0; y < grid.GetLength(1); y++)
                     {
                         var cell = grid[x, y];
-                        var right = (x + 1 < grid.GetLength(0)) ? grid[x + 1, y] : null;
-                        var bottom = (y + 1 < grid.GetLength(1)) ? grid[x, y + 1] : null;
-                        cell.Right = right;
-                        cell.Bottom = bottom;
-
-                        if (right != null)
+                        var neighbour_3 = (x + 1 < grid.GetLength(0)) ? grid[x + 1, y] : null;
+                        var neighbour_2 = (y + 1 < grid.GetLength(1)) ? grid[x, y + 1] : null;
+                        
+                        if (neighbour_3 != null)
                         {
-                            right.Left = cell;
+                            cell.Neighbours[3] = new NeighbourData(neighbour_3, new RuleEmptyAdapter());
+                            neighbour_3.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter());
                         }                       
 
-                        if (bottom != null)
+                        if (neighbour_2 != null)
                         {
-                            bottom.Top = cell;
+                            cell.Neighbours[2] = new NeighbourData(neighbour_2, new RuleEmptyAdapter());
+                            neighbour_2.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter());
                         }                        
                     }
                 }
 
-                var t = 0;
-            }
+                //var iland_0 = node.Neighbours[0];
 
-            // TODO: use cell adapters for cells (to rotate cells)
+                //if (grids.TryGetValue(iland_0, out var grid_0))
+                //{
+                //    var adapter_0 = new GridAdapter(node, iland_0, grid_0);
+
+                //    for (int x = 0; x < grid.GetLength(0); x++)
+                //    {
+                //        var cell = grid[x, 0];
+                //        var neighbour_0 = adapter_0[x, adapter_0.Height - 1];
+                //        cell.Neighbours[0] = new NeighbourData(neighbour_0, new RuleEmptyAdapter()); // TODO: fix adapter
+                //    }
+                //}
+
+                //var iland_1 = node.Neighbours[1];
+
+                //if (grids.TryGetValue(iland_1, out var grid_1))
+                //{
+                //    var adapter_1 = new GridAdapter(node, iland_1, grid_1);
+
+                //    for (int y = 0; y < grid.GetLength(1); y++)
+                //    {
+                //        var cell = grid[0, y];
+                //        var neighbour_1 = adapter_1[adapter_1.Width - 1, y];
+                //        cell.Neighbours[1] = new NeighbourData(neighbour_1, new RuleEmptyAdapter()); // TODO: fix adapter
+                //    }
+                //}
+
+                //var iland_2 = node.Neighbours[2];
+
+                //if (grids.TryGetValue(iland_2, out var grid_2))
+                //{
+                //    var adapter_2 = new GridAdapter(node, iland_2, grid_2);
+
+                //    for (int x = 0; x < grid.GetLength(0); x++)
+                //    {
+                //        var cell = grid[x, grid.GetLength(1) - 1];
+                //        var neighbour_2 = adapter_2[x, 0];
+                //        cell.Neighbours[2] = new NeighbourData(neighbour_2, new RuleEmptyAdapter()); // TODO: fix adapter
+                //    }
+                //}
+
+                //var iland_3 = node.Neighbours[3];
+
+                //if (grids.TryGetValue(iland_3, out var grid_3))
+                //{
+                //    var adapter_3 = new GridAdapter(node, iland_3, grid_3);
+
+                //    for (int y = 0; y < grid.GetLength(1); y++)
+                //    {
+                //        var cell = grid[grid.GetLength(0) - 1, y];
+                //        var neighbour_3 = adapter_3[0, y];
+                //        cell.Neighbours[3] = new NeighbourData(neighbour_3, new RuleEmptyAdapter()); // TODO: fix adapter
+                //    }
+                //}
+            }
         }
 
-        public static GameObject CreatePoliesVisualization(Engine engine, Topology topology)
+        public static void Wfc(Dictionary<TopologyNode, Cell[,]> grids, List<Rule> rules)
         {
-            var go = engine.CreateGameObject();
-
-            foreach (var node in topology)
+            foreach (var pair in grids)
             {
-                var polyGo = engine.CreateGameObject();
+                var grid = pair.Value;
+                var defaultRule = rules[33];
+                var forRecalculation = new List<Vector2i>();
 
-                foreach (var edge in node.Face.EnumerateEdges())
+                if (grid.GetLength(0) <= 2 || grid.GetLength(1) <= 2)
                 {
-                    var edgeGo = engine.Line(edge.A.Position, edge.B.Position, Colors.Green);
-                    polyGo.AddChild(edgeGo);
-                }
-
-                go.AddChild(polyGo);
-            }
-
-            return go;
-        }
-
-        public static byte[] CreateDebugTexture(
-            Topology topology,
-            Dictionary<TopologyNode, Vertex> initials,
-            Dictionary<TopologyNode, Cell[,]> grids, 
-            int size, 
-            int step)
-        {
-            var texture = new byte[size * size * 4];
-
-            foreach (var node in topology)
-            {
-                var from = node.Face[0].TextureCoords * size;
-                var to = node.Face.GetCircular(2).TextureCoords * size;
-                var direction = to - from;
-                var bounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
-                var axis = new Vector2i(Math.Sign(direction.X), Math.Sign(direction.Y));
-
-                for (int x = 0; x < bounds.X; x++)
-                {
-                    for (int y = 0; y < bounds.Y; y++)
-                    {
-                        var position = from + new Vector2(x * axis.X, y * axis.Y);
-                        texture.SetColor(size, (int)position.X, (int)position.Y, Color.Purple);
-                    }
-                }
-
-                if (grids.TryGetValue(node, out var grid))
-                {
-
-                    for (int x = 0; x < bounds.X; x++)
-                    {
-                        for (int y = 0; y < bounds.Y; y++)
-                        {
-                            var position = from + new Vector2(x * axis.X, y * axis.Y);
-                            texture.SetColor(size, (int)position.X, (int)position.Y, Color.White);
-                        }
-                    }
-
-                    var ilandBottomDirection = node.Face[2].TextureCoords - node.Face[1].TextureCoords;
-                    var ilandBottomBound = (ilandBottomDirection * size).Length;
-                    ilandBottomDirection.Normalize();
-
-                    var ilandLeftDirection = node.Face[1].TextureCoords - node.Face[0].TextureCoords;
-                    var rightBound = step / 8;
-                    ilandLeftDirection.Normalize();
-
-                    for (int x = 0; x < rightBound; x++)
-                    {
-                        for (int y = 0; y < ilandBottomBound; y++)
-                        {
-                            var position = from + x * ilandLeftDirection + y * ilandBottomDirection;
-                            texture.SetColor(size, (int)position.X, (int)position.Y, Color.Red);
-                        }
-                    }
-
                     foreach (var cell in grid.Enumerate())
                     {
-                        var cellBottomDirection = cell[3] - cell[0];
-                        var cellBottomBound = cellBottomDirection.Length;
-                        cellBottomDirection.Normalize();
+                        cell.Rules.Clear();
+                        cell.Rules.Add(defaultRule);
+                    }
 
-                        var cellRightDirection = cell[0] - cell[1];
-                        var cellLeftBound = step / 8;
-                        cellRightDirection.Normalize();
+                    continue;
+                }
 
-                        for (int x = 0; x < cellLeftBound; x++)
+                foreach (var ceil in grid.Enumerate())
+                {
+                    ceil.Rules.Clear();
+                    ceil.Rules.AddRange(rules);
+                }
+
+                // Tob and bottom borders
+                for (int x = 1; x < grid.GetLength(0) - 1; x++)
+                {
+                    grid[x, 0].Rules.Clear();
+                    grid[x, 0].Rules.Add(defaultRule);
+                    forRecalculation.Add(new Vector2i(x, 1));
+
+                    grid[x, grid.GetLength(1) - 1].Rules.Clear();
+                    grid[x, grid.GetLength(1) - 1].Rules.Add(defaultRule);
+                    forRecalculation.Add(new Vector2i(x, grid.GetLength(1) - 2));
+                }
+
+                // Left and right borders
+                for (int y = 1; y < grid.GetLength(1) - 1; y++)
+                {
+                    grid[0, y].Rules.Clear();
+                    grid[0, y].Rules.Add(defaultRule);
+                    forRecalculation.Add(new Vector2i(1, y));
+
+                    grid[grid.GetLength(0) - 1, y].Rules.Clear();
+                    grid[grid.GetLength(0) - 1, y].Rules.Add(defaultRule);
+                    forRecalculation.Add(new Vector2i(grid.GetLength(0) - 2, y));
+                }
+
+                // Corners
+                grid[0, 0].Rules.Clear();
+                grid[0, 0].Rules.Add(defaultRule);
+
+                grid[0, grid.GetLength(1) - 1].Rules.Clear();
+                grid[0, grid.GetLength(1) - 1].Rules.Add(defaultRule);
+
+                grid[grid.GetLength(0) - 1, 0].Rules.Clear();
+                grid[grid.GetLength(0) - 1, 0].Rules.Add(defaultRule);
+
+                grid[grid.GetLength(0) - 1, grid.GetLength(1) - 1].Rules.Clear();
+                grid[grid.GetLength(0) - 1, grid.GetLength(1) - 1].Rules.Add(defaultRule);
+
+                while (true)
+                {
+                    while (forRecalculation.Count > 0)
+                    {
+                        var coords = forRecalculation[0];
+                        forRecalculation.Remove(coords);
+                        var cell = grid[coords.X, coords.Y];
+                        var filtered = FilterPossible(grid, coords);
+
+                        if (filtered.Count == 0)
                         {
-                            for (int y = 0; y < cellBottomBound; y++)
+                            cell.Rules.Clear();
+                            cell.Rules.AddRange(rules);
+
+                            foreach (var neighbourCoords in GetNeighboursCoords(grid, coords, 1))
                             {
-                                var position = cell[1] + x * cellRightDirection + y * cellBottomDirection;
-                                texture.SetColor(size, (int)position.X, (int)position.Y, Color.Green);
+                                var neighbour = grid[neighbourCoords.X, neighbourCoords.Y];
+                                neighbour.Rules.Clear();
+                                neighbour.Rules.AddRange(rules);
+                            }
+
+                            continue;
+                        }
+
+                        if (cell.Rules.Count > filtered.Count)
+                        {
+                            forRecalculation.AddRange(GetNeighboursCoords(grid, coords, 1));
+                            cell.Rules.Clear();
+                            cell.Rules.AddRange(filtered);
+                        }
+                    }
+
+                    var maxCellCoord = new Vector2i(1, 1);
+                    var maxCell = grid[maxCellCoord.X, maxCellCoord.Y];
+
+                    for (int x = 1; x < grid.GetLength(0) - 1; x++)
+                    {
+                        for (int y = 1; y < grid.GetLength(1) - 1; y++)
+                        {
+                            var cell = grid[x, y];
+
+                            if (cell.Rules.Count > maxCell.Rules.Count)
+                            {
+                                maxCellCoord = new Vector2i(x, y);
+                                maxCell = cell;
                             }
                         }
                     }
 
-                    var initialIndex = node.Face.IndexOf(initials[node]);
-                    from = node.Face[initialIndex].TextureCoords * size;
-                    to = node.Face.GetCircular(initialIndex + 2).TextureCoords * size;
-                    direction = to - from;
-                    bounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
-                    axis = new Vector2i(Math.Sign(direction.X), Math.Sign(direction.Y));
-
-                    for (int x = 0; x < bounds.X; x += step)
+                    if (maxCell.Rules.Count <= 1)
                     {
-                        for (int y = 0; y < bounds.Y; y++)
-                        {
-                            var position = from + new Vector2(x * axis.X, y * axis.Y);
-                            texture.SetColor(size, (int)position.X, (int)position.Y, Color.Black);
-                        }
+                        break;
                     }
 
-                    for (int x = 0; x < bounds.X; x++)
-                    {
-                        for (int y = 0; y < bounds.Y; y += step)
-                        {
-                            var position = from + new Vector2(x * axis.X, y * axis.Y);
-                            texture.SetColor(size, (int)position.X, (int)position.Y, Color.Black);
-                        }
-                    }
-                }                
+                    var rule = maxCell.Rules.GetRandom();
+                    maxCell.Rules.Clear();
+                    maxCell.Rules.Add(rule);
+                    forRecalculation.AddRange(GetNeighboursCoords(grid, maxCellCoord, 1));
+                }
             }
-
-            return texture;
         }
 
-        public static byte[] CreateTexture(Topology topology, Dictionary<TopologyNode, Vertex> initials, int size, int step)
+        private static IEnumerable<Vector2i> GetNeighboursCoords<T>(T[,] matrix, Vector2i coords, int padding = 0)
         {
-            var texture = new byte[size * size * 4];
-
-            foreach (var node in topology)
+            if (coords.Y > padding)
             {
-                if (initials.TryGetValue(node, out var initial))
+                yield return new Vector2i(coords.X, coords.Y - 1);
+            }
+            if (coords.X > padding)
+            {
+                yield return new Vector2i(coords.X - 1, coords.Y);
+            }
+            if (coords.Y + 1 < matrix.GetLength(1) - padding)
+            {
+                yield return new Vector2i(coords.X, coords.Y + 1);
+            }
+            if (coords.X + 1 < matrix.GetLength(0) - padding)
+            {
+                yield return new Vector2i(coords.X + 1, coords.Y);
+            }
+        }
+
+        public static List<Rule> FilterPossible(Cell[,] grid, Vector2i coords)
+        {
+            var cell = grid[coords.X, coords.Y];
+            var neighboursCoords = GetNeighboursCoords(grid, coords).ToList();
+            return cell.Rules.Where(r => IsPossible(grid, r, neighboursCoords)).ToList();
+        }           
+
+        public static bool IsPossible(Cell[,] grid, Rule rule, List<Vector2i> neighboursCoords)
+        {
+            for (int neighbourIndex = 0; neighbourIndex < neighboursCoords.Count; neighbourIndex++)
+            {
+                var coords = neighboursCoords[neighbourIndex];                
+                var neighbour = grid[coords.X, coords.Y];
+                var rules = neighbour.Rules;
+                var nodeIndex = (neighbourIndex + 2) % 4;
+
+                if (rules.All(r => !IsSame(r[nodeIndex], rule[neighbourIndex])))
                 {
-                    var initialIndex = node.Face.IndexOf(initial);
-                    var from = node.Face[initialIndex].TextureCoords * size;
-                    var to = node.Face.GetCircular(initialIndex + 2).TextureCoords * size;
-                    var direction = to - from;
-                    var bounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
-                    var axis = new Vector2i(Math.Sign(direction.X), Math.Sign(direction.Y));
-
-                    for (int x = 0; x < bounds.X; x++)
-                    {
-                        for (int y = 0; y < bounds.Y; y++)
-                        {
-                            var position = from + new Vector2(x * axis.X, y * axis.Y);
-                            texture.SetColor(size, (int)position.X, (int)position.Y, Color.White);
-                        }
-                    }
-
-                    for (int x = 0; x < bounds.X; x += step)
-                    {
-                        for (int y = 0; y < bounds.Y; y++)
-                        {
-                            var position = from + new Vector2(x * axis.X, y * axis.Y);
-                            texture.SetColor(size, (int)position.X, (int)position.Y, Color.Black);
-                        }
-                    }
-
-                    for (int x = 0; x < bounds.X; x++)
-                    {
-                        for (int y = 0; y < bounds.Y; y += step)
-                        {
-                            var position = from + new Vector2(x * axis.X, y * axis.Y);
-                            texture.SetColor(size, (int)position.X, (int)position.Y, Color.Black);
-                        }
-                    }
-                }
-                else
-                {
-                    var from = node.Face[0].TextureCoords * size;
-                    var to = node.Face[2].TextureCoords * size;
-                    var direction = to - from;
-                    var bounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
-                    var axis = new Vector2i(Math.Sign(direction.X), Math.Sign(direction.Y));
-
-                    for (int x = 0; x < bounds.X; x++)
-                    {
-                        for (int y = 0; y < bounds.Y; y++)
-                        {
-                            var position = from + new Vector2(x * axis.X, y * axis.Y);
-                            texture.SetColor(size, (int)position.X, (int)position.Y, Color.Red);
-                        }
-                    }
+                    return false;
                 }
             }
 
-            return texture;
+            return true;
+        }
+
+        public static bool IsSame(Color[] lhs, Color[] rhs)
+        {
+            if (lhs.Length != rhs.Length)
+            {
+                throw new ArgumentException();
+            }
+
+            for (int i = 0; i < lhs.Length; i++)
+            {
+                if (!lhs[i].IsSame(rhs[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public static void Main(string[] args)
         {
+            CollectionsHelper.UseSeed(96350589);
+
             using var engine = new Engine();
 
             var operatorGo = engine.CreateGameObject();
@@ -549,10 +596,7 @@ namespace TriangulatedTopology
             operatorGo.Position = new Vector3(0, 0, 0);
 
             var model = Model.Load("Content/Room.obj");
-
-            //var roomGo = engine.CreateGameObject();
-            //var roomRenderer = roomGo.Add<MaterialRenderComponent>();
-            //roomRenderer.Model = model;
+            //var model = Model.Load("Content/Cube.obj");
 
             int size = 2048;
             int step = 40;
@@ -563,21 +607,40 @@ namespace TriangulatedTopology
             var retopology = new Topology(cleanPolies);
             var initials = SliceSurfaces(retopology);
             var grids = BuildCells(retopology, initials, size, step);
-            ConnectCells(grids);
+            //ConnectCells(grids);
 
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
-            roomRenderer.Model = model;
-            //roomRenderer.Texture = Texture.LoadFromMemory(CreateTexture(retopology, initials, size, step), size, size);
-            var texture = CreateDebugTexture(retopology, initials, grids, size, step);
-            roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
+            roomRenderer.Model = model;   
             roomGo.Position = 5 * Vector3.UnitY;
 
+            //var texture = TextureCreator.CreateGridTexture(retopology, initials, size, step);
+            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
+            //var bmp = TextureHelper.TextureToBitmap(texture, size);
+            //bmp.Save("Test.bmp");
+
+            //var texture = TextureCreator.CreateDebugGridTexture(retopology, initials, grids, size, step);
+            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
+            //var bmp = TextureHelper.TextureToBitmap(texture, size);
+            //bmp.Save("Test.bmp");
+
+            //var texture = TextureCreator.CreateDebugCellTexture(grids, initials, size, step);
+            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
+            //var bmp = TextureHelper.TextureToBitmap(texture, size);
+            //bmp.Save("Test.bmp");
+
+            var rules = RulesLoader.CreateRules(
+                "Content/WallLogical.png",
+                "Content/WallLogical.png",
+                LogicalResolution,
+                LogicalResolution);
+
+            Wfc(grids, rules);
+
+            var texture = TextureCreator.CreateLogicalTexture(grids, initials, size, step);
+            roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
             var bmp = TextureHelper.TextureToBitmap(texture, size);
             bmp.Save("Test.bmp");
-
-            //var visualization = CreatePoliesVisualization(engine, retopology);
-            //visualization.Position = 5 * Vector3.UnitY;
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);
