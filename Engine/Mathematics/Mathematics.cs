@@ -1,13 +1,45 @@
 ﻿using GameEngine.Graphics;
 using GameEngine.Helpers;
 using OpenTK.Mathematics;
-using System.Collections.Generic;
 
 namespace GameEngine.Mathematics
 {
     public static class Mathematics
     {
         // NOTE: I use words "points" and "polygon" as synonyms.
+
+        public static int GetDecimalPlaces(float n)
+        {
+            n = Math.Abs(n);
+            n -= (int)n;
+            int decimalPlaces = 0;
+
+            while (n > 0)
+            {
+                decimalPlaces++;
+                n *= 10;
+                n -= (int)n;
+            }
+
+            return decimalPlaces;
+        }
+
+        public static int Euclid(int a, int b)
+        {
+            while (a != 0 && b != 0)
+            {
+                if (a > b)
+                {
+                    a %= b;
+                }
+                else
+                {
+                    b %= a;
+                }
+            }
+
+            return a + b;
+        }
 
         public static float Map(float x, float inMin, float inMax, float outMin, float outMax)
         {

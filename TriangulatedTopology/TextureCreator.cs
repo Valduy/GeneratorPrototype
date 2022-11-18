@@ -39,6 +39,17 @@ namespace TriangulatedTopology
             }
         }
 
+        public static void DrawLine(byte[] texture, int size, Vector2 from, Vector2 to, Color color)
+        {          
+            var step = to - from;
+            step.Normalize();
+
+            for (var temp = from; (to - temp).Length > 1.0f ; temp += step)
+            {
+                texture.SetColor(size, (int)temp.X, (int)temp.Y, color);
+            }
+        }
+
         public static void DrawGrid(byte[] texture, TopologyNode node, Vertex initial, int size, int step)
         {
             var initialIndex = node.Face.IndexOf(initial);
@@ -216,6 +227,129 @@ namespace TriangulatedTopology
                 }
 
                 DrawGrid(texture, node, initials[node], size, step);
+            }
+
+            return texture;
+        }
+
+        public static byte[] CreateDebugStitchesTexture(
+            Dictionary<TopologyNode, Cell[,]> grids,
+            Dictionary<TopologyNode, Vertex> initials,
+            int size,
+            int step)
+        {
+            var texture = new byte[size * size * 4];
+            var cellToColor = new Dictionary<Cell, Color>();
+            var cellToSetter = new Dictionary<Cell, Cell>();
+            var pallete = new Color[]
+            {
+                Color.Blue,
+                Color.Purple,
+                Color.Magenta,
+                Color.Coral,
+                Color.Red,
+                Color.Orange,
+                Color.Yellow,
+                Color.Lime,
+                Color.Green,
+                Color.Aqua,
+                Color.Cyan,
+            };
+
+            FillWithColor(texture, size, Color.White);
+            
+            foreach (var pair in grids)
+            {
+                var node = pair.Key;
+                var grid = pair.Value;
+
+                DrawGrid(texture, node, initials[node], size, step);
+
+                if (grids.ContainsKey(node.Neighbours[0]))
+                {
+                    for (int x = grid.GetLength(0) - 1; x >= 0; x--)
+                    {
+                        var cell = grid[x, 0];
+
+                        if (!cellToColor.TryGetValue(cell, out var color))
+                        {
+                            color = pallete.GetRandom();
+                            cellToColor[cell] = color;
+
+                            var link = cell.Neighbours[0];
+                            cellToColor[link!.Neighbour] = color;
+
+                            cellToSetter[link!.Neighbour] = cell;
+                        }
+
+                        var from = cell.Aggregate((a, b) => a + b) / cell.Count;
+                        var to = (cell[0] + cell[1]) / 2;
+                        DrawLine(texture, size, from, to, color);
+                    }
+                }
+
+                if (grids.ContainsKey(node.Neighbours[1]))
+                {
+                    for (int y = 0; y < grid.GetLength(1); y++)
+                    {
+                        var cell = grid[0, y];
+
+                        if (!cellToColor.TryGetValue(cell, out var color))
+                        {
+                            color = pallete.GetRandom();
+                            cellToColor[cell] = color;
+
+                            var link = cell.Neighbours[1];
+                            cellToColor[link!.Neighbour] = color;
+                        }
+
+                        var from = cell.Aggregate((a, b) => a + b) / cell.Count;
+                        var to = (cell[1] + cell[2]) / 2;
+                        DrawLine(texture, size, from, to, color);
+                    }
+                }
+
+                if (grids.ContainsKey(node.Neighbours[2]))
+                {
+                    for (int x = 0; x < grid.GetLength(0); x++)
+                    {
+                        var cell = grid[x, grid.GetLength(1) - 1];
+
+                        if (!cellToColor.TryGetValue(cell, out var color))
+                        {
+                            color = pallete.GetRandom();
+                            cellToColor[cell] = color;
+
+                            var link = cell.Neighbours[2];
+                            cellToColor[link!.Neighbour] = color;
+                        }
+
+                        var from = cell.Aggregate((a, b) => a + b) / cell.Count;
+                        var to = (cell[2] + cell[3]) / 2;
+                        DrawLine(texture, size, from, to, color);
+                    }
+                }
+
+                if (grids.ContainsKey(node.Neighbours[3]))
+                {
+                    for (int y = grid.GetLength(1) - 1; y >= 0; y--)
+                    {
+                        var cell = grid[grid.GetLength(0) - 1, y];
+
+                        if (!cellToColor.TryGetValue(cell, out var color))
+                        {
+                            color = pallete.GetRandom();
+                            cellToColor[cell] = color;
+
+                            var link = cell.Neighbours[3];
+                            cellToColor[link!.Neighbour] = color;
+                        }
+
+                        var from = cell.Aggregate((a, b) => a + b) / cell.Count;
+                        var to = (cell[3] + cell[0]) / 2;
+                        DrawLine(texture, size, from, to, color);
+                    }
+                }
             }
 
             return texture;

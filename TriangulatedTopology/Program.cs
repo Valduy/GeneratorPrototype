@@ -19,8 +19,6 @@ namespace TriangulatedTopology
         public const int LogicalResolution = 4;
         public const int DetailedResolution = 20;
 
-        public const float SideSize = 1.0f;
-
         public static List<Face> ExtractPolies(Topology topology)
         {
             var groups = topology.ExtractFacesGroups((reference, node)
@@ -104,6 +102,31 @@ namespace TriangulatedTopology
 
             return cleanPoly;
         }
+
+        //public static float GetTileSize(Topology topology, float size)
+        //{
+        //    var lengths = new List<int>();
+            
+        //    foreach (var node in topology)
+        //    {
+        //        foreach (var edge in node.Face.EnumerateEdges())
+        //        {
+        //            var difference = edge.B.TextureCoords - edge.A.TextureCoords;
+        //            var length = (int)(difference.Length * size);
+        //            lengths.Add(length);
+        //        }
+        //    }
+
+        //    for (int i = 1; i < lengths.Count; i++)
+        //    {
+        //        var a = lengths[i - 1];
+        //        var b = lengths[i - 0];
+        //        var gcd = Mathematics.Euclid(a, b);
+        //        lengths[i] = gcd;
+        //    }
+
+        //    return lengths.Last();
+        //}
 
         public static Dictionary<TopologyNode, Vertex> SliceSurfaces(Topology topology)
         {
@@ -310,90 +333,148 @@ namespace TriangulatedTopology
             return grids;
         }
 
-        public static void ConnectCells(Dictionary<TopologyNode, Cell[,]> grids)
+        public static void ConnectCells(Dictionary<TopologyNode, Cell[,]> grids, int size)
         {
             foreach (var pair in grids)
             {
                 var node = pair.Key;
                 var grid = pair.Value;
 
-                for (int x = 0; x < grid.GetLength(0); x++)
+                for (int x = 0; x < grid.GetLength(0) - 1; x++)
                 {
-                    for (int y = 0; y < grid.GetLength(1); y++)
+                    for (int y = 0; y < grid.GetLength(1) - 1; y++)
                     {
                         var cell = grid[x, y];
-                        var neighbour_3 = (x + 1 < grid.GetLength(0)) ? grid[x + 1, y] : null;
-                        var neighbour_2 = (y + 1 < grid.GetLength(1)) ? grid[x, y + 1] : null;
-                        
-                        if (neighbour_3 != null)
-                        {
-                            cell.Neighbours[3] = new NeighbourData(neighbour_3, new RuleEmptyAdapter());
-                            neighbour_3.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter());
-                        }                       
+                        var right = grid[x + 1, y];
+                        var bottom = grid[x, y + 1];
 
-                        if (neighbour_2 != null)
-                        {
-                            cell.Neighbours[2] = new NeighbourData(neighbour_2, new RuleEmptyAdapter());
-                            neighbour_2.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter());
-                        }                        
+                        cell.Neighbours[3] = new NeighbourData(right, new RuleEmptyAdapter());
+                        right.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter());
+
+                        cell.Neighbours[2] = new NeighbourData(bottom, new RuleEmptyAdapter());
+                        bottom.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter());
                     }
                 }
 
-                //var iland_0 = node.Neighbours[0];
+                for (int x = 0; x < grid.GetLength(0) - 1; x++)
+                {
+                    int y = grid.GetLength(1) - 1;
+                    var cell = grid[x, y];
+                    var right = grid[x + 1, y];
 
-                //if (grids.TryGetValue(iland_0, out var grid_0))
-                //{
-                //    var adapter_0 = new GridAdapter(node, iland_0, grid_0);
+                    cell.Neighbours[3] = new NeighbourData(right, new RuleEmptyAdapter());
+                    right.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter());
+                }
 
-                //    for (int x = 0; x < grid.GetLength(0); x++)
-                //    {
-                //        var cell = grid[x, 0];
-                //        var neighbour_0 = adapter_0[x, adapter_0.Height - 1];
-                //        cell.Neighbours[0] = new NeighbourData(neighbour_0, new RuleEmptyAdapter()); // TODO: fix adapter
-                //    }
-                //}
+                for (int y = 0; y < grid.GetLength(1) - 1; y++)
+                {
+                    int x = grid.GetLength(0) - 1;
+                    var cell = grid[x, y];
+                    var bottom = grid[x, y + 1];
 
-                //var iland_1 = node.Neighbours[1];
+                    cell.Neighbours[2] = new NeighbourData(bottom, new RuleEmptyAdapter());
+                    bottom.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter());
+                }
 
-                //if (grids.TryGetValue(iland_1, out var grid_1))
-                //{
-                //    var adapter_1 = new GridAdapter(node, iland_1, grid_1);
+                for (int i = 0; i < node.Neighbours.Count; i++)
+                {
+                    var neighbour = node.Neighbours[i];
 
-                //    for (int y = 0; y < grid.GetLength(1); y++)
-                //    {
-                //        var cell = grid[0, y];
-                //        var neighbour_1 = adapter_1[adapter_1.Width - 1, y];
-                //        cell.Neighbours[1] = new NeighbourData(neighbour_1, new RuleEmptyAdapter()); // TODO: fix adapter
-                //    }
-                //}
+                    if (grids.TryGetValue(neighbour, out var neighbourGrid))
+                    {
+                        var neighbourSharedEdge = neighbour.Face.GetSharedEdge(node.Face);
+                        var gridSharedEdge = node.Face.GetSharedEdge(neighbour.Face);
 
-                //var iland_2 = node.Neighbours[2];
+                        var fromTextureCoords = GetTextureCoords(neighbourSharedEdge, gridSharedEdge.A.Position);
+                        var toTextureCoords = GetTextureCoords(neighbourSharedEdge, gridSharedEdge.B.Position);
 
-                //if (grids.TryGetValue(iland_2, out var grid_2))
-                //{
-                //    var adapter_2 = new GridAdapter(node, iland_2, grid_2);
+                        var from = GetCornerByUV(neighbourGrid, fromTextureCoords * size);
+                        var to = GetCornerByUV(neighbourGrid, toTextureCoords * size);
+                        var temp = from;
 
-                //    for (int x = 0; x < grid.GetLength(0); x++)
-                //    {
-                //        var cell = grid[x, grid.GetLength(1) - 1];
-                //        var neighbour_2 = adapter_2[x, 0];
-                //        cell.Neighbours[2] = new NeighbourData(neighbour_2, new RuleEmptyAdapter()); // TODO: fix adapter
-                //    }
-                //}
+                        var step = to - from;
+                        step.X = MathHelper.Sign(step.X);
+                        step.Y = MathHelper.Sign(step.Y);
 
-                //var iland_3 = node.Neighbours[3];
+                        foreach (var cell in EnumerateGridSide(grid, i))
+                        {
+                            var link = neighbourGrid[temp.X, temp.Y];
+                            cell.Neighbours[i] = new NeighbourData(link, new RuleEmptyAdapter());
+                            temp += step;
+                        }
+                    }
+                }
+            }
+        }
 
-                //if (grids.TryGetValue(iland_3, out var grid_3))
-                //{
-                //    var adapter_3 = new GridAdapter(node, iland_3, grid_3);
+        public static Vector2 GetTextureCoords(Edge edge, Vector3 position)
+        {
+            if (edge.A.Position == position)
+            {
+                return edge.A.TextureCoords;
+            }
+            if (edge.B.Position == position) 
+            {
+                return edge.B.TextureCoords;
+            }
 
-                //    for (int y = 0; y < grid.GetLength(1); y++)
-                //    {
-                //        var cell = grid[grid.GetLength(0) - 1, y];
-                //        var neighbour_3 = adapter_3[0, y];
-                //        cell.Neighbours[3] = new NeighbourData(neighbour_3, new RuleEmptyAdapter()); // TODO: fix adapter
-                //    }
-                //}
+            throw new ArgumentException($"Edge is not contain vertex with position {position}.");
+        }
+
+        public static Vector2i GetCornerByUV(Cell[,] grid, Vector2 uv)
+        {
+            float epsilon = 0.1f;
+
+            if (grid[0, 0].Any(p => (uv - p).Length < epsilon))
+            {
+                return new Vector2i(0, 0);
+            }
+            if (grid[grid.GetLength(0) - 1, 0].Any(p => (uv - p).Length < epsilon))
+            {
+                return new Vector2i(grid.GetLength(0) - 1, 0);
+            }
+            if (grid[grid.GetLength(0) - 1, grid.GetLength(1) - 1].Any(p => (uv - p).Length < epsilon))
+            {
+                return new Vector2i(grid.GetLength(0) - 1, grid.GetLength(1) - 1);
+            }
+            if (grid[0, grid.GetLength(1) - 1].Any(p => (uv - p).Length < epsilon))
+            {
+                return new Vector2i(0, grid.GetLength(1) - 1);
+            }
+
+            throw new ArgumentException($"There is no corner with uv {uv}.");
+        }
+
+        public static IEnumerable<Cell> EnumerateGridSide(Cell[,] grid, int side)
+        {
+            switch (side)
+            {
+                case 0:
+                    for (int x = grid.GetLength(0) - 1; x >= 0; x--)
+                    {
+                        yield return grid[x, 0];
+                    }
+                    break;
+                case 1:
+                    for (int y = 0; y < grid.GetLength(1); y++)
+                    {
+                        yield return grid[0, y];
+                    }
+                    break;
+                case 2:
+                    for (int x = 0; x < grid.GetLength(0); x++)
+                    {
+                        yield return grid[x, grid.GetLength(1) - 1];
+                    }
+                    break;
+                case 3:
+                    for (int y = grid.GetLength(1) - 1; y >= 0; y--)
+                    {
+                        yield return grid[grid.GetLength(0) - 1, y];
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(side));
             }
         }
 
@@ -586,7 +667,7 @@ namespace TriangulatedTopology
 
         public static void Main(string[] args)
         {
-            CollectionsHelper.UseSeed(96350589);
+            //CollectionsHelper.UseSeed(96350589);
 
             using var engine = new Engine();
 
@@ -607,7 +688,7 @@ namespace TriangulatedTopology
             var retopology = new Topology(cleanPolies);
             var initials = SliceSurfaces(retopology);
             var grids = BuildCells(retopology, initials, size, step);
-            //ConnectCells(grids);
+            ConnectCells(grids, size);
 
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
@@ -629,18 +710,23 @@ namespace TriangulatedTopology
             //var bmp = TextureHelper.TextureToBitmap(texture, size);
             //bmp.Save("Test.bmp");
 
-            var rules = RulesLoader.CreateRules(
-                "Content/WallLogical.png",
-                "Content/WallLogical.png",
-                LogicalResolution,
-                LogicalResolution);
-
-            Wfc(grids, rules);
-
-            var texture = TextureCreator.CreateLogicalTexture(grids, initials, size, step);
+            var texture = TextureCreator.CreateDebugStitchesTexture(grids, initials, size, step);
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
             var bmp = TextureHelper.TextureToBitmap(texture, size);
             bmp.Save("Test.bmp");
+
+            //var rules = RulesLoader.CreateRules(
+            //    "Content/WallLogical.png",
+            //    "Content/WallLogical.png",
+            //    LogicalResolution,
+            //    LogicalResolution);
+
+            //Wfc(grids, rules);
+
+            //var texture = TextureCreator.CreateLogicalTexture(grids, initials, size, step);
+            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
+            //var bmp = TextureHelper.TextureToBitmap(texture, size);
+            //bmp.Save("Test.bmp");
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);

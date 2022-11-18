@@ -3,6 +3,7 @@ using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
+using GameEngine.Mathematics;
 using GameEngine.Utils;
 using MeshTopology;
 using OpenTK.Mathematics;
@@ -37,28 +38,12 @@ namespace PatternDemo
 
             foreach (Vertex v in mesh.Vertices)
             {
-                degree = Math.Max(degree, GetDecimalPlaces(v.TextureCoords.X));
-                degree = Math.Max(degree, GetDecimalPlaces(v.TextureCoords.Y));
+                degree = Math.Max(degree, Mathematics.GetDecimalPlaces(v.TextureCoords.X));
+                degree = Math.Max(degree, Mathematics.GetDecimalPlaces(v.TextureCoords.Y));
             }
 
             //return (int)Math.Pow(10, degree);
             return 2048;
-        }
-
-        public static int GetDecimalPlaces(float n)
-        {
-            n = Math.Abs(n); 
-            n -= (int)n;     
-            int decimalPlaces = 0;
-
-            while (n > 0)
-            {
-                decimalPlaces++;
-                n *= 10;
-                n -= (int)n;
-            }
-
-            return decimalPlaces;
         }
 
         public static Dictionary<TopologyNode, Rule> Wfc(

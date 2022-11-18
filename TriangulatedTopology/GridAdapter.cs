@@ -7,6 +7,7 @@ namespace TriangulatedTopology
 {
     public class GridAdapter
     {
+        private bool _transpose;
         private int _expected;
         private int _actual;
 
@@ -18,11 +19,11 @@ namespace TriangulatedTopology
         public readonly TopologyNode Pivot;
         public readonly TopologyNode Neighbour;
 
-        public int Width => _factor % 2 == 0
+        public int Width => _factor % 2 == 0 && !_transpose
             ? _grid.GetLength(0)
             : _grid.GetLength(1);
 
-        public int Height => _factor % 2 == 0
+        public int Height => _factor % 2 == 0 && !_transpose
             ? _grid.GetLength(1)
             : _grid.GetLength(0);
 
@@ -31,6 +32,14 @@ namespace TriangulatedTopology
             get
             {
                 var accessor = _original + new Vector2i(x, y) * _axis;
+
+                if (_transpose)
+                {
+                    var temp = accessor.X;
+                    accessor.X = accessor.Y;
+                    accessor.Y = temp;
+                }
+
                 return _grid[accessor.X, accessor.Y];
             }
         }
@@ -50,8 +59,16 @@ namespace TriangulatedTopology
             _axis = Vector2i.One;
 
             var pivotNeighbourIndex = pivot.Neighbours.IndexOf(neighbour);
-            var sharedEdge = pivot.Face.GetSharedEdge(neighbour.Face);
-            var neighbourSharedEdgeIndex = neighbour.Face.GetEdgeIndex(e => e.HasSamePositions(sharedEdge));
+            var pivotSharedEdge = pivot.Face.GetSharedEdge(neighbour.Face);
+            var neighbourSharedEdge = neighbour.Face.GetSharedEdge(pivot.Face);
+
+            // This case mean orienation mismatch.
+            // this.A.Position == other.B.Position && this.B.Position == other.A.Position expected.
+            _transpose = 
+                pivotSharedEdge.A.Position != neighbourSharedEdge.B.Position || 
+                pivotSharedEdge.B.Position != neighbourSharedEdge.A.Position; 
+
+            var neighbourSharedEdgeIndex = neighbour.Face.GetEdgeIndex(e => e.HasSamePositions(pivotSharedEdge));
             var expectedSharedEdgeIndex = GetExpectedSharedEdgeIndex(pivotNeighbourIndex);
 
             var originals = new List<Vector2i> 
