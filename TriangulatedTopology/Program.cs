@@ -523,7 +523,7 @@ namespace TriangulatedTopology
 
                 if (grids.ContainsKey(node.Neighbours[0]))
                 {
-                    for (int x = grid.GetLength(0) - 1; x >= 0; x--)
+                    for (int x = 0; x < grid.GetLength(0); x++)
                     {
                         var cell = grid[x, 0];
                         var cellRule = cell.Rules[0];
@@ -553,7 +553,7 @@ namespace TriangulatedTopology
 
                 if (grids.ContainsKey(node.Neighbours[1]))
                 {
-                    for (int y = 0; y < grid.GetLength(1) - 1; y++)
+                    for (int y = 0; y < grid.GetLength(1); y++)
                     {
                         var cell = grid[0, y];
                         var cellRule = cell.Rules[0];
@@ -583,7 +583,7 @@ namespace TriangulatedTopology
 
                 if (grids.ContainsKey(node.Neighbours[2]))
                 {
-                    for (int x = grid.GetLength(0) - 1; x >= 0; x--)
+                    for (int x = 0; x < grid.GetLength(0); x++)
                     {
                         var cell = grid[x, grid.GetLength(1) - 1];
                         var cellRule = cell.Rules[0];
@@ -613,7 +613,7 @@ namespace TriangulatedTopology
 
                 if (grids.ContainsKey(node.Neighbours[3]))
                 {
-                    for (int y = 0; y < grid.GetLength(1) - 1; y++)
+                    for (int y = 0; y < grid.GetLength(1); y++)
                     {
                         var cell = grid[grid.GetLength(0) - 1, y];
                         var cellRule = cell.Rules[0];
@@ -888,7 +888,7 @@ namespace TriangulatedTopology
             //    LogicalResolution);
 
             //Wfc(grids, rules);
-            
+
             var texture = TextureCreator.CreateLogicalTexture(grids, initials, size, step);
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
             var bmp = TextureHelper.TextureToBitmap(texture, size);

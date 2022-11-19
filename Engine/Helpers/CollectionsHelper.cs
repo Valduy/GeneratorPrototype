@@ -34,7 +34,7 @@
         {
             var first = list[0];
 
-            for (int i = 0; i < list.Count - 2; i++)
+            for (int i = 0; i < list.Count - 1; i++)
             {
                 list[i] = list[i + 1];
             }
