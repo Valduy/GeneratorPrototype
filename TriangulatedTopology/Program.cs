@@ -11,6 +11,7 @@ using Mathematics = GameEngine.Mathematics.Mathematics;
 using Face = MeshTopology.Face;
 using TriangulatedTopology.RulesAdapters;
 using GameEngine.Mathematics;
+using Assimp.Unmanaged;
 
 namespace TriangulatedTopology
 {
@@ -348,11 +349,11 @@ namespace TriangulatedTopology
                         var right = grid[x + 1, y];
                         var bottom = grid[x, y + 1];
 
-                        cell.Neighbours[3] = new NeighbourData(right, new RuleEmptyAdapter());
-                        right.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter());
+                        cell.Neighbours[3] = new NeighbourData(right, new RuleEmptyAdapter(LogicalResolution));
+                        right.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter(LogicalResolution));
 
-                        cell.Neighbours[2] = new NeighbourData(bottom, new RuleEmptyAdapter());
-                        bottom.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter());
+                        cell.Neighbours[2] = new NeighbourData(bottom, new RuleEmptyAdapter(LogicalResolution));
+                        bottom.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter(LogicalResolution));
                     }
                 }
 
@@ -362,8 +363,8 @@ namespace TriangulatedTopology
                     var cell = grid[x, y];
                     var right = grid[x + 1, y];
 
-                    cell.Neighbours[3] = new NeighbourData(right, new RuleEmptyAdapter());
-                    right.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter());
+                    cell.Neighbours[3] = new NeighbourData(right, new RuleEmptyAdapter(LogicalResolution));
+                    right.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter(LogicalResolution));
                 }
 
                 for (int y = 0; y < grid.GetLength(1) - 1; y++)
@@ -372,8 +373,8 @@ namespace TriangulatedTopology
                     var cell = grid[x, y];
                     var bottom = grid[x, y + 1];
 
-                    cell.Neighbours[2] = new NeighbourData(bottom, new RuleEmptyAdapter());
-                    bottom.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter());
+                    cell.Neighbours[2] = new NeighbourData(bottom, new RuleEmptyAdapter(LogicalResolution));
+                    bottom.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter(LogicalResolution));
                 }
 
                 for (int i = 0; i < node.Neighbours.Count; i++)
@@ -399,7 +400,7 @@ namespace TriangulatedTopology
                         foreach (var cell in EnumerateGridSide(grid, i))
                         {
                             var link = neighbourGrid[temp.X, temp.Y];
-                            cell.Neighbours[i] = new NeighbourData(link, new RuleEmptyAdapter());
+                            cell.Neighbours[i] = new NeighbourData(link, new RuleRotationAdapter(node, neighbour, LogicalResolution));
                             temp += step;
                         }
                     }
@@ -475,6 +476,170 @@ namespace TriangulatedTopology
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(side));
+            }
+        }
+
+        public static void OrientationDebug(Dictionary<TopologyNode, Cell[,]> grids)
+        {
+            var pallete = new Color[]
+            {
+                Color.Blue,
+                Color.Purple,
+                Color.Magenta,
+                Color.Coral,
+                Color.Red,
+                Color.Orange,
+                Color.Yellow,
+                Color.Lime,
+                Color.Green,
+                Color.Aqua,
+                Color.Cyan,
+            };
+
+            foreach (var pair in grids)
+            {
+                var grid = pair.Value;
+
+                foreach (var cell in grid)
+                {
+                    var defenition = new Color[LogicalResolution, LogicalResolution];
+
+                    for (int x = 0; x < defenition.GetLength(0); x++)
+                    {
+                        for (int y = 0; y < defenition.GetLength(1); y++)
+                        {
+                            defenition[x, y] = Color.White;
+                        }
+                    }
+
+                    cell.Rules.Add(new Rule(defenition, defenition));
+                }
+            }
+
+            foreach (var pair in grids)
+            {
+                var node = pair.Key;
+                var grid = pair.Value;
+
+                if (grids.ContainsKey(node.Neighbours[0]))
+                {
+                    for (int x = grid.GetLength(0) - 1; x >= 0; x--)
+                    {
+                        var cell = grid[x, 0];
+                        var cellRule = cell.Rules[0];
+
+                        var link = cell.Neighbours[0];
+                        var adapter = link!.Adapter;
+                        var linkRule = link!.Neighbour.Rules[0];
+
+                        var semple = adapter.GetSide(linkRule, 2);
+
+                        if (semple.All(c => c.IsSame(Color.White)))
+                        {
+                            for (int i = 0; i < cellRule.Logical.GetLength(0); i++)
+                            {
+                                cellRule.Logical[i, 0] = pallete.GetRandom();
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < semple.Length; i++)
+                            {
+                                cellRule.Logical[i, 0] = semple[i];
+                            }
+                        }
+                    }
+                }
+
+                if (grids.ContainsKey(node.Neighbours[1]))
+                {
+                    for (int y = 0; y < grid.GetLength(1) - 1; y++)
+                    {
+                        var cell = grid[0, y];
+                        var cellRule = cell.Rules[0];
+
+                        var link = cell.Neighbours[1];
+                        var adapter = link!.Adapter;
+                        var linkRule = link!.Neighbour.Rules[0];
+
+                        var semple = adapter.GetSide(linkRule, 3);
+
+                        if (semple.All(c => c.IsSame(Color.White)))
+                        {
+                            for (int i = 0; i < cellRule.Logical.GetLength(1); i++)
+                            {
+                                cellRule.Logical[0, i] = pallete.GetRandom();
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < semple.Length; i++)
+                            {
+                                cellRule.Logical[0, i] = semple[i];
+                            }
+                        }
+                    }
+                }
+
+                if (grids.ContainsKey(node.Neighbours[2]))
+                {
+                    for (int x = grid.GetLength(0) - 1; x >= 0; x--)
+                    {
+                        var cell = grid[x, grid.GetLength(1) - 1];
+                        var cellRule = cell.Rules[0];
+
+                        var link = cell.Neighbours[2];
+                        var adapter = link!.Adapter;
+                        var linkRule = link!.Neighbour.Rules[0];
+
+                        var semple = adapter.GetSide(linkRule, 0);
+
+                        if (semple.All(c => c.IsSame(Color.White)))
+                        {
+                            for (int i = 0; i < cellRule.Logical.GetLength(0); i++)
+                            {
+                                cellRule.Logical[i, cellRule.Logical.GetLength(1) - 1] = pallete.GetRandom();
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < semple.Length; i++)
+                            {
+                                cellRule.Logical[i, cellRule.Logical.GetLength(1) - 1] = semple[i];
+                            }
+                        }
+                    }
+                }
+
+                if (grids.ContainsKey(node.Neighbours[3]))
+                {
+                    for (int y = 0; y < grid.GetLength(1) - 1; y++)
+                    {
+                        var cell = grid[grid.GetLength(0) - 1, y];
+                        var cellRule = cell.Rules[0];
+
+                        var link = cell.Neighbours[3];
+                        var adapter = link!.Adapter;
+                        var linkRule = link!.Neighbour.Rules[0];
+
+                        var semple = adapter.GetSide(linkRule, 1);
+
+                        if (semple.All(c => c.IsSame(Color.White)))
+                        {
+                            for (int i = 0; i < cellRule.Logical.GetLength(1); i++)
+                            {
+                                cellRule.Logical[cellRule.Logical.GetLength(0) - 1, i] = pallete.GetRandom();
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < semple.Length; i++)
+                            {
+                                cellRule.Logical[cellRule.Logical.GetLength(0) - 1, i] = semple[i];
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -689,6 +854,7 @@ namespace TriangulatedTopology
             var initials = SliceSurfaces(retopology);
             var grids = BuildCells(retopology, initials, size, step);
             ConnectCells(grids, size);
+            OrientationDebug(grids);
 
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
@@ -710,10 +876,10 @@ namespace TriangulatedTopology
             //var bmp = TextureHelper.TextureToBitmap(texture, size);
             //bmp.Save("Test.bmp");
 
-            var texture = TextureCreator.CreateDebugStitchesTexture(grids, initials, size, step);
-            roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
-            var bmp = TextureHelper.TextureToBitmap(texture, size);
-            bmp.Save("Test.bmp");
+            //var texture = TextureCreator.CreateDebugStitchesTexture(grids, initials, size, step);
+            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
+            //var bmp = TextureHelper.TextureToBitmap(texture, size);
+            //bmp.Save("Test.bmp");
 
             //var rules = RulesLoader.CreateRules(
             //    "Content/WallLogical.png",
@@ -722,16 +888,15 @@ namespace TriangulatedTopology
             //    LogicalResolution);
 
             //Wfc(grids, rules);
-
-            //var texture = TextureCreator.CreateLogicalTexture(grids, initials, size, step);
-            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
-            //var bmp = TextureHelper.TextureToBitmap(texture, size);
-            //bmp.Save("Test.bmp");
+            
+            var texture = TextureCreator.CreateLogicalTexture(grids, initials, size, step);
+            roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
+            var bmp = TextureHelper.TextureToBitmap(texture, size);
+            bmp.Save("Test.bmp");
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);
             axis.Position = new Vector3(-11, 0, -11);
-
             engine.Run();
         }
     }

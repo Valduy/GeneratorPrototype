@@ -68,6 +68,12 @@ namespace TriangulatedTopology
                 }
             }
 
+            for (int y = 0; y < bounds.Y; y++)
+            {
+                var position = from + new Vector2(bounds.X * axis.X, y * axis.Y);
+                texture.SetColor(size, (int)position.X, (int)position.Y, Color.Black);
+            }
+
             for (int x = 0; x < bounds.X; x++)
             {
                 for (int y = 0; y < bounds.Y; y += step)
@@ -75,6 +81,12 @@ namespace TriangulatedTopology
                     var position = from + new Vector2(x * axis.X, y * axis.Y);
                     texture.SetColor(size, (int)position.X, (int)position.Y, Color.Black);
                 }
+            }
+
+            for (int x = 0; x < bounds.X; x++)
+            {
+                var position = from + new Vector2(x * axis.X, bounds.Y * axis.Y);
+                texture.SetColor(size, (int)position.X, (int)position.Y, Color.Black);
             }
         }
 
@@ -409,11 +421,6 @@ namespace TriangulatedTopology
 
                     var bounds = new Vector2(MathF.Abs(horizontal.SumComponents()), MathF.Abs(vertical.SumComponents()));
 
-                    if (MathF.Abs(bounds.X - bounds.Y) > 0.1)
-                    {
-                        var t = 0;
-                    }
-
                     for (int x = 0; x < bounds.X; x++)
                     {
                         int colorX = (int)Mathematics.Map(x, 0, bounds.X, 0, rule.GetLength(0));
@@ -421,8 +428,6 @@ namespace TriangulatedTopology
                         for (int y = 0; y < bounds.Y; y++)
                         {
                             int colorY = (int)Mathematics.Map(y, 0, bounds.Y, 0, rule.GetLength(1));
-                            //var color = rule[rule.GetLength(0) - 1 - colorX, rule.GetLength(1) - 1 - colorY];
-                            //var color = rule[rule.GetLength(0) - 1 - colorX, colorY];
                             var color = rule[colorX, colorY];
                             var position = from + horizontalAxis * x + verticalAxis * y;
                             texture.SetColor(size, (int)position.X, (int)position.Y, color);
