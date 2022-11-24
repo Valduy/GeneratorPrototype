@@ -26,6 +26,9 @@
     <None Update="Content\Room.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\WallDetailed.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\WallLogical.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

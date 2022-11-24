@@ -411,8 +411,7 @@ namespace TriangulatedTopology
                 {
                     var rule = acessor(cell);
                     var from = cell[1];
-                    var to = cell[3];
-
+     
                     var horizontal = cell[0] - cell[1];
                     var horizontalAxis = horizontal.Normalized();
 

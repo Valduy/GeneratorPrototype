@@ -47,7 +47,7 @@ namespace PatternDemo
         }
 
         public static Dictionary<TopologyNode, Rule> Wfc(
-            MeshTopology.Topology topology, 
+            Topology topology, 
             List<Rule> wallRules, 
             List<Rule> floorRules,
             List<Rule> ceilRules,
