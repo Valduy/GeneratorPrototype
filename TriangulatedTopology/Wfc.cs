@@ -135,23 +135,48 @@ namespace TriangulatedTopology
         public static void GraphWfc(List<Cell> cells, List<Rule> rules)
         {
             var forRecalculation = new List<Cell>();
+            var defaultRule = rules[33];
 
             foreach (var cell in cells)
             {
                 cell.Rules.Clear();
-                cell.Rules.AddRange(rules);
+
+                if (cell.Neighbours.All(n => n != null))
+                {                   
+                    cell.Rules.AddRange(rules);
+                }
+                else
+                {
+                    cell.Rules.Add(defaultRule);
+                    cell.Define();
+                }
             }
 
-            var initial = cells.GetRandom();
-            var rule = initial.Rules.GetRandom();
-            initial.Rules.Clear();
-            initial.Rules.Add(rule);
-
-            foreach(var neighbour in initial.Neighbours)
+            foreach (var cell in cells.Where(c => c.IsDefined()))
             {
-                if (neighbour != null)
+                foreach (var neighbour in cell.Neighbours)
                 {
-                    forRecalculation.Add(neighbour.Neighbour);
+                    if (neighbour != null && !neighbour.Cell.IsDefined())
+                    {
+                        forRecalculation.Add(neighbour.Cell);
+                    }
+                }
+            }
+
+            // If there is no defined tiles we choose tile randomly.
+            if (!forRecalculation.Any())
+            {
+                var initial = cells.GetRandom();
+                var rule = initial.Rules.GetRandom();
+                initial.Rules.Clear();
+                initial.Rules.Add(rule);
+
+                foreach (var neighbour in initial.Neighbours)
+                {
+                    if (neighbour != null)
+                    {
+                        forRecalculation.Add(neighbour.Cell);
+                    }
                 }
             }
 
@@ -163,6 +188,7 @@ namespace TriangulatedTopology
                     forRecalculation.Remove(cell);
                     var filtered = FilterGraphPossible(cell);
 
+                    // Deadlock resoultion.
                     if (filtered.Count == 0)
                     {
                         cell.Rules.Clear();
@@ -170,10 +196,10 @@ namespace TriangulatedTopology
 
                         foreach (var neighbour in cell.Neighbours)
                         {
-                            if (neighbour != null)
+                            if (neighbour != null && !neighbour.Cell.IsDefined())
                             {
-                                neighbour.Neighbour.Rules.Clear();
-                                neighbour.Neighbour.Rules.AddRange(rules);
+                                neighbour.Cell.Rules.Clear();
+                                neighbour.Cell.Rules.AddRange(rules);
                             }
                         }
 
@@ -184,9 +210,9 @@ namespace TriangulatedTopology
                     {
                         foreach (var neighbour in cell.Neighbours)
                         {
-                            if (neighbour != null)
+                            if (neighbour != null && !neighbour.Cell.IsDefined())
                             {
-                                forRecalculation.Add(neighbour.Neighbour);
+                                forRecalculation.Add(neighbour.Cell);
                             }
                         }
 
@@ -212,15 +238,15 @@ namespace TriangulatedTopology
                     break;
                 }
 
-                rule = maxCell.Rules.GetRandom();
+                var rule = maxCell.Rules.GetRandom();
                 maxCell.Rules.Clear();
                 maxCell.Rules.Add(rule);
 
                 foreach (var neighbour in maxCell.Neighbours)
                 {
-                    if (neighbour != null)
+                    if (neighbour != null && !neighbour.Cell.IsDefined())
                     {
-                        forRecalculation.Add(neighbour.Neighbour);
+                        forRecalculation.Add(neighbour.Cell);
                     }
                 }
             }
@@ -285,7 +311,7 @@ namespace TriangulatedTopology
                     continue;
                 }
 
-                var rules = neighbour.Neighbour.Rules;
+                var rules = neighbour.Cell.Rules;
                 var adapter = neighbour.Adapter;
                 var nodeIndex = (neighbourIndex + 2) % 4;
 

@@ -103,7 +103,7 @@ namespace PatternDemo
                     var possibleHere = possibilities[node];
                     var filtered = FilterPossible(possibilities, possibleHere, node);
 
-                    // Deadlock resolution
+                    // Deadlock resolution.
                     if (filtered.Count == 0)
                     {
                         failes += 1;

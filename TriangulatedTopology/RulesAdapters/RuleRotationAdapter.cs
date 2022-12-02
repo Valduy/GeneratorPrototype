@@ -133,16 +133,6 @@ namespace TriangulatedTopology.RulesAdapters
             return rule.Logical[accessor.X, accessor.Y];
         }
 
-        private Vector2i RotateClockwise(Vector2i indices)
-        {
-            return new Vector2i(indices.Y, -indices.X);
-        }
-
-        private Vector2i RotateCounterclockwise(Vector2i indices)
-        {
-            return new Vector2i(-indices.Y, indices.X);
-        }
-
         private int GetExpectedNeighbourVertexIndex(int pivonVertexIndex)
         {
             switch (pivonVertexIndex)

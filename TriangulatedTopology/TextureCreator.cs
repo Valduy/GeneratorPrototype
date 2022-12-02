@@ -289,9 +289,9 @@ namespace TriangulatedTopology
                             cellToColor[cell] = color;
 
                             var link = cell.Neighbours[0];
-                            cellToColor[link!.Neighbour] = color;
+                            cellToColor[link!.Cell] = color;
 
-                            cellToSetter[link!.Neighbour] = cell;
+                            cellToSetter[link!.Cell] = cell;
                         }
 
                         var from = cell.Aggregate((a, b) => a + b) / cell.Count;
@@ -312,7 +312,7 @@ namespace TriangulatedTopology
                             cellToColor[cell] = color;
 
                             var link = cell.Neighbours[1];
-                            cellToColor[link!.Neighbour] = color;
+                            cellToColor[link!.Cell] = color;
                         }
 
                         var from = cell.Aggregate((a, b) => a + b) / cell.Count;
@@ -333,7 +333,7 @@ namespace TriangulatedTopology
                             cellToColor[cell] = color;
 
                             var link = cell.Neighbours[2];
-                            cellToColor[link!.Neighbour] = color;
+                            cellToColor[link!.Cell] = color;
                         }
 
                         var from = cell.Aggregate((a, b) => a + b) / cell.Count;
@@ -354,7 +354,7 @@ namespace TriangulatedTopology
                             cellToColor[cell] = color;
 
                             var link = cell.Neighbours[3];
-                            cellToColor[link!.Neighbour] = color;
+                            cellToColor[link!.Cell] = color;
                         }
 
                         var from = cell.Aggregate((a, b) => a + b) / cell.Count;

@@ -24,5 +24,10 @@ namespace MeshTopology
             return this.A.TextureCoords == other.A.TextureCoords && this.B.TextureCoords == other.B.TextureCoords
                 || this.A.TextureCoords == other.B.TextureCoords && this.B.TextureCoords == other.A.TextureCoords;
         }
+
+        public bool HasVertex(Vertex vertex)
+        {
+            return A.Equals(vertex) || B.Equals(vertex);
+        }
     }
 }

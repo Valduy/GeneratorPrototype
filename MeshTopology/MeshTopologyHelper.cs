@@ -132,6 +132,50 @@ namespace MeshTopology
             return false;
         }
 
+        public static bool IsSharedVertexExist(this Edge edge, Edge other)
+        {
+            return
+                edge.A.Position == other.A.Position ||
+                edge.B.Position == other.B.Position ||
+                edge.A.Position == other.B.Position ||
+                edge.B.Position == other.A.Position;
+        }
+
+        public static Vertex GetSharedVertex(this Edge edge, Edge other)
+        {
+            if (edge.A.Position == other.A.Position || 
+                edge.A.Position == other.B.Position)
+            {
+                return edge.A;
+            }
+            if (edge.B.Position == other.B.Position || 
+                edge.B.Position == other.A.Position)
+            {
+                return edge.B;
+            }
+
+            throw new ArgumentException("This edges does not contain shared vertex.");
+        }
+
+        public static bool TryGetSharedVertex(this Edge edge, Edge other, out Vertex vertex)
+        {
+            if (edge.A.Position == other.A.Position ||
+                edge.A.Position == other.B.Position)
+            {
+                vertex = edge.A;
+                return true;
+            }
+            if (edge.B.Position == other.B.Position ||
+                edge.B.Position == other.A.Position)
+            {
+                vertex = edge.B;
+                return true;
+            }
+
+            vertex = default;
+            return false;
+        }
+
         #endregion Edges
 
         #region UVs

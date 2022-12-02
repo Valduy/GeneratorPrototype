@@ -11,8 +11,6 @@ using Mathematics = GameEngine.Mathematics.Mathematics;
 using Face = MeshTopology.Face;
 using TriangulatedTopology.RulesAdapters;
 using GameEngine.Mathematics;
-using Assimp.Unmanaged;
-using Assimp;
 
 namespace TriangulatedTopology
 {
@@ -157,26 +155,45 @@ namespace TriangulatedTopology
 
         public static void SliceSurface(TopologyNode node, Dictionary<TopologyNode, Vertex> initials)
         {
-            var topAdapter = new VertexAdapter(node, node.Neighbours[0]);
-            var bottomAdapter = new VertexAdapter(node, node.Neighbours[2]);
-            var leftAdapter = new VertexAdapter(node, node.Neighbours[1]);            
-            var rightAdapter = new VertexAdapter(node, node.Neighbours[3]);
+            var possibilities = new List<int>[4];
 
-            var top = GetPossibleInitialsHorizontal(topAdapter, initials);
-            var bottom = GetPossibleInitialsHorizontal(bottomAdapter, initials);
-            var left = GetPossibleInitialsVertical(leftAdapter, initials);
-            var right = GetPossibleInitialsVertical(rightAdapter, initials);
+            for (int i = 0; i < node.Neighbours.Count; i++)
+            {
+                var neighbour = node.Neighbours[i];
+
+                if (initials.TryGetValue(neighbour, out var initial))
+                {
+                    var sharedEdge = node.Face.GetSharedEdge(neighbour.Face);
+                    var neighbourSharedEdgeIndex = neighbour.Face.GetEdgeIndex(e => e.HasSamePositions(sharedEdge));
+                    
+                    var neighbourGuidesEdges = GetGuidesEdges(neighbour, neighbourSharedEdgeIndex);
+                    var guidesEdges = GetGuidesEdges(node, i);
+
+                    var neighbourGuide = neighbourGuidesEdges.First(e => e.HasVertex(initial));
+                    var guide = guidesEdges.First(e => e.IsSharedVertexExist(neighbourGuide));
+
+                    possibilities[i] = new List<int>()
+                    {
+                        node.Face.IndexOf(guide.A),
+                        node.Face.IndexOf(guide.B),
+                    };
+                }
+                else
+                {
+                    possibilities[i] = new List<int>() { 0, 1, 2, 3 };
+                }
+            }
 
             try
             {
-                var initialIndex = top
-                    .Intersect(bottom)
-                    .Intersect(left)
-                    .Intersect(right)
-                    .First();
+                var possibleInitials = possibilities[0];
 
+                for (int i = 1; i < possibilities.Length; i++)
+                {
+                    possibleInitials = possibleInitials.Intersect(possibilities[i]).ToList();
+                }
 
-                initials[node] = node.Face[initialIndex];
+                initials[node] = node.Face[possibleInitials.First()];
             }
             catch (Exception)
             {
@@ -184,42 +201,26 @@ namespace TriangulatedTopology
             }
         }
 
-        public static List<int> GetPossibleInitialsHorizontal(VertexAdapter adapter, Dictionary<TopologyNode, Vertex> initials)
+        public static List<Edge> GetGuidesEdges(TopologyNode node, int index)
         {
-            if (initials.TryGetValue(adapter.Neighbour, out var initial))
-            {
-                int adaptedIndex = adapter.IndexOf(initial);
+            var result = new List<Edge>();
 
-                if (adaptedIndex == 0 || adaptedIndex == 3)
+            if (index % 2 == 0)
+            {
+                for (int i = 1; i < node.Neighbours.Count; i += 2)
                 {
-                    return new List<int> { 0, 3 };
+                    result.Add(node.Face.GetEdgeByIndex(i));
                 }
-                else
+            }
+            else
+            {
+                for (int i = 0; i < node.Neighbours.Count; i += 2)
                 {
-                    return new List<int> { 1, 2 };
+                    result.Add(node.Face.GetEdgeByIndex(i));
                 }
             }
 
-            return new List<int> { 0, 1, 2, 3 };
-        }
-
-        public static List<int> GetPossibleInitialsVertical(VertexAdapter adapter, Dictionary<TopologyNode, Vertex> initials)
-        {
-            if (initials.TryGetValue(adapter.Neighbour, out var initial))
-            {
-                int adaptedIndex = adapter.IndexOf(initial);
-
-                if (adaptedIndex == 0 || adaptedIndex == 1)
-                {
-                    return new List<int> { 0, 1 };
-                }
-                else
-                {
-                    return new List<int> { 2, 3 };
-                }
-            }
-
-            return new List<int> { 0, 1, 2, 3 };
+            return result;
         }
 
         public static Dictionary<TopologyNode, Cell[,]> BuildCells(
@@ -531,7 +532,7 @@ namespace TriangulatedTopology
 
                         var link = cell.Neighbours[0];
                         var adapter = link!.Adapter;
-                        var linkRule = link!.Neighbour.Rules[0];
+                        var linkRule = link!.Cell.Rules[0];
 
                         var semple = adapter.GetSide(linkRule, 2);
 
@@ -561,7 +562,7 @@ namespace TriangulatedTopology
 
                         var link = cell.Neighbours[1];
                         var adapter = link!.Adapter;
-                        var linkRule = link!.Neighbour.Rules[0];
+                        var linkRule = link!.Cell.Rules[0];
 
                         var semple = adapter.GetSide(linkRule, 3);
 
@@ -591,7 +592,7 @@ namespace TriangulatedTopology
 
                         var link = cell.Neighbours[2];
                         var adapter = link!.Adapter;
-                        var linkRule = link!.Neighbour.Rules[0];
+                        var linkRule = link!.Cell.Rules[0];
 
                         var semple = adapter.GetSide(linkRule, 0);
 
@@ -621,7 +622,7 @@ namespace TriangulatedTopology
 
                         var link = cell.Neighbours[3];
                         var adapter = link!.Adapter;
-                        var linkRule = link!.Neighbour.Rules[0];
+                        var linkRule = link!.Cell.Rules[0];
 
                         var semple = adapter.GetSide(linkRule, 1);
 
@@ -655,8 +656,10 @@ namespace TriangulatedTopology
             operatorGo.Add<LightComponent>();
             operatorGo.Position = new Vector3(0, 0, 0);
 
-            var model = Model.Load("Content/Room.obj");
             //var model = Model.Load("Content/Cube.obj");
+            //var model = Model.Load("Content/Room.obj");
+            //var model = Model.Load("Content/Line.obj");
+            var model = Model.Load("Content/Corner.obj");
 
             int size = 2048;
             int step = 40;
@@ -668,11 +671,10 @@ namespace TriangulatedTopology
             var initials = SliceSurfaces(retopology);
             var grids = BuildCells(retopology, initials, size, step);
             ConnectCells(grids, size);
-            //OrientationDebug(grids);
 
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
-            roomRenderer.Model = model;   
+            roomRenderer.Model = model;
             roomGo.Position = 5 * Vector3.UnitY;
 
             //var texture = TextureCreator.CreateGridTexture(retopology, initials, size, step);
@@ -695,13 +697,12 @@ namespace TriangulatedTopology
             //var bmp = TextureHelper.TextureToBitmap(texture, size);
             //bmp.Save("Test.bmp");
 
+            // WFC on graph
             var rules = RulesLoader.CreateRules(
                 "Content/WallLogical.png",
                 "Content/WallDetailed.png",
                 LogicalResolution,
                 DetailedResolution);
-
-            //Wfc.GridWfc(grids, rules);
 
             var cells = new List<Cell>();
 

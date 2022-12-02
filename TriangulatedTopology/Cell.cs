@@ -7,12 +7,12 @@ namespace TriangulatedTopology
 {
     public class NeighbourData
     {
-        public Cell Neighbour;
+        public Cell Cell;
         public RuleAdapter Adapter;
 
-        public NeighbourData(Cell neighbour, RuleAdapter adapter)
+        public NeighbourData(Cell cell, RuleAdapter adapter)
         {
-            Neighbour = neighbour;
+            Cell = cell;
             Adapter = adapter;
         }
     }
