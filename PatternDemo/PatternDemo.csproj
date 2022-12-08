@@ -96,6 +96,12 @@
     <None Update="Content\Samples\WallBigTilesLogical.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Scene.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Scene.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\SimplePipes.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

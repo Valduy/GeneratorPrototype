@@ -352,7 +352,7 @@ namespace PatternDemo
             var axis = engine.Axis(2);
             axis.Position = new Vector3(-11, 0, -11);
 
-            var quadModel = Model.Load("Content/Room.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            var quadModel = Model.Load("Content/Scene.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             quadModel = new Model(quadModel.Meshes[0].SortVertices());
             var topology = new Topology(quadModel.Meshes[0], 4);
 

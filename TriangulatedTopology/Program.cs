@@ -662,7 +662,7 @@ namespace TriangulatedTopology
             var model = Model.Load("Content/Corner.obj");
 
             int size = 2048;
-            int step = 40;
+            int step = 32;
 
             var topology = new Topology(model.Meshes[0], 3);
             var dirtyPolies = ExtractPolies(topology);
@@ -704,6 +704,18 @@ namespace TriangulatedTopology
                 LogicalResolution,
                 DetailedResolution);
 
+            var horizontalRules = RulesLoader.CreateRules(
+                "Content/HorizontalLogical.png",
+                "Content/HorizontalDetailed.png",
+                LogicalResolution,
+                DetailedResolution);
+
+            var verticalRules = RulesLoader.CreateRules(
+                "Content/VerticalLogical.png",
+                "Content/VerticalDetailed.png",
+                LogicalResolution,
+                DetailedResolution);
+
             var cells = new List<Cell>();
 
             foreach (var node in grids)
@@ -716,7 +728,7 @@ namespace TriangulatedTopology
                 }
             }
 
-            Wfc.GraphWfc(cells, rules);
+            Wfc.GraphWfc(cells, rules, horizontalRules, verticalRules);
 
             var texture = TextureCreator.CreateDetailedTexture(grids, initials, size, step);
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
