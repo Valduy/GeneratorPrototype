@@ -35,7 +35,7 @@ namespace PatternDemo
                     var render = cube.Add<MaterialRenderComponent>();
                     render.Model = Model.Cube;
                     render.Material.Color = Colors.Red;
-                    cube.Scale = new Vector3(0.1f);
+                    cube.Scale = new Vector3(0.05f);
                     cube.Position = centroid;
                     go.AddChild(cube);
                 }

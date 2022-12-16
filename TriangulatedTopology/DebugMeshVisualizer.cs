@@ -5,7 +5,7 @@ using MeshTopology;
 
 namespace TriangulatedTopology
 {
-    public static class DebugVisualizer
+    public static class DebugMeshVisualizer
     {
         public static GameObject CreatePoliesVisualization(Engine engine, Topology topology)
         {

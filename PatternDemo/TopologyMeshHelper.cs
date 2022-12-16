@@ -11,7 +11,7 @@ namespace PatternDemo
         YZ,
     }
 
-    public static class MeshHelper
+    public static class TopologyMeshHelper
     {
         public static Mesh SortUVs(this Mesh mesh)
         {
@@ -121,24 +121,6 @@ namespace PatternDemo
             return new Mesh(mesh.Vertices, indices);
         }   
 
-        public static Mesh TriangulateQuadMesh(this Mesh mesh)
-        {
-            var indices = new List<int>();
-
-            for (int i = 0; i < mesh.Indices.Count; i += 4)
-            {
-                indices.Add(mesh.Indices[i + 0]);
-                indices.Add(mesh.Indices[i + 1]);
-                indices.Add(mesh.Indices[i + 2]);
-
-                indices.Add(mesh.Indices[i + 2]);
-                indices.Add(mesh.Indices[i + 3]);
-                indices.Add(mesh.Indices[i + 0]);
-            }
-
-            return new Mesh(mesh.Vertices, indices);
-        }
-
         private static MeshOrientation GetPolyOrientation(IList<Vector3> positions)
         {
             if (positions.Count < 3)
@@ -190,17 +172,5 @@ namespace PatternDemo
 
         private static bool IsVertical(List<Vector3> positions) 
             => !IsHorisontal(positions);
-
-        private static bool IsSortedRightHorizontally(List<Vector3> positions, List<Vector2> uvs)
-        {
-
-
-            throw new NotImplementedException();
-        }
-
-        private static bool IsSortedRightVertically()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

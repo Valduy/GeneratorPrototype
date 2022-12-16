@@ -50,11 +50,10 @@ namespace TriangulatedTopology
             }
         }
 
-        public static void DrawGrid(byte[] texture, TopologyNode node, Vertex initial, int size, int step)
+        public static void DrawGrid(byte[] texture, TopologyNode node, int size, int step)
         {
-            var initialIndex = node.Face.IndexOf(initial);
-            var from = node.Face[initialIndex].TextureCoords * size;
-            var to = node.Face.GetCircular(initialIndex + 2).TextureCoords * size;
+            var from = node.Face[1].TextureCoords * size;
+            var to = node.Face[3].TextureCoords * size;
             var direction = to - from;
             var bounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
             var axis = new Vector2i(Math.Sign(direction.X), Math.Sign(direction.Y));
@@ -90,21 +89,13 @@ namespace TriangulatedTopology
             }
         }
 
-        public static byte[] CreateGridTexture(Topology topology, Dictionary<TopologyNode, Vertex> initials, int size, int step)
+        public static byte[] CreateGridTexture(Topology topology, int size, int step)
         {
             var texture = new byte[size * size * 4];
 
             foreach (var node in topology)
             {
-                if (initials.TryGetValue(node, out var initial))
-                {
-                    FillCellsWithColor(texture, node, size, Color.White);
-                    DrawGrid(texture, node, initial, size, step);
-                }
-                else
-                {
-                    FillCellsWithColor(texture, node, size, Color.Red);
-                }
+                FillCellsWithColor(texture, node, size, Color.White);
             }
 
             return texture;
@@ -112,7 +103,6 @@ namespace TriangulatedTopology
 
         public static byte[] CreateDebugGridTexture(
             Topology topology,
-            Dictionary<TopologyNode, Vertex> initials,
             Dictionary<TopologyNode, Cell[,]> grids, 
             int size, 
             int step)
@@ -163,7 +153,7 @@ namespace TriangulatedTopology
                         }
                     }
 
-                    DrawGrid(texture, node, initials[node], size, step);
+                    DrawGrid(texture, node, size, step);
                 }
                 else
                 {
@@ -176,7 +166,6 @@ namespace TriangulatedTopology
 
         public static byte[] CreateDebugCellTexture(
             Dictionary<TopologyNode, Cell[,]> grids,
-            Dictionary<TopologyNode, Vertex> initials,
             int size, 
             int step)
         {
@@ -238,7 +227,7 @@ namespace TriangulatedTopology
                     }
                 }
 
-                DrawGrid(texture, node, initials[node], size, step);
+                DrawGrid(texture, node, size, step);
             }
 
             return texture;
@@ -246,7 +235,6 @@ namespace TriangulatedTopology
 
         public static byte[] CreateDebugStitchesTexture(
             Dictionary<TopologyNode, Cell[,]> grids,
-            Dictionary<TopologyNode, Vertex> initials,
             int size,
             int step)
         {
@@ -275,7 +263,7 @@ namespace TriangulatedTopology
                 var node = pair.Key;
                 var grid = pair.Value;
 
-                DrawGrid(texture, node, initials[node], size, step);
+                DrawGrid(texture, node, size, step);
 
                 if (grids.ContainsKey(node.Neighbours[0]))
                 {
@@ -369,25 +357,22 @@ namespace TriangulatedTopology
 
         public static byte[] CreateDetailedTexture(
             Dictionary<TopologyNode, Cell[,]> grids, 
-            Dictionary<TopologyNode, Vertex> initials,
             int size, 
             int step)
         {
-            return CreateTexture(grids, initials, size, step, c => c.Rules[0].Detailed);
+            return CreateTexture(grids, size, step, c => c.Rules[0].Detailed);
         }
 
         public static byte[] CreateLogicalTexture(
             Dictionary<TopologyNode, Cell[,]> grids,
-            Dictionary<TopologyNode, Vertex> initials, 
             int size, 
             int step)
         {
-            return CreateTexture(grids, initials, size, step, c => c.Rules[0].Logical);
+            return CreateTexture(grids, size, step, c => c.Rules[0].Logical);
         }
 
         private static byte[] CreateTexture(
-            Dictionary<TopologyNode, Cell[,]> grids,
-            Dictionary<TopologyNode, Vertex> initials, 
+            Dictionary<TopologyNode, Cell[,]> grids, 
             int size, 
             int step, 
             Func<Cell, Color[,]> acessor)
@@ -434,10 +419,7 @@ namespace TriangulatedTopology
                     }
                 }
 
-                if (initials.TryGetValue(node, out var initial))
-                {
-                    DrawGrid(texture, node, initial, size, step);
-                }                
+                DrawGrid(texture, node, size, step);
             }
 
             return texture;

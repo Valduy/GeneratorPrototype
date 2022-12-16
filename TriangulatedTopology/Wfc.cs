@@ -132,11 +132,7 @@ namespace TriangulatedTopology
             }
         }
 
-        public static void GraphWfc(
-            List<Cell> cells, 
-            List<Rule> rules, 
-            List<Rule> horizontalRules, 
-            List<Rule> verticalRules)
+        public static void GraphWfc(List<Cell> cells, List<Rule> rules)
         {
             var forRecalculation = new List<Cell>();
             var defaultRule = rules[33];

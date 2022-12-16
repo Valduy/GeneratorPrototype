@@ -43,7 +43,7 @@ namespace PatternDemo
             }
 
             //return (int)Math.Pow(10, degree);
-            return 2048;
+            return 4096;
         }
 
         public static Dictionary<TopologyNode, Rule> Wfc(
@@ -82,7 +82,7 @@ namespace PatternDemo
                 }
             }
 
-            if (!wallBigTiles.Any() && !floorBigTiles.Any())
+            if (!wallBigTiles.Any() && !floorBigTiles.Any() || !topology.Any(n => n.IsDefined()))
             {
                 var initial = topology.GetRandom();
                 var rule = possibilities[initial].GetRandom();
@@ -171,19 +171,18 @@ namespace PatternDemo
         }
 
         public static void PlaceWallBigTiles(
-            MeshTopology.Topology topology, 
+            Topology topology, 
             Dictionary<TopologyNode, List<Rule>> possibilities, 
             List<Rule?[,]> bigTiles)
         {
             int margin = 2;
             var walls = topology.ExtractXyGroups();
             walls.AddRange(topology.ExtractYzGroups());
-
             PlaceBigTiles(possibilities, walls, bigTiles, margin);
         }
 
         public static void PlaceFloorBigTiles(
-            MeshTopology.Topology topology,
+            Topology topology,
             Dictionary<TopologyNode, List<Rule>> possibilities,
             List<Rule?[,]> bigTiles)
         {
@@ -352,7 +351,7 @@ namespace PatternDemo
             var axis = engine.Axis(2);
             axis.Position = new Vector3(-11, 0, -11);
 
-            var quadModel = Model.Load("Content/Scene.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            var quadModel = Model.Load("Content/AnotherTower.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             quadModel = new Model(quadModel.Meshes[0].SortVertices());
             var topology = new Topology(quadModel.Meshes[0], 4);
 

@@ -44,6 +44,12 @@
     <None Update="Content\Room.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Scene.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Scene.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\VerticalDetailed.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
