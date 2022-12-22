@@ -332,7 +332,11 @@ namespace TriangulatedTopology
 
         public static void Main(string[] args)
         {
-            //CollectionsHelper.UseSeed(96350589);
+            //var random = new Random();
+            //int seed = random.Next();
+            //Console.WriteLine(seed);
+            //CollectionsHelper.UseSeed(seed);
+            CollectionsHelper.UseSeed(404963574);
 
             using var engine = new Engine();
 
@@ -345,8 +349,8 @@ namespace TriangulatedTopology
             //var model = Model.Load("Content/Models/Room.obj");
             //var model = Model.Load("Content/Models/Line.obj");
             //var model = Model.Load("Content/Models/Corner.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var model = Model.Load("Content/Models/Scene.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            //var model = Model.Load("Content/Models/Tower.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            //var model = Model.Load("Content/Models/Scene.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            var model = Model.Load("Content/Models/Tower.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
 
             int size = 2048;
             int step = 32;
@@ -406,7 +410,8 @@ namespace TriangulatedTopology
                 LogicalResolution,
                 DetailedResolution);
 
-            Wfc.GraphWfc(GridsToCells(grids), wallRules);
+            var cells = GridsToCells(grids);
+            Wfc.GraphWfc(cells, wallRules, floorRules, ceilRules);
 
             var texture = TextureCreator.CreateDetailedTexture(grids, size, step);
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);

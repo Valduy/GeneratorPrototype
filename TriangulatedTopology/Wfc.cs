@@ -135,56 +135,70 @@ namespace TriangulatedTopology
             }
         }
 
-        public static void GraphWfc(List<Cell> cells, List<Rule> rules)
+        public static void GraphWfc(
+            List<Cell> cells,
+            List<Rule> wallRules,
+            List<Rule> floorRules,
+            List<Rule> ceilRules)
         {
             var forRecalculation = new List<Cell>();
-            var defaultRule = rules[33];
 
-            foreach (var cell in cells)
+            //var defaultRule = rules[33];
+
+            //foreach (var cell in cells)
+            //{
+            //    cell.Rules.Clear();
+
+            //    if (cell.Neighbours.All(n => n != null))
+            //    {                   
+            //        cell.Rules.AddRange(rules);
+            //    }
+            //    else
+            //    {
+            //        cell.Rules.Add(defaultRule);
+            //        cell.Define();
+            //    }
+            //}
+
+            //foreach (var c in cells)
+            //{
+            //    c.Rules.Clear();
+            //    c.Rules.AddRange(SelectRuleSet(c, wallRules, floorRules, ceilRules));
+
+            //    if (c.Rules.Count == 1)
+            //    {
+            //        c.Define();
+            //    }
+            //}
+
+            //foreach (var cell in cells.Where(c => c.IsDefined()))
+            //{
+            //    forRecalculation.AddRange(SelectNeighbourCellsForRecalculation(cell));
+            //}
+
+            foreach (var c in cells.Where(c => !c.IsDefined()))
             {
-                cell.Rules.Clear();
-
-                if (cell.Neighbours.All(n => n != null))
-                {                   
-                    cell.Rules.AddRange(rules);
-                }
-                else
-                {
-                    cell.Rules.Add(defaultRule);
-                    cell.Define();
-                }
-            }
-
-            foreach (var cell in cells.Where(c => c.IsDefined()))
-            {
-                foreach (var neighbour in cell.Neighbours)
-                {
-                    if (neighbour != null && !neighbour.Cell.IsDefined())
-                    {
-                        forRecalculation.Add(neighbour.Cell);
-                    }
-                }
+                c.Rules.Clear();
+                c.Rules.AddRange(SelectRuleSet(c, wallRules, floorRules, ceilRules));
             }
 
             // If there is no defined tiles we choose tile randomly.
             if (!forRecalculation.Any())
             {
                 var initial = cells.GetRandom();
+
                 var rule = initial.Rules.GetRandom();
                 initial.Rules.Clear();
                 initial.Rules.Add(rule);
 
-                foreach (var neighbour in initial.Neighbours)
-                {
-                    if (neighbour != null)
-                    {
-                        forRecalculation.Add(neighbour.Cell);
-                    }
-                }
+                forRecalculation.AddRange(SelectNeighbourCellsForRecalculation(initial));
             }
 
             while (true)
             {
+                int trashold = 1000;
+                int failes = 0;
+
                 while (forRecalculation.Count > 0)
                 {
                     var cell = forRecalculation[0];
@@ -192,17 +206,31 @@ namespace TriangulatedTopology
                     var filtered = FilterGraphPossible(cell);
 
                     // Deadlock resoultion.
-                    if (filtered.Count == 0)
+                    if (filtered.Count == 0) // May be bad idea...
                     {
+                        failes += 1;
+
+                        if (failes >= trashold)
+                        {
+                            foreach (var c in cells.Where(c => !c.IsDefined()))
+                            {
+                                c.Rules.Clear();
+                                c.Rules.AddRange(SelectRuleSet(c, wallRules, floorRules, ceilRules));
+                            }
+
+                            forRecalculation.Clear();
+                            break;
+                        }
+
                         cell.Rules.Clear();
-                        cell.Rules.AddRange(rules);
+                        cell.Rules.AddRange(SelectRuleSet(cell, wallRules, floorRules, ceilRules));
 
                         foreach (var neighbour in cell.Neighbours)
                         {
                             if (neighbour != null && !neighbour.Cell.IsDefined())
                             {
                                 neighbour.Cell.Rules.Clear();
-                                neighbour.Cell.Rules.AddRange(rules);
+                                neighbour.Cell.Rules.AddRange(SelectRuleSet(neighbour.Cell, wallRules, floorRules, ceilRules));
                             }
                         }
 
@@ -227,6 +255,8 @@ namespace TriangulatedTopology
                 var maxCell = cells.First();
                 int maxPossibilities = maxCell.Rules.Count;
 
+                int collapsed = 0;
+
                 foreach (var cell in cells)
                 {
                     if (cell.Rules.Count > maxPossibilities)
@@ -234,25 +264,33 @@ namespace TriangulatedTopology
                         maxCell = cell;
                         maxPossibilities = maxCell.Rules.Count;
                     }
+
+                    if (cell.Rules.Count == 1)
+                    {
+                        collapsed += 1;
+                    }
                 }
+
+                Console.WriteLine(collapsed);
 
                 if (maxPossibilities <= 1)
                 {
                     break;
                 }
 
-                var rule = maxCell.Rules.GetRandom();
+                var rule = maxCell.Rules.Count == 41 ? maxCell.Rules[33] : maxCell.Rules.GetRandom();
                 maxCell.Rules.Clear();
                 maxCell.Rules.Add(rule);
 
-                foreach (var neighbour in maxCell.Neighbours)
-                {
-                    if (neighbour != null && !neighbour.Cell.IsDefined())
-                    {
-                        forRecalculation.Add(neighbour.Cell);
-                    }
-                }
+                forRecalculation.AddRange(SelectNeighbourCellsForRecalculation(maxCell));
             }
+        }
+
+        private static IEnumerable<Cell> SelectNeighbourCellsForRecalculation(Cell cell)
+        {
+            return cell.Neighbours
+                .Where(nd => nd != null && !nd.Cell.IsDefined())
+                .Select(nd => nd!.Cell);
         }
 
         private static List<Rule> SelectRuleSet(
@@ -261,14 +299,14 @@ namespace TriangulatedTopology
             List<Rule> floorRules,
             List<Rule> ceilRules)
         {
-            var floorFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(Vector3.UnitY, cell.Normal)));
+            var floorFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(-Vector3.UnitY, cell.Normal)));
 
             if (floorFactor < FloorTrashold)
             {
                 return floorRules;
             }
 
-            var ceilFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(-Vector3.UnitY, cell.Normal)));
+            var ceilFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(Vector3.UnitY, cell.Normal)));
 
             if (ceilFactor < CeilTrashold)
             {
@@ -328,7 +366,7 @@ namespace TriangulatedTopology
 
         private static bool IsPossibleInGraph(Rule rule, Cell cell)
         {
-            for (int neighbourIndex = 0; neighbourIndex < cell.Neighbours.Count(); neighbourIndex++)
+            for (int neighbourIndex = 0; neighbourIndex < cell.Neighbours.Length; neighbourIndex++)
             {
                 var neighbour = cell.Neighbours[neighbourIndex];
 
