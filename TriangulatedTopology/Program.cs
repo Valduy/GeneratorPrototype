@@ -108,6 +108,7 @@ namespace TriangulatedTopology
 
             foreach (var node in topology)
             {
+                var normal = node.Face.GetNormal().Normalized();
                 var prev = node.Face.GetCircular(0).TextureCoords * size;
                 var from = node.Face.GetCircular(1).TextureCoords * size;
                 var next = node.Face.GetCircular(2).TextureCoords * size;
@@ -142,7 +143,7 @@ namespace TriangulatedTopology
                             pivot + dx + dy,
                         };
 
-                        grid[x, y] = new Cell(vertices);
+                        grid[x, y] = new Cell(vertices, normal);
                     }
                 }
 
@@ -312,6 +313,23 @@ namespace TriangulatedTopology
             }
         }
 
+        public static List<Cell> GridsToCells(Dictionary<TopologyNode, Cell[,]> grids)
+        {
+            var cells = new List<Cell>();
+
+            foreach (var node in grids)
+            {
+                var iland = node.Value;
+
+                foreach (var cell in iland)
+                {
+                    cells.Add(cell);
+                }
+            }
+
+            return cells;
+        }
+
         public static void Main(string[] args)
         {
             //CollectionsHelper.UseSeed(96350589);
@@ -323,11 +341,12 @@ namespace TriangulatedTopology
             operatorGo.Add<LightComponent>();
             operatorGo.Position = new Vector3(0, 0, 0);
 
-            //var model = Model.Load("Content/Cube.obj");
-            //var model = Model.Load("Content/Room.obj");
-            //var model = Model.Load("Content/Line.obj");
-            //var model = Model.Load("Content/Corner.obj");
-            var model = Model.Load("Content/Scene.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            //var model = Model.Load("Content/Models/Cube.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            //var model = Model.Load("Content/Models/Room.obj");
+            //var model = Model.Load("Content/Models/Line.obj");
+            //var model = Model.Load("Content/Models/Corner.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            var model = Model.Load("Content/Models/Scene.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            //var model = Model.Load("Content/Models/Tower.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
 
             int size = 2048;
             int step = 32;
@@ -347,7 +366,6 @@ namespace TriangulatedTopology
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
             //roomRenderer.Model = model;
             roomRenderer.Model = new Model(model.Meshes[0].TriangulateQuadMesh());
-            roomGo.Position = 5 * Vector3.UnitY;
 
             //var texture = TextureCreator.CreateGridTexture(retopology, initials, size, step);
             //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
@@ -370,25 +388,25 @@ namespace TriangulatedTopology
             //bmp.Save("Test.bmp");
 
             // WFC on graph
-            var rules = RulesLoader.CreateRules(
+            var wallRules = RulesLoader.CreateRules(
                 "Content/WallLogical.png",
                 "Content/WallDetailed.png",
                 LogicalResolution,
                 DetailedResolution);
 
-            var cells = new List<Cell>();
+            var floorRules = RulesLoader.CreateRules(
+                "Content/FloorLogical.png",
+                "Content/FloorDetailed.png",
+                LogicalResolution,
+                DetailedResolution);
 
-            foreach (var node in grids)
-            {
-                var iland = node.Value;
+            var ceilRules = RulesLoader.CreateRules(
+                "Content/CeilLogical.png",
+                "Content/CeilDetailed.png",
+                LogicalResolution,
+                DetailedResolution);
 
-                foreach (var cell in iland)
-                {
-                    cells.Add(cell);
-                }
-            }
-
-            Wfc.GraphWfc(cells, rules);
+            Wfc.GraphWfc(GridsToCells(grids), wallRules);
 
             var texture = TextureCreator.CreateDetailedTexture(grids, size, step);
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);

@@ -24,15 +24,17 @@ namespace TriangulatedTopology
         private List<Vector2> _points = new();
 
         public int Count => _points.Count;
+        public Vector3 Normal;
 
         public readonly NeighbourData?[] Neighbours = new NeighbourData?[NeighboursCount];
         public readonly List<Rule> Rules = new List<Rule>();
 
         public Vector2 this[int index] => _points[index];
 
-        public Cell(IEnumerable<Vector2> points)
+        public Cell(IEnumerable<Vector2> points, Vector3 normal)
         {
             _points = points.ToList();
+            Normal = normal;
         }
 
         public IEnumerator<Vector2> GetEnumerator()

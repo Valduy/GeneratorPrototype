@@ -8,6 +8,9 @@ namespace TriangulatedTopology
 {
     public static class Wfc
     {
+        private const float FloorTrashold = 45.0f;
+        private const float CeilTrashold = 45.0f;
+
         public static void GridWfc(Dictionary<TopologyNode, Cell[,]> grids, List<Rule> rules)
         {
             foreach (var pair in grids)
@@ -250,6 +253,29 @@ namespace TriangulatedTopology
                     }
                 }
             }
+        }
+
+        private static List<Rule> SelectRuleSet(
+            Cell cell, 
+            List<Rule> wallRules,
+            List<Rule> floorRules,
+            List<Rule> ceilRules)
+        {
+            var floorFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(Vector3.UnitY, cell.Normal)));
+
+            if (floorFactor < FloorTrashold)
+            {
+                return floorRules;
+            }
+
+            var ceilFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(-Vector3.UnitY, cell.Normal)));
+
+            if (ceilFactor < CeilTrashold)
+            {
+                return ceilRules;
+            }
+
+            return wallRules;
         }
 
         private static IEnumerable<Vector2i> GetNeighboursCross<T>(T[,] matrix, Vector2i coords, int padding = 0)
