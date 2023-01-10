@@ -10,6 +10,8 @@ using Mathematics = GameEngine.Mathematics.Mathematics;
 using Face = MeshTopology.Face;
 using TriangulatedTopology.RulesAdapters;
 using Assimp;
+using System.Drawing;
+using Quaternion = OpenTK.Mathematics.Quaternion;
 
 namespace TriangulatedTopology
 {
@@ -313,6 +315,126 @@ namespace TriangulatedTopology
             }
         }
 
+        public static void GenerateDetails(Engine engine, Topology topology, List<Cell> cells, int size)
+        {
+            foreach (var cell in cells)
+            {
+                BuildPipe(engine, topology, cell, size);
+                //var centroid = cell.Aggregate((a, b) => a + b) / cell.Count;
+                //var point = GetPoint(topology, centroid, size);
+                //engine.CreateCube(point, new Vector3(0.1f));
+            }
+        }
+
+        public static Vector3 GetPoint(Topology topology, Vector2 uv, int size)
+        {
+            foreach (var node in topology)
+            {
+                Vertex a = node.Face[0];
+                Vertex b = node.Face[1];
+                Vertex c = node.Face[2];
+
+                Vector2 barycentric = GetBarycentric(
+                    a.TextureCoords * size, 
+                    b.TextureCoords * size, 
+                    c.TextureCoords * size, 
+                    uv);
+                
+                float u = barycentric.X;
+                float v = barycentric.Y;
+
+                // Face contain this uv
+                if (u >= 0 && v >= 0 && u + v <= 1)
+                {
+                    Vector3 point = (1 - u - v) * a.Position + v * b.Position + u * c.Position;
+                    return point;
+                }
+            }
+
+            throw new ArgumentException();            
+        }
+
+        public static Vector2 GetBarycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 p)
+        {
+            Vector2 v0 = c - a;
+            Vector2 v1 = b - a;
+            Vector2 v2 = p - a;
+
+            float dot00 = Vector2.Dot(v0, v0);
+            float dot01 = Vector2.Dot(v0, v1);
+            float dot02 = Vector2.Dot(v0, v2);
+            float dot11 = Vector2.Dot(v1, v1);
+            float dot12 = Vector2.Dot(v1, v2);
+
+            float inverseDenominator = 1.0f / (dot00 * dot11 - dot01 * dot01);
+            float u = (dot11 * dot02 - dot01 * dot12) * inverseDenominator;
+            float v = (dot00 * dot12 - dot01 * dot02) * inverseDenominator;
+
+            return new Vector2(u, v);
+        }
+
+        public static void BuildPipe(Engine engine, Topology topology, Cell cell, int size)
+        {            
+            var rotation = Mathematics.GetRotation(Vector3.UnitX, cell.Normal);
+            var scale = new Vector3(0.3f);
+            var color = Color.FromArgb(255, 255, 217, 0);
+            var rule = cell.Rules[0];
+
+            var centroidUV = cell.Aggregate((p1, p2) => p1 + p2) / 4;
+            var centroid = GetPoint(topology, centroidUV, size);
+
+            bool isPipe = false;
+
+            for (int i = 0; i < 4; i++)
+            {
+                var side = rule[i];
+
+                if (side[1].IsSame(color) && side[2].IsSame(color))
+                {                    
+                    var uv = (cell[i] + cell.GetCircular(i + 1)) / 2;
+                    uv += (centroidUV - uv).Normalized(); // Move inside right face;
+                    var point = (GetPoint(topology, uv, size) + centroid) / 2;                    
+                    InstantiateCube(engine, point, rotation, scale, color);
+                    isPipe = true;
+                }
+            }
+
+            if (isPipe)
+            {
+                InstantiateCube(engine, centroid, rotation, scale, color);
+            }
+        }
+
+        private static GameObject InstantiateCube(
+            Engine engine, 
+            Vector3 position, 
+            Quaternion rotation, 
+            Vector3 scale,
+            Color color)
+        {
+            var cube = engine.CreateCube(position, new Vector3(0.3f));
+            var renderer = cube.Get<MaterialRenderComponent>();
+            renderer!.Material.Color = new Vector3(color.R, color.G, color.B);
+            cube.Rotation = rotation;
+            return cube;
+        }
+
+        public static bool IsAllColorsSameInWindow(Color[,] rule, int x, int y, int size, Color color)
+        {
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {
+                    if (!rule[x + i, y + j].IsSame(color))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static List<Cell> GridsToCells(Dictionary<TopologyNode, Cell[,]> grids)
         {
             var cells = new List<Cell>();
@@ -368,8 +490,8 @@ namespace TriangulatedTopology
 
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
-            //roomRenderer.Model = model;
-            roomRenderer.Model = new Model(model.Meshes[0].TriangulateQuadMesh());
+            var triangulatedModel = new Model(model.Meshes[0].TriangulateQuadMesh());            
+            roomRenderer.Model = triangulatedModel;
 
             //var texture = TextureCreator.CreateGridTexture(retopology, initials, size, step);
             //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
@@ -391,7 +513,6 @@ namespace TriangulatedTopology
             //var bmp = TextureHelper.TextureToBitmap(texture, size);
             //bmp.Save("Test.bmp");
 
-            // WFC on graph
             var wallRules = RulesLoader.CreateRules(
                 "Content/WallLogical.png",
                 "Content/WallDetailed.png",
@@ -411,7 +532,9 @@ namespace TriangulatedTopology
                 DetailedResolution);
 
             var cells = GridsToCells(grids);
+            var triangulatedTopology = new Topology(triangulatedModel.Meshes[0], 3);
             Wfc.GraphWfc(cells, wallRules, floorRules, ceilRules);
+            GenerateDetails(engine, triangulatedTopology, cells, size);
 
             var texture = TextureCreator.CreateDetailedTexture(grids, size, step);
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);

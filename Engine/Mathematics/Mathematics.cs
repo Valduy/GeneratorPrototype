@@ -322,15 +322,22 @@ namespace GameEngine.Mathematics
 
         public static Quaternion GetRotation(Vector3 from, Vector3 to)
         {
-            from.Normalize();
+            from.Normalized();
             to.Normalize();
 
-            if (from == to) return Quaternion.Identity;
+            if (ApproximatelyEqualEpsilon(from, to, float.Epsilon))
+            {
+                return Quaternion.Identity;
+            }
+            if (ApproximatelyEqualEpsilon(from, -to, float.Epsilon))
+            {
+                return Quaternion.FromEulerAngles(0, MathF.PI, 0);
+            }
 
             float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
             var axis = Vector3.Cross(from, to);
             float angle = MathF.Acos(cosa);
-            return Matrix4.CreateFromAxisAngle(axis, angle).ExtractRotation();
+            return Quaternion.FromAxisAngle(axis, angle);
         }
     }
 }

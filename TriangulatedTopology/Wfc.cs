@@ -1,4 +1,5 @@
-﻿using GameEngine.Helpers;
+﻿using GameEngine.Graphics;
+using GameEngine.Helpers;
 using MeshTopology;
 using OpenTK.Mathematics;
 using System.Drawing;
@@ -206,7 +207,7 @@ namespace TriangulatedTopology
                     var filtered = FilterGraphPossible(cell);
 
                     // Deadlock resoultion.
-                    if (filtered.Count == 0) // May be bad idea...
+                    if (filtered.Count == 0)
                     {
                         failes += 1;
 
@@ -278,7 +279,7 @@ namespace TriangulatedTopology
                     break;
                 }
 
-                var rule = maxCell.Rules.Count == 41 ? maxCell.Rules[33] : maxCell.Rules.GetRandom();
+                var rule = maxCell.Rules.GetRandom();
                 maxCell.Rules.Clear();
                 maxCell.Rules.Add(rule);
 
