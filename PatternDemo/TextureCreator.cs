@@ -1,4 +1,5 @@
-﻿using MeshTopology;
+﻿using GameEngine.Mathematics;
+using MeshTopology;
 using OpenTK.Mathematics;
 using System.Drawing;
 using TextureUtils;
@@ -7,17 +8,17 @@ namespace PatternDemo
 {
     public static class TextureCreator
     {
-        public static byte[] CreateDetailedTexture(MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
+        public static byte[] CreateDetailedTexture(Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
         {
             return CreateTexture(topology, collapsed, size, r => r.Detailed);
         }
 
-        public static byte[] CreateLogicalTexture(MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
+        public static byte[] CreateLogicalTexture(Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size)
         {
             return CreateTexture(topology, collapsed, size, r => r.Logical);
         }
 
-        private static byte[] CreateTexture(MeshTopology.Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size, Func<Rule, Color[,]> acessor)
+        private static byte[] CreateTexture(Topology topology, Dictionary<TopologyNode, Rule> collapsed, int size, Func<Rule, Color[,]> acessor)
         {
             var texture = new byte[size * size * 4];
 
@@ -26,23 +27,24 @@ namespace PatternDemo
                 var rule = collapsed[node];
                 var defenition = acessor(rule);
 
-                var from = node.Face[0].TextureCoords * size;
-                var to = node.Face[2].TextureCoords * size;
+                var from = node.Face[1].TextureCoords * size;
+     
+                var horizontal = (node.Face[0].TextureCoords - node.Face[1].TextureCoords) * size;
+                var horizontalAxis = horizontal.Normalized();
 
-                var horizontalAxis = (node.Face[1].TextureCoords - node.Face[0].TextureCoords).Normalized();
-                var verticalAxis = (node.Face[3].TextureCoords - node.Face[0].TextureCoords).Normalized();
+                var vertical = (node.Face[2].TextureCoords - node.Face[1].TextureCoords) * size;
+                var verticalAxis = vertical.Normalized();
 
-                var direction = to - from;
-                var square = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
+                var bounds = new Vector2(MathF.Abs(horizontal.SumComponents()), MathF.Abs(vertical.SumComponents()));
 
-                for (int x = 0; x < square.X; x++)
-                {                    
-                    int colorX = (int)(x * defenition.GetLength(0) / square.X);
+                for (int x = 0; x < bounds.X; x++)
+                {
+                    int colorX = (int)Mathematics.Map(x, 0, bounds.X, 0, defenition.GetLength(0));
 
-                    for (int y = 0; y < square.Y; y++)
+                    for (int y = 0; y < bounds.Y; y++)
                     {
-                        int colorY = (int)(y * defenition.GetLength(1) / square.Y);
-                        var color = defenition[defenition.GetLength(0) - 1 - colorX, colorY];
+                        int colorY = (int)Mathematics.Map(y, 0, bounds.Y, 0, defenition.GetLength(1));
+                        var color = defenition[colorX, colorY];
                         var position = from + horizontalAxis * x + verticalAxis * y;
                         texture.SetColor(size, (int)position.X, (int)position.Y, color);
                     }

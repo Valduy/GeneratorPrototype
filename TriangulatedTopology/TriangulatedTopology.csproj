@@ -68,6 +68,12 @@
     <None Update="Content\Models\Line.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Models\Ring.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Models\Ring.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Models\Room.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

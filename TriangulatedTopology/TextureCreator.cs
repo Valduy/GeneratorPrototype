@@ -16,7 +16,7 @@ namespace TriangulatedTopology
             {
                 for (int y = 0; y < size; y++)
                 {
-                    texture.SetColor(size, x, y, Color.White);
+                    texture.SetColor(size, x, y, color);
                 }
             }
         }

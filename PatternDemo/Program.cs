@@ -56,7 +56,7 @@ namespace PatternDemo
         {
             var possibilities = new Dictionary<TopologyNode, List<Rule>>();
             var forRecalculation = new List<TopologyNode>();
-            
+
             foreach (var node in topology.Where(n => !n.IsDefined()))
             {
                 possibilities[node] = new List<Rule>(SelectRuleSet(node, wallRules, floorRules, ceilRules));
@@ -380,7 +380,7 @@ namespace PatternDemo
                 DetailedResolution);
 
             var ceilRules = RulesLoader.CreateRules(
-                "Content/Samples/1/CeilLogical.png", 
+                "Content/Samples/1/CeilLogical.png",
                 "Content/Samples/1/CeilDetailed.png", 
                 LogicalResolution, 
                 DetailedResolution);

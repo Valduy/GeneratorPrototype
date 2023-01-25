@@ -12,6 +12,7 @@ using TriangulatedTopology.RulesAdapters;
 using Assimp;
 using System.Drawing;
 using Quaternion = OpenTK.Mathematics.Quaternion;
+using System.Linq;
 
 namespace TriangulatedTopology
 {
@@ -19,6 +20,8 @@ namespace TriangulatedTopology
     {
         public const int LogicalResolution = 4;
         public const int DetailedResolution = 20;
+
+        public static Model RingModel = Model.Load("Content/Models/Ring.obj");
 
         public static List<Face> ExtractPolies(Topology topology)
         {
@@ -319,10 +322,9 @@ namespace TriangulatedTopology
         {
             foreach (var cell in cells)
             {
-                BuildPipe(engine, topology, cell, size);
-                //var centroid = cell.Aggregate((a, b) => a + b) / cell.Count;
-                //var point = GetPoint(topology, centroid, size);
-                //engine.CreateCube(point, new Vector3(0.1f));
+                BuildNet(engine, topology, cell, Color.FromArgb(255, 255, 217, 0), size);
+                BuildNet(engine, topology, cell, Color.FromArgb(255, 255, 0, 24), size);
+                BuildNet(engine, topology, cell, Color.FromArgb(255, 255, 60, 246), size);
             }
         }
 
@@ -373,17 +375,20 @@ namespace TriangulatedTopology
             return new Vector2(u, v);
         }
 
-        public static void BuildPipe(Engine engine, Topology topology, Cell cell, int size)
-        {            
-            var rotation = Mathematics.GetRotation(Vector3.UnitX, cell.Normal);
-            var scale = new Vector3(0.3f);
-            var color = Color.FromArgb(255, 255, 217, 0);
+        public static void BuildNet(Engine engine, Topology topology, Cell cell, Color color, int size)
+        {
+            if (!cell.Rules[0].Logical.Enumerate().Any(c => c.IsSame(color)))
+            {
+                return;
+            }
+
+            var scaleFactor = 2.2f;
+            var scale = new Vector3(scaleFactor);            
             var rule = cell.Rules[0];
 
             var centroidUV = cell.Aggregate((p1, p2) => p1 + p2) / 4;
             var centroid = GetPoint(topology, centroidUV, size);
-
-            bool isPipe = false;
+            float step = 0.1f;
 
             for (int i = 0; i < 4; i++)
             {
@@ -393,19 +398,25 @@ namespace TriangulatedTopology
                 {                    
                     var uv = (cell[i] + cell.GetCircular(i + 1)) / 2;
                     uv += (centroidUV - uv).Normalized(); // Move inside right face;
-                    var point = (GetPoint(topology, uv, size) + centroid) / 2;                    
-                    InstantiateCube(engine, point, rotation, scale, color);
-                    isPipe = true;
+                    var edgePoint = GetPoint(topology, uv, size);
+                    var direction = centroid - edgePoint;
+                    var length = direction.Length;
+                    direction.Normalize();
+
+                    var rotation = Mathematics.GetRotation(Vector3.UnitY, direction);
+
+                    for (float offset = 0; offset < length; offset += step)
+                    {
+                        var position = edgePoint + direction * offset + cell.Normal * -0.3f;
+                        InstantiateRing(engine, position, rotation, scale, color);
+                    }                    
                 }
             }
 
-            if (isPipe)
-            {
-                InstantiateCube(engine, centroid, rotation, scale, color);
-            }
+            //InstantiateCube(engine, centroid, rotation, scale, color);
         }
 
-        private static GameObject InstantiateCube(
+        public static GameObject InstantiateCube(
             Engine engine, 
             Vector3 position, 
             Quaternion rotation, 
@@ -414,9 +425,31 @@ namespace TriangulatedTopology
         {
             var cube = engine.CreateCube(position, new Vector3(0.3f));
             var renderer = cube.Get<MaterialRenderComponent>();
-            renderer!.Material.Color = new Vector3(color.R, color.G, color.B);
+            renderer!.Material.Color = RgbaToVector3(color);
             cube.Rotation = rotation;
             return cube;
+        }
+
+        public static GameObject InstantiateRing(
+            Engine engine,
+            Vector3 position,
+            Quaternion rotation,
+            Vector3 scale,
+            Color color)
+        {
+            var ring = engine.CreateGameObject();
+            var renderer = ring.Add<MaterialRenderComponent>();
+            renderer!.Model = RingModel;
+            renderer!.Material.Color = RgbaToVector3(color);
+            ring.Position = position;
+            ring.Rotation = rotation;
+            ring.Scale = scale;
+            return ring;
+        }
+
+        public static Vector3 RgbaToVector3(Color color)
+        {
+            return new Vector3((float)color.R / 255, (float)color.G / 255, (float)color.B / 255);
         }
 
         public static bool IsAllColorsSameInWindow(Color[,] rule, int x, int y, int size, Color color)
@@ -536,7 +569,7 @@ namespace TriangulatedTopology
             Wfc.GraphWfc(cells, wallRules, floorRules, ceilRules);
             GenerateDetails(engine, triangulatedTopology, cells, size);
 
-            var texture = TextureCreator.CreateDetailedTexture(grids, size, step);
+            var texture = TextureCreator.CreateDetailedTexture(grids, size, step);                 
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
             var bmp = TextureHelper.TextureToBitmap(texture, size);
             bmp.Save("Test.bmp");
