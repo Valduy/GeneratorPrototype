@@ -13,6 +13,16 @@ namespace MeshTopology
             B = b;
         }
 
+        public static bool operator== (Edge lhs, Edge rhs)
+        {
+            return lhs.A == rhs.A && lhs.B == rhs.B;
+        }
+
+        public static bool operator!= (Edge lhs, Edge rhs)
+        {
+            return !(lhs == rhs);
+        }
+
         public bool HasSamePositions(Edge other)
         {
             return this.A.Position == other.A.Position && this.B.Position == other.B.Position
@@ -28,6 +38,16 @@ namespace MeshTopology
         public bool HasVertex(Vertex vertex)
         {
             return A.Equals(vertex) || B.Equals(vertex);
+        }
+
+        public override bool Equals(object? other)
+        {
+            if (other is not Edge edge)
+            {
+                return false;
+            }
+
+            return A.Equals(edge.A) && B.Equals(edge.B);
         }
     }
 }

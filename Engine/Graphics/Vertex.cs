@@ -16,27 +16,39 @@ namespace GameEngine.Graphics
             TextureCoords = textureCoords;
         }
 
+        public static bool operator== (Vertex lhs, Vertex rhs)
+        {
+            return lhs.Position == rhs.Position
+                && lhs.TextureCoords == rhs.TextureCoords
+                && lhs.Normal == rhs.Normal;
+        }
+
+        public static bool operator!= (Vertex lhs, Vertex rhs)
+        {
+            return !(lhs == rhs);
+        }
+
+
         public override int GetHashCode()
         {
             return Position.GetHashCode() ^ Normal.GetHashCode() ^ TextureCoords.GetHashCode();
         }
 
         public override bool Equals([NotNullWhen(true)] object? other)
-        {
-            if (!(other is Vertex))
+        {            
+            if (other is not Vertex vertex)
             {
                 return false;
             }
 
-            return Equals((Vertex)other);
+            return Equals(vertex);
         }
 
-        public bool Equals(Vertex other)
+        private bool Equals(Vertex other)
         {
             return Position.Equals(other.Position) 
                 && Normal.Equals(other.Normal)
                 && TextureCoords.Equals(other.TextureCoords);
         }
-
     }
 }

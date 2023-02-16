@@ -1,6 +1,4 @@
-﻿using GameEngine.Graphics;
-using GameEngine.Helpers;
-using MeshTopology;
+﻿using GameEngine.Helpers;
 using OpenTK.Mathematics;
 using System.Drawing;
 using TextureUtils;
@@ -11,130 +9,6 @@ namespace TriangulatedTopology
     {
         private const float FloorTrashold = 45.0f;
         private const float CeilTrashold = 45.0f;
-
-        public static void GridWfc(Dictionary<TopologyNode, Cell[,]> grids, List<Rule> rules)
-        {
-            foreach (var pair in grids)
-            {
-                var grid = pair.Value;
-                var defaultRule = rules[33];
-                var forRecalculation = new List<Vector2i>();
-
-                if (grid.GetLength(0) <= 2 || grid.GetLength(1) <= 2)
-                {
-                    foreach (var cell in grid.Enumerate())
-                    {
-                        cell.Rules.Clear();
-                        cell.Rules.Add(defaultRule);
-                    }
-
-                    continue;
-                }
-
-                foreach (var ceil in grid.Enumerate())
-                {
-                    ceil.Rules.Clear();
-                    ceil.Rules.AddRange(rules);
-                }
-
-                // Tob and bottom borders
-                for (int x = 1; x < grid.GetLength(0) - 1; x++)
-                {
-                    grid[x, 0].Rules.Clear();
-                    grid[x, 0].Rules.Add(defaultRule);
-                    forRecalculation.Add(new Vector2i(x, 1));
-
-                    grid[x, grid.GetLength(1) - 1].Rules.Clear();
-                    grid[x, grid.GetLength(1) - 1].Rules.Add(defaultRule);
-                    forRecalculation.Add(new Vector2i(x, grid.GetLength(1) - 2));
-                }
-
-                // Left and right borders
-                for (int y = 1; y < grid.GetLength(1) - 1; y++)
-                {
-                    grid[0, y].Rules.Clear();
-                    grid[0, y].Rules.Add(defaultRule);
-                    forRecalculation.Add(new Vector2i(1, y));
-
-                    grid[grid.GetLength(0) - 1, y].Rules.Clear();
-                    grid[grid.GetLength(0) - 1, y].Rules.Add(defaultRule);
-                    forRecalculation.Add(new Vector2i(grid.GetLength(0) - 2, y));
-                }
-
-                // Corners
-                grid[0, 0].Rules.Clear();
-                grid[0, 0].Rules.Add(defaultRule);
-
-                grid[0, grid.GetLength(1) - 1].Rules.Clear();
-                grid[0, grid.GetLength(1) - 1].Rules.Add(defaultRule);
-
-                grid[grid.GetLength(0) - 1, 0].Rules.Clear();
-                grid[grid.GetLength(0) - 1, 0].Rules.Add(defaultRule);
-
-                grid[grid.GetLength(0) - 1, grid.GetLength(1) - 1].Rules.Clear();
-                grid[grid.GetLength(0) - 1, grid.GetLength(1) - 1].Rules.Add(defaultRule);
-
-                while (true)
-                {
-                    while (forRecalculation.Count > 0)
-                    {
-                        var coords = forRecalculation[0];
-                        forRecalculation.Remove(coords);
-                        var cell = grid[coords.X, coords.Y];
-                        var filtered = FilterGridPossible(grid, coords);
-
-                        if (filtered.Count == 0)
-                        {
-                            cell.Rules.Clear();
-                            cell.Rules.AddRange(rules);
-
-                            foreach (var neighbourCoords in GetNeighboursCross(grid, coords, 1))
-                            {
-                                var neighbour = grid[neighbourCoords.X, neighbourCoords.Y];
-                                neighbour.Rules.Clear();
-                                neighbour.Rules.AddRange(rules);
-                            }
-
-                            continue;
-                        }
-
-                        if (cell.Rules.Count > filtered.Count)
-                        {
-                            forRecalculation.AddRange(GetNeighboursCross(grid, coords, 1));
-                            cell.Rules.Clear();
-                            cell.Rules.AddRange(filtered);
-                        }
-                    }
-
-                    var maxCellCoord = new Vector2i(1, 1);
-                    var maxCell = grid[maxCellCoord.X, maxCellCoord.Y];
-
-                    for (int x = 1; x < grid.GetLength(0) - 1; x++)
-                    {
-                        for (int y = 1; y < grid.GetLength(1) - 1; y++)
-                        {
-                            var cell = grid[x, y];
-
-                            if (cell.Rules.Count > maxCell.Rules.Count)
-                            {
-                                maxCellCoord = new Vector2i(x, y);
-                                maxCell = cell;
-                            }
-                        }
-                    }
-
-                    if (maxCell.Rules.Count <= 1)
-                    {
-                        break;
-                    }
-
-                    var rule = maxCell.Rules.GetRandom();
-                    maxCell.Rules.Clear();
-                    maxCell.Rules.Add(rule);
-                    forRecalculation.AddRange(GetNeighboursCross(grid, maxCellCoord, 1));
-                }
-            }
-        }
 
         public static void GraphWfc(
             List<Cell> cells,
@@ -204,7 +78,7 @@ namespace TriangulatedTopology
                 {
                     var cell = forRecalculation[0];
                     forRecalculation.Remove(cell);
-                    var filtered = FilterGraphPossible(cell);
+                    var filtered = FilterPossible(cell);
 
                     // Deadlock resoultion.
                     if (filtered.Count == 0)
@@ -300,14 +174,14 @@ namespace TriangulatedTopology
             List<Rule> floorRules,
             List<Rule> ceilRules)
         {
-            var floorFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(-Vector3.UnitY, cell.Normal)));
+            var floorFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(Vector3.UnitY, cell.Normal)));
 
             if (floorFactor < FloorTrashold)
             {
                 return floorRules;
             }
 
-            var ceilFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(Vector3.UnitY, cell.Normal)));
+            var ceilFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(-Vector3.UnitY, cell.Normal)));
 
             if (ceilFactor < CeilTrashold)
             {
@@ -337,35 +211,10 @@ namespace TriangulatedTopology
             }
         }
 
-        private static List<Rule> FilterGridPossible(Cell[,] grid, Vector2i coords)
-        {
-            var cell = grid[coords.X, coords.Y];
-            var neighboursCoords = GetNeighboursCross(grid, coords).ToList();
-            return cell.Rules.Where(r => IsPossibleInGrid(grid, r, neighboursCoords)).ToList();
-        }
+        private static List<Rule> FilterPossible(Cell cell) 
+            => cell.Rules.Where(r => IsPossible(r, cell)).ToList();
 
-        private static List<Rule> FilterGraphPossible(Cell cell) 
-            => cell.Rules.Where(r => IsPossibleInGraph(r, cell)).ToList();
-
-        private static bool IsPossibleInGrid(Cell[,] grid, Rule rule, List<Vector2i> neighboursCoords)
-        {
-            for (int neighbourIndex = 0; neighbourIndex < neighboursCoords.Count; neighbourIndex++)
-            {
-                var coords = neighboursCoords[neighbourIndex];
-                var neighbour = grid[coords.X, coords.Y];
-                var rules = neighbour.Rules;
-                var nodeIndex = (neighbourIndex + 2) % 4;
-
-                if (rules.All(r => !IsSame(r[nodeIndex], rule[neighbourIndex])))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private static bool IsPossibleInGraph(Rule rule, Cell cell)
+        private static bool IsPossible(Rule rule, Cell cell)
         {
             for (int neighbourIndex = 0; neighbourIndex < cell.Neighbours.Length; neighbourIndex++)
             {
@@ -405,11 +254,6 @@ namespace TriangulatedTopology
             }
 
             return true;
-        }
-
-        public static List<Rule> ChooseRuleSet()
-        {
-            throw new NotImplementedException();
         }
     }
 }

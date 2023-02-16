@@ -219,29 +219,6 @@ namespace GameEngine.Mathematics
             => thisPolygon.Any(p => IsPointInConvexPolygon(p, otherPolygon))
                || otherPolygon.Any(p => IsPointInConvexPolygon(p, thisPolygon));
 
-        //public static Orientation GetPolygonOrientation(IReadOnlyList<Vector3> polygon)
-        //{
-        //    var first = polygon[0];
-        //    List<Vector2> projection;
-        //    float cross = 0;
-
-        //    if (polygon.All(v => v.X == first.X))
-        //    {
-        //        projection = polygon.Select(v => v.Yz).ToList();
-        //    }
-        //    else if (polygon.All(v => v.Y == first.Y))
-        //    {
-        //        projection = polygon.Select(v => v.Xz).ToList();                
-        //    }
-        //    else
-        //    {
-        //        projection = polygon.Select(v => v.Xy).ToList();
-        //    }
-
-        //    cross = Cross(projection[1] - projection[0], projection[2] - projection[1]);
-        //    return cross > 0 ? Orientation.Сounterclockwise : Orientation.Clockwise;
-        //}
-
         /// <summary>
         /// Calculate cross production for 2d vectors.
         /// </summary>

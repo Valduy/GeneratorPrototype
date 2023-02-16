@@ -1,7 +1,6 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
-using GameEngine.Helpers;
 using GameEngine.Mathematics;
 using GameEngine.Utils;
 using MeshTopology;
@@ -14,12 +13,12 @@ namespace ExtractSurfaces
     {
         public bool Equals(Edge? x, Edge? y)
         {
-            if (x == null && y == null)
+            if (x is null && y is null)
             {
                 return true;
             }
 
-            if (x != null && y != null)
+            if (x is not null && y is not null)
             {
                 return x.HasSamePositions(y);
             }
@@ -35,7 +34,7 @@ namespace ExtractSurfaces
 
     public class Program
     {
-        public static List<List<Edge>> ExtractPolies(MeshTopology.Topology topology)
+        public static List<List<Edge>> ExtractPolies(Topology topology)
         {
             var groups = topology.ExtractFacesGroups((reference, node) =>
             {
@@ -119,7 +118,7 @@ namespace ExtractSurfaces
             axis.Position = new Vector3(-11, 0, -11);
 
             var model = Model.Load("Content/UVExperiments.obj");
-            var topology = new MeshTopology.Topology(model.Meshes[0], 3);
+            var topology = new Topology(model.Meshes[0], 3);
             var polies = ExtractPolies(topology);
 
             var poliesGo = CreatePoliesVisualization(engine, polies);

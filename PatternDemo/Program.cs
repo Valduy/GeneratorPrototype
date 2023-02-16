@@ -189,7 +189,7 @@ namespace PatternDemo
             int margin = 1;
             PlaceBigTiles(possibilities, topology
                 .ExtractXzGroups()
-                .Where(g => g.Enumerate().First(n => n != null)!.Face.GetNormal().Y < 0)
+                .Where(g => g.Enumerate().First(n => n != null)!.Face.GetNormal().Y > 0)
                 .ToList(), bigTiles, margin);
         }
 
@@ -281,7 +281,7 @@ namespace PatternDemo
                     return wallRules;
                 case FaceOrientation.XZ:
                     var normal = node.Face.GetNormal();
-                    return (normal.Y > 0) ? ceilRules : floorRules;
+                    return (normal.Y < 0) ? ceilRules : floorRules;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -351,7 +351,7 @@ namespace PatternDemo
             var axis = engine.Axis(2);
             axis.Position = new Vector3(-11, 0, -11);
 
-            var quadModel = Model.Load("Content/AnotherTower.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            var quadModel = Model.Load("Content/Room.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
             quadModel = new Model(quadModel.Meshes[0].SortVertices());
             var topology = new Topology(quadModel.Meshes[0], 4);
 

@@ -7,6 +7,132 @@ namespace TriangulatedTopology
 {
     public class DebugTopologyResolver
     {
+        public static void DebugCellsConnections(List<Cell> cells, int logicalResolution)
+        {
+            var pallete = new Color[]
+            {
+                Color.Blue,
+                Color.Purple,
+                Color.Magenta,
+                Color.Coral,
+                Color.Red,
+                Color.Orange,
+                Color.Yellow,
+                Color.Lime,
+                Color.Green,
+                Color.Aqua,
+                Color.Cyan,
+            };
+
+            foreach (var cell in cells)
+            {
+                var defaultRule = new Color[logicalResolution, logicalResolution];
+
+                for (int x = 0; x < defaultRule.GetLength(0); x++)
+                {
+                    for (int y = 0; y < defaultRule.GetLength(1); y++)
+                    {
+                        defaultRule[x, y] = Color.White;
+                    }
+                }
+
+                cell.Rules.Add(new Rule(defaultRule, defaultRule));
+            }
+
+            foreach (var cell in cells)
+            {
+                var rule = cell.Rules[0];
+
+                rule.Logical[2, 1] = Color.Black;
+                rule.Logical[1, 1] = Color.FromArgb(255 / 2, 255 / 2, 255 / 2);
+                rule.Logical[1, 2] = Color.FromArgb(255 / 3, 255 / 3, 255 / 3);
+                rule.Logical[2, 2] = Color.FromArgb(255 / 4, 255 / 4, 255 / 4);
+
+                for (int i = 0; i < 4; i++)
+                {
+                    var neighbour = cell.Neighbours[i]!;
+                    var neighbourRule = neighbour.Cell.Rules[0];
+                    var nodeIndex = (i + 2) % 4;
+                    var neighbourSide = neighbour.Adapter.GetSide(neighbourRule, nodeIndex);
+
+                    if (!neighbourSide[1].IsSame(Color.White) &&
+                        !neighbourSide[2].IsSame(Color.White))
+                    {
+                        switch (i)
+                        {
+                            case 0:
+                                for (int j = 1; j < logicalResolution - 1; j++)
+                                {
+                                    rule.Logical[j, 0] = neighbourSide[j];
+                                }
+
+                                break;
+                            case 1:
+                                for (int j = 1; j < logicalResolution - 1; j++)
+                                {
+                                    rule.Logical[0, j] = neighbourSide[j];
+                                }
+
+                                break;
+                            case 2:
+                                for (int j = 1; j < logicalResolution - 1; j++)
+                                {
+                                    rule.Logical[j, logicalResolution - 1] = neighbourSide[j];
+                                }
+
+                                break;
+                            case 3:
+                                for (int j = 1; j < logicalResolution - 1; j++)
+                                {
+                                    rule.Logical[logicalResolution - 1, j] = neighbourSide[j];
+                                }
+
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException("index");
+                        }
+                    }
+                    else
+                    {
+                        switch (i)
+                        {
+                            case 0:
+                                for (int j = 1; j < logicalResolution - 1; j++)
+                                {
+                                    rule.Logical[j, 0] = pallete.GetRandom();
+                                }
+
+                                break;
+                            case 1:
+                                for (int j = 1; j < logicalResolution - 1; j++)
+                                {
+                                    rule.Logical[0, j] = pallete.GetRandom();
+                                }
+
+                                break;
+                            case 2:
+                                for (int j = 1; j < logicalResolution - 1; j++)
+                                {
+                                    rule.Logical[j, logicalResolution - 1] = pallete.GetRandom();
+                                }
+
+                                break;
+                            case 3:
+                                for (int j = 1; j < logicalResolution - 1; j++)
+                                {
+                                    rule.Logical[logicalResolution - 1, j] = pallete.GetRandom();
+                                }
+
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException("index");
+                        }
+                    }
+                }
+            }
+        }
+
+
         public static void OrientationDebug(Dictionary<TopologyNode, Cell[,]> grids, int logicalResolution)
         {
             var pallete = new Color[]

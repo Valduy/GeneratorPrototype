@@ -265,7 +265,7 @@ namespace MeshTopology
                 var wall = new TopologyNode?[width, height];
 
                 var notNullNode = group.First(n => n != null)!;
-                bool isMirror = notNullNode.Face.GetNormal().Z < 0;
+                bool isMirror = notNullNode.Face.GetNormal().Z > 0;
 
                 foreach (var node in group)
                 {
@@ -294,7 +294,7 @@ namespace MeshTopology
                 var wall = new TopologyNode?[width, height];
 
                 var notNullNode = group.First(n => n != null)!;
-                bool isMirror = notNullNode.Face.GetNormal().Y > 0;
+                bool isMirror = notNullNode.Face.GetNormal().Y < 0;
 
                 foreach (var node in group)
                 {
@@ -323,7 +323,7 @@ namespace MeshTopology
                 var wall = new TopologyNode?[width, height];
 
                 var notNullNode = group.First(n => n != null)!;
-                bool isMirror = notNullNode.Face.GetNormal().X > 0;
+                bool isMirror = notNullNode.Face.GetNormal().X < 0;
 
                 foreach (var node in group)
                 {
@@ -373,8 +373,8 @@ namespace MeshTopology
 
         public static Vector3 GetNormal(this Face face)
         {
-            var a = (face[1].Position - face[0].Position).Normalized();
-            var b = (face[2].Position - face[0].Position).Normalized();
+            var a = (face[0].Position - face[1].Position).Normalized();
+            var b = (face[2].Position - face[1].Position).Normalized();
             return Vector3.Cross(a, b);
         }
 

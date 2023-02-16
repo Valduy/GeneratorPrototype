@@ -7,12 +7,14 @@ namespace MeshTopology
     {
         private List<TopologyNode> _nodes = new();
 
-        public int VerticesPerFace;
+        public readonly int VerticesPerFace;
         public int Count => _nodes.Count;
 
         public Topology(Mesh mesh, int verticesPerFace) 
             : this(mesh.ExtractFaces(verticesPerFace))
-        { }
+        {
+            VerticesPerFace = verticesPerFace;
+        }
 
         public Topology(List<Face> faces)
         {

@@ -25,6 +25,11 @@ namespace TriangulatedTopology
         {
             var from = node.Face[0].TextureCoords * size;
             var to = node.Face[2].TextureCoords * size;
+            FillCellsWithColor(texture, from, to, size, color);
+        }
+
+        public static void FillCellsWithColor(byte[] texture, Vector2 from, Vector2 to, int size, Color color)
+        {
             var direction = to - from;
             var bounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
             var axis = new Vector2i(Math.Sign(direction.X), Math.Sign(direction.Y));
@@ -54,6 +59,11 @@ namespace TriangulatedTopology
         {
             var from = node.Face[1].TextureCoords * size;
             var to = node.Face[3].TextureCoords * size;
+            DrawGrid(texture, from, to, size, step);
+        }
+
+        public static void DrawGrid(byte[] texture, Vector2 from, Vector2 to, int size, int step)
+        {
             var direction = to - from;
             var bounds = new Vector2(MathF.Abs(direction.X), MathF.Abs(direction.Y));
             var axis = new Vector2i(Math.Sign(direction.X), Math.Sign(direction.Y));
@@ -233,6 +243,81 @@ namespace TriangulatedTopology
             return texture;
         }
 
+        private class CellConnection
+        {
+            public readonly Cell A;
+            public readonly Cell B;
+
+            public CellConnection(Cell a, Cell b)
+            {
+                A = a;
+                B = b;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (obj is not CellConnection cellConnection)
+                {
+                    return false;
+                }
+
+                return cellConnection.A == A && cellConnection.B == B
+                    || cellConnection.A == B && cellConnection.B == A;
+            }
+
+            public override int GetHashCode()
+            {
+                return A.GetHashCode() ^ B.GetHashCode();
+            }
+        }
+
+        public static byte[] CreateDebugStitchesTexture(
+            List<Cell> cells,
+            int size,
+            int step)
+        {
+            var texture = new byte[size * size * 4];
+            var connections = new Dictionary<CellConnection, Color>();
+
+            var pallete = new Color[]
+            {
+                Color.Blue,
+                Color.Purple,
+                Color.Magenta,
+                Color.Coral,
+                Color.Red,
+                Color.Orange,
+                Color.Yellow,
+                Color.Lime,
+                Color.Green,
+                Color.Aqua,
+                Color.Cyan,
+            };
+
+            FillWithColor(texture, size, Color.White);
+
+            foreach (var cell in cells) 
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    var neighbour = cell.Neighbours[i]!.Cell;
+                    var connection = new CellConnection(cell, neighbour);
+
+                    if (!connections.TryGetValue(connection, out var color))
+                    {
+                        color = pallete.GetRandom();
+                        connections[connection] = color;
+                    }
+
+                    var from = cell.Aggregate((a, b) => a + b) / cell.Count;
+                    var to = (cell.GetCircular(i) + cell.GetCircular(i + 1)) / 2;
+                    DrawLine(texture, size, from, to, color);
+                }
+            }
+
+            return texture;
+        }
+
         public static byte[] CreateDebugStitchesTexture(
             Dictionary<TopologyNode, Cell[,]> grids,
             int size,
@@ -356,23 +441,23 @@ namespace TriangulatedTopology
         }
 
         public static byte[] CreateDetailedTexture(
-            Dictionary<TopologyNode, Cell[,]> grids, 
+            List<Cell> cells,
             int size, 
             int step)
         {
-            return CreateTexture(grids, size, step, c => c.Rules[0].Detailed);
+            return CreateTexture(cells, size, step, c => c.Rules[0].Detailed);
         }
 
         public static byte[] CreateLogicalTexture(
-            Dictionary<TopologyNode, Cell[,]> grids,
+            List<Cell> cells,
             int size, 
             int step)
         {
-            return CreateTexture(grids, size, step, c => c.Rules[0].Logical);
+            return CreateTexture(cells, size, step, c => c.Rules[0].Logical);
         }
 
         private static byte[] CreateTexture(
-            Dictionary<TopologyNode, Cell[,]> grids, 
+            List<Cell> cells, 
             int size, 
             int step, 
             Func<Cell, Color[,]> acessor)
@@ -387,41 +472,35 @@ namespace TriangulatedTopology
                 }
             }
 
-            foreach (var pair in grids)
+            foreach (var cell in cells)
             {
-                var node = pair.Key;
-                var grid = pair.Value;
+                var rule = acessor(cell);
+                var from = cell[1];
 
-                foreach (var cell in grid)
+                var horizontal = cell[0] - cell[1];
+                var horizontalAxis = horizontal.Normalized();
+
+                var vertical = cell[2] - cell[1];
+                var verticalAxis = vertical.Normalized();
+
+                var bounds = new Vector2(MathF.Abs(horizontal.SumComponents()), MathF.Abs(vertical.SumComponents()));
+
+                for (int x = 0; x < bounds.X; x++)
                 {
-                    var rule = acessor(cell);
-                    var from = cell[1];
-     
-                    var horizontal = cell[0] - cell[1];
-                    var horizontalAxis = horizontal.Normalized();
+                    int colorX = (int)Mathematics.Map(x, 0, bounds.X, 0, rule.GetLength(0));
 
-                    var vertical = cell[2] - cell[1];
-                    var verticalAxis = vertical.Normalized();
-
-                    var bounds = new Vector2(MathF.Abs(horizontal.SumComponents()), MathF.Abs(vertical.SumComponents()));
-
-                    for (int x = 0; x < bounds.X; x++)
+                    for (int y = 0; y < bounds.Y; y++)
                     {
-                        int colorX = (int)Mathematics.Map(x, 0, bounds.X, 0, rule.GetLength(0));
-
-                        for (int y = 0; y < bounds.Y; y++)
-                        {
-                            int colorY = (int)Mathematics.Map(y, 0, bounds.Y, 0, rule.GetLength(1));
-                            var color = rule[colorX, colorY];
-                            var position = from + horizontalAxis * x + verticalAxis * y;
-                            texture.SetColor(size, (int)position.X, (int)position.Y, color);
-                        }
+                        int colorY = (int)Mathematics.Map(y, 0, bounds.Y, 0, rule.GetLength(1));
+                        var color = rule[colorX, colorY];
+                        var position = from + horizontalAxis * x + verticalAxis * y;
+                        texture.SetColor(size, (int)position.X, (int)position.Y, color);
                     }
                 }
 
-                DrawGrid(texture, node, size, step);
+                DrawGrid(texture, cell[0], cell[2], size, step);
             }
-
+            
             return texture;
         }
     }

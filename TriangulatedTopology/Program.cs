@@ -7,12 +7,10 @@ using GameEngine.Utils;
 using MeshTopology;
 using OpenTK.Mathematics;
 using Mathematics = GameEngine.Mathematics.Mathematics;
-using Face = MeshTopology.Face;
 using TriangulatedTopology.RulesAdapters;
-using Assimp;
 using System.Drawing;
 using Quaternion = OpenTK.Mathematics.Quaternion;
-using System.Linq;
+using TriangulatedTopology.TextureIsland;
 
 namespace TriangulatedTopology
 {
@@ -23,162 +21,198 @@ namespace TriangulatedTopology
 
         public static Model RingModel = Model.Load("Content/Models/Ring.obj");
 
-        public static List<Face> ExtractPolies(Topology topology)
+        public static List<Island> CreateIslands(Topology topology, int size, int step)
         {
+            var islands = new List<Island>();
             var groups = topology.ExtractFacesGroups((reference, node)
                 => reference.Face.IsSharedUVEdgeExist(node.Face));
 
-            var polies = new List<Face>();
-
             foreach (var group in groups)
             {
-                var repeates = new HashSet<Edge>(new EdgeComparer());
-                var edges = new HashSet<Edge>(new EdgeComparer());
+                var edges = ExtractOuterEdges(group);
+                var loop = ConnectIntoLoop(edges);
+                var sides = LoopToSides(loop);
+                var corners = ExtractCorners(sides);
+                var grid = CreateGrid(corners, size, step);
+                var island = new Island(grid, sides.ToArray());
+                islands.Add(island);
+            }
 
-                foreach (var node in group)
+            ConnectCells(islands, size, step);
+            return islands;
+        }
+
+        public static HashSet<Edge> ExtractOuterEdges(List<TopologyNode> island)
+        {
+            var repeates = new HashSet<Edge>(new EdgeComparer());
+            var edges = new HashSet<Edge>(new EdgeComparer());
+
+            foreach (var node in island)
+            {
+                foreach (var edge in node.Face.EnumerateEdges())
                 {
-                    foreach (var edge in node.Face.EnumerateEdges())
+                    if (edges.Contains(edge))
                     {
-                        if (edges.Contains(edge))
-                        {
-                            repeates.Add(edge);
-                        }
-                        else
-                        {
-                            edges.Add(edge);
-                        }                     
+                        repeates.Add(edge);
+                    }
+                    else
+                    {
+                        edges.Add(edge);
                     }
                 }
+            }
 
-                edges.ExceptWith(repeates);
+            edges.ExceptWith(repeates);
+            return edges;
+        }
 
-                while (edges.Count > 0)
+        public static List<Edge> ConnectIntoLoop(HashSet<Edge> edges)
+        {
+            var loop = new List<Edge>();
+            var temp = edges.First();
+
+            while (edges.Count > 0)
+            {
+                edges.Remove(temp);
+                loop.Add(temp);
+
+                foreach (var other in edges)
                 {
-                    var poly = new List<Vertex>() { edges.First().B };
-                    edges.Remove(edges.First());
-
-                    while (edges.Any(e => e.A.Position == poly[poly.Count - 1].Position))
+                    if (other.A == temp.B)
                     {
-                        var edge = edges.First(e => e.A.Position == poly[poly.Count - 1].Position);
-                        poly.Add(edge.B);
-                        edges.Remove(edge);
+                        temp = other;
+                        break;
                     }
-
-                    polies.Add(new Face(poly));
-                }            
+                }
             }
 
-            return polies;
+            return loop;
         }
 
-        public static List<Face> CleanUpPolies(List<Face> polies)
+        public static List<Side> LoopToSides(List<Edge> loop)
         {
-            var result = new List<Face>();
+            var sides = new List<Side>();
+            int initial = 0;
 
-            foreach (var poly in polies)
+            // Find any corner.
+            for (; initial < loop.Count; initial++)
             {
-                var cleanPoly = GetCorners(poly);
-                result.Add(new Face(cleanPoly));
-            }
-
-            return result;
-        }
-
-        public static List<Vertex> GetCorners(Face poly)
-        {
-            var cleanPoly = new List<Vertex>();
-
-            for (int i = 0; i < poly.Count; i++)
-            {
-                var prev = poly.GetCircular(i - 1);
-                var current = poly.GetCircular(i);
-                var next = poly.GetCircular(i + 1);
-
-                var axis1 = prev.Position - current.Position;
-                var axis2 = next.Position - current.Position;
-                var cross = Vector3.Cross(axis1, axis2);
-
-                if (!Mathematics.ApproximatelyEqualEpsilon(cross, Vector3.Zero, float.Epsilon))
+                var prev = loop.GetCircular(initial);
+                var next = loop.GetCircular(initial + 1);
+                var prevDirection = Vector2.Normalize(prev.B.TextureCoords - prev.A.TextureCoords);
+                var nextDirection = Vector2.Normalize(next.B.TextureCoords - next.A.TextureCoords);
+                
+                if (prevDirection != nextDirection)
                 {
-                    cleanPoly.Add(current);
+                    break;
                 }
             }
 
-            return cleanPoly;
-        }
+            initial += 1;
 
-        public static Dictionary<TopologyNode, Cell[,]> BuildCells(Topology topology, int size, int step)
-        {
-            var grids = new Dictionary<TopologyNode, Cell[,]>();
+            // Create sides.
+            var edges = new List<Edge>();
 
-            foreach (var node in topology)
+            for (int i = 0; i < loop.Count; i++)
             {
-                var normal = node.Face.GetNormal().Normalized();
-                var prev = node.Face.GetCircular(0).TextureCoords * size;
-                var from = node.Face.GetCircular(1).TextureCoords * size;
-                var next = node.Face.GetCircular(2).TextureCoords * size;
+                var prev = loop.GetCircular(initial + i);
+                var next = loop.GetCircular(initial + i + 1);
+                var prevDirection = Vector2.Normalize(prev.B.TextureCoords - prev.A.TextureCoords);
+                var nextDirection = Vector2.Normalize(next.B.TextureCoords - next.A.TextureCoords);
 
-                var xDirection = prev - from;
-                var yDirection = next - from;
+                edges.Add(prev);
 
-                var xLength = xDirection.Length;
-                var yLength = yDirection.Length;
-
-                var xAxis = xDirection.Normalized();
-                var yAxis = yDirection.Normalized();
-
-                int width = (int)MathHelper.Ceiling(xLength / step);
-                int height = (int)MathHelper.Ceiling(yLength / step);
-                var grid = new Cell[width, height];
-
-                var dx = step * xAxis;
-                var dy = step * yAxis;
-
-                for (int x = 0; x < width; x++)
+                if (prevDirection != nextDirection)
                 {
-                    for (int y = 0; y < height; y++)
-                    {
-                        var pivot = from + (step * x * xAxis) + (step * y * yAxis);
-
-                        var vertices = new List<Vector2>()
-                        {
-                            pivot + dx, 
-                            pivot, 
-                            pivot + dy, 
-                            pivot + dx + dy,
-                        };
-
-                        grid[x, y] = new Cell(vertices, normal);
-                    }
+                    var side = new Side(edges);
+                    sides.Add(side);
+                    edges.Clear();
                 }
-
-                grids[node] = grid;
             }
 
-            return grids;
+            return sides;
         }
 
-        public static void ConnectCells(Dictionary<TopologyNode, Cell[,]> grids, int size)
+        public static List<Vertex> ExtractCorners(List<Side> sides)
         {
-            foreach (var pair in grids)
-            {
-                var node = pair.Key;
-                var grid = pair.Value;
+            var corners = new List<Vertex>();
 
-                ConnectCellsOnSameGrid(grid);
-                ConnectGridWithNeighbours(grids, node, size);
+            foreach (var side in sides)
+            {
+                corners.Add(side[0].A);
             }
+
+            return corners;
         }
 
-        public static void ConnectCellsOnSameGrid(Cell[,] grid)
+        public static Cell[,] CreateGrid(List<Vertex> corners, int size, int step)
         {
-            for (int x = 0; x < grid.GetLength(0) - 1; x++)
+            var normal = GetNormal(corners);
+            var prev = corners[0].TextureCoords * size;
+            var from = corners[1].TextureCoords * size;
+            var next = corners[2].TextureCoords * size;
+
+            var xDirection = prev - from;
+            var yDirection = next - from;
+
+            var xLength = xDirection.Length;
+            var yLength = yDirection.Length;
+
+            var xAxis = xDirection.Normalized();
+            var yAxis = yDirection.Normalized();
+
+            int width = (int)MathHelper.Ceiling(xLength / step);
+            int height = (int)MathHelper.Ceiling(yLength / step);
+            var grid = new Cell[width, height];
+
+            var dx = step * xAxis;
+            var dy = step * yAxis;
+
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < grid.GetLength(1) - 1; y++)
+                for (int y = 0; y < height; y++)
                 {
-                    var cell = grid[x, y];
-                    var right = grid[x + 1, y];
-                    var bottom = grid[x, y + 1];
+                    var pivot = from + (step * x * xAxis) + (step * y * yAxis);
+                    var vertices = new List<Vector2>()
+                    {
+                        pivot + dx,
+                        pivot,
+                        pivot + dy,
+                        pivot + dx + dy,
+                    };
+
+                    grid[x, y] = new Cell(vertices, normal);
+                }
+            }
+
+            return grid;
+        }
+
+        public static Vector3 GetNormal(IReadOnlyList<Vertex> face)
+        {
+            var a = Vector3.Normalize(face[0].Position - face[1].Position);
+            var b = Vector3.Normalize(face[2].Position - face[1].Position);
+            return Vector3.Cross(a, b).Normalized();
+        }
+
+        public static void ConnectCells(List<Island> islands, int size, int step)
+        {
+            foreach (var island in islands)
+            {               
+                ConnectCellsOnIsland(island);
+                ConnectCellsBetweenIslands(island, islands, size, step);
+            }
+        }
+
+        public static void ConnectCellsOnIsland(Island island)
+        {
+            for (int x = 0; x < island.Grid.GetLength(0) - 1; x++)
+            {
+                for (int y = 0; y < island.Grid.GetLength(1) - 1; y++)
+                {
+                    var cell = island.Grid[x, y];
+                    var right = island.Grid[x + 1, y];
+                    var bottom = island.Grid[x, y + 1];
 
                     cell.Neighbours[3] = new NeighbourData(right, new RuleEmptyAdapter(LogicalResolution));
                     right.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter(LogicalResolution));
@@ -188,134 +222,146 @@ namespace TriangulatedTopology
                 }
             }
 
-            int lastX = grid.GetLength(0) - 1;
-            int lastY = grid.GetLength(1) - 1;
+            int lastX = island.Grid.GetLength(0) - 1;
+            int lastY = island.Grid.GetLength(1) - 1;
 
-            for (int x = 0; x < grid.GetLength(0) - 1; x++)
+            // Bottom side.
+            for (int x = 0; x < island.Grid.GetLength(0) - 1; x++)
             {
-                var cell = grid[x, lastY];
-                var right = grid[x + 1, lastY];
+                var cell = island.Grid[x, lastY];
+                var right = island.Grid[x + 1, lastY];
 
                 cell.Neighbours[3] = new NeighbourData(right, new RuleEmptyAdapter(LogicalResolution));
                 right.Neighbours[1] = new NeighbourData(cell, new RuleEmptyAdapter(LogicalResolution));
             }
 
-            for (int y = 0; y < grid.GetLength(1) - 1; y++)
+            // Right side.
+            for (int y = 0; y < island.Grid.GetLength(1) - 1; y++)
             {
-                var cell = grid[lastX, y];
-                var bottom = grid[lastX, y + 1];
+                var cell = island.Grid[lastX, y];
+                var bottom = island.Grid[lastX, y + 1];
 
                 cell.Neighbours[2] = new NeighbourData(bottom, new RuleEmptyAdapter(LogicalResolution));
                 bottom.Neighbours[0] = new NeighbourData(cell, new RuleEmptyAdapter(LogicalResolution));
             }
         }
 
-        public static void ConnectGridWithNeighbours(
-            Dictionary<TopologyNode, Cell[,]> grids, 
-            TopologyNode node, 
-            int size)
+        public static void ConnectCellsBetweenIslands(Island island, List<Island> islands, int size, int step)
         {
-            var grid = grids[node];
-
-            for (int i = 0; i < node.Neighbours.Count; i++)
+            for (int sideIndex = 0; sideIndex < island.Sides.Length; sideIndex++)
             {
-                var neighbour = node.Neighbours[i];
+                var side = island.Sides[sideIndex];
 
-                if (grids.TryGetValue(neighbour, out var neighbourGrid))
+                foreach (var segment in side)
                 {
-                    var neighbourSharedEdge = neighbour.Face.GetSharedEdge(node.Face);
-                    var gridSharedEdge = node.Face.GetSharedEdge(neighbour.Face);
+                    var thisCells = island.GetCorrespodingCells(segment.A.Position, segment.B.Position, size, step);
+                    var neighbour = GetNeighbourIsland(island, islands, segment);
+                    var neighbourCells = neighbour.GetCorrespodingCells(segment.A.Position, segment.B.Position, size, step);
+                    GetAdapterBasis(sideIndex, segment, neighbour, out var origin, out var xAxis, out var yAxis);
 
-                    var fromTextureCoords = GetTextureCoords(neighbourSharedEdge, gridSharedEdge.A.Position);
-                    var toTextureCoords = GetTextureCoords(neighbourSharedEdge, gridSharedEdge.B.Position);
-
-                    var from = GetCornerByUV(neighbourGrid, fromTextureCoords * size);
-                    var to = GetCornerByUV(neighbourGrid, toTextureCoords * size);
-                    var temp = from;
-
-                    var step = to - from;
-                    step.X = MathHelper.Sign(step.X);
-                    step.Y = MathHelper.Sign(step.Y);
-
-                    foreach (var cell in EnumerateGridSide(grid, i))
+                    for (int i = 0; i < thisCells.Count; i++)
                     {
-                        var link = neighbourGrid[temp.X, temp.Y];
-                        cell.Neighbours[i] = new NeighbourData(link, new RuleRotationAdapter(node, neighbour, LogicalResolution));
-                        temp += step;
+                        var thisCell = thisCells[i];
+                        var neighbourCell = neighbourCells[i];
+                        thisCell.Neighbours[sideIndex] = new NeighbourData(neighbourCell, new RuleRotationAdapter(origin, xAxis, yAxis, LogicalResolution));
                     }
                 }
             }
         }
 
-        public static Vector2 GetTextureCoords(Edge edge, Vector3 position)
+        // This method is where all the magic happens...
+        public static void GetAdapterBasis(
+            int sideIndex, 
+            Edge segment, 
+            Island neighbour, 
+            out Vector2i origin, 
+            out Vector2i xAxis, 
+            out Vector2i yAxis)
         {
-            if (edge.A.Position == position)
+            neighbour.TryGetSegmentAndSide(segment.A.Position, segment.B.Position, out var _, out var neighbourSide);
+            var expectedAnchorNeighbourVertexIndex = (4 + (sideIndex - 1 % 4)) % 4;
+            var (A, B) = GetExpectedNeighbourSideVerticesOrder(segment, neighbourSide!);
+
+            var anchorNeighbourVertex = neighbour.Corners.First(v => v.Position == A);
+            var anchorNeighbourVertexIndex = neighbour.Corners.IndexOf(anchorNeighbourVertex);
+
+            var secondaryNeighbourVertex = neighbour.Corners.First(v => v.Position == B);
+            var secondaryNeighbourVertexIndex = neighbour.Corners.IndexOf(secondaryNeighbourVertex);
+
+            bool isShouldTranspose = (secondaryNeighbourVertexIndex + 1) % 4 != anchorNeighbourVertexIndex;
+            int factor = anchorNeighbourVertexIndex - expectedAnchorNeighbourVertexIndex;
+            int rotations = MathHelper.Abs(factor);
+            var direction = factor < 0
+                ? RotationDirection.Negative
+                : RotationDirection.Positive;
+
+            var origins = new CoordSystem[]
             {
-                return edge.A.TextureCoords;
-            }
-            if (edge.B.Position == position) 
+                new(new Vector2i(0, 0),
+                    new Vector2i(1, 0),
+                    new Vector2i(0, 1)),
+                new(new Vector2i(0, LogicalResolution - 1),
+                    new Vector2i(0, -1),
+                    new Vector2i(1, 0)),
+                new(new Vector2i(LogicalResolution - 1, LogicalResolution - 1),
+                    new Vector2i(-1, 0),
+                    new Vector2i(0, -1)),
+                new(new Vector2i(LogicalResolution - 1, 0),
+                    new Vector2i(0, 1),
+                    new Vector2i(-1, 0)),
+            };
+
+            switch (direction)
             {
-                return edge.B.TextureCoords;
+                case RotationDirection.Negative:
+                    for (int i = 0; i < rotations; i++)
+                    {
+                        origins.ShiftRight();
+                    }
+
+                    break;
+                case RotationDirection.Positive:
+                    for (int i = 0; i < rotations; i++)
+                    {
+                        origins.ShiftLeft();
+                    }
+
+                    break;
             }
 
-            throw new ArgumentException($"Edge is not contain vertex with position {position}.");
+            origin = origins[0].Origin;
+            xAxis = origins[0].XAxis;
+            yAxis = origins[0].YAxis;
+
+            if (isShouldTranspose)
+            {
+                var temp = xAxis;
+                xAxis = yAxis;
+                yAxis = temp;
+            }            
         }
 
-        public static Vector2i GetCornerByUV(Cell[,] grid, Vector2 uv)
+        public static (Vector3 A, Vector3 B) GetExpectedNeighbourSideVerticesOrder(Edge pivotSegment, Side neighbourSide)
         {
-            float epsilon = 0.1f;
+            Vector3 A = neighbourSide.A.Position;
+            Vector3 B = neighbourSide.B.Position;
 
-            if (grid[0, 0].Any(p => (uv - p).Length < epsilon))
+            float aDistance = (neighbourSide.A.Position - pivotSegment.A.Position).Length;
+            float bDistance = (neighbourSide.A.Position - pivotSegment.B.Position).Length;
+
+            if (aDistance > bDistance)
             {
-                return new Vector2i(0, 0);
-            }
-            if (grid[grid.GetLength(0) - 1, 0].Any(p => (uv - p).Length < epsilon))
-            {
-                return new Vector2i(grid.GetLength(0) - 1, 0);
-            }
-            if (grid[grid.GetLength(0) - 1, grid.GetLength(1) - 1].Any(p => (uv - p).Length < epsilon))
-            {
-                return new Vector2i(grid.GetLength(0) - 1, grid.GetLength(1) - 1);
-            }
-            if (grid[0, grid.GetLength(1) - 1].Any(p => (uv - p).Length < epsilon))
-            {
-                return new Vector2i(0, grid.GetLength(1) - 1);
+                var temp = A;
+                A = B;
+                B = temp;
             }
 
-            throw new ArgumentException($"There is no corner with uv {uv}.");
+            return (A, B);
         }
 
-        public static IEnumerable<Cell> EnumerateGridSide(Cell[,] grid, int side)
+        public static Island GetNeighbourIsland(Island island, List<Island> islands, Edge segment)
         {
-            switch (side)
-            {
-                case 0:
-                    for (int x = grid.GetLength(0) - 1; x >= 0; x--)
-                    {
-                        yield return grid[x, 0];
-                    }
-                    break;
-                case 1:
-                    for (int y = 0; y < grid.GetLength(1); y++)
-                    {
-                        yield return grid[0, y];
-                    }
-                    break;
-                case 2:
-                    for (int x = 0; x < grid.GetLength(0); x++)
-                    {
-                        yield return grid[x, grid.GetLength(1) - 1];
-                    }
-                    break;
-                case 3:
-                    for (int y = grid.GetLength(1) - 1; y >= 0; y--)
-                    {
-                        yield return grid[grid.GetLength(0) - 1, y];
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(side));
-            }
+            return islands.First(o => !o.Equals(island) && o.IsContainsSegment(segment.A.Position, segment.B.Position));
         }
 
         public static void GenerateDetails(Engine engine, Topology topology, List<Cell> cells, int size)
@@ -407,7 +453,7 @@ namespace TriangulatedTopology
 
                     for (float offset = 0; offset < length; offset += step)
                     {
-                        var position = edgePoint + direction * offset + cell.Normal * -0.3f;
+                        var position = edgePoint + direction * offset + cell.Normal * 0.3f;
                         InstantiateRing(engine, position, rotation, scale, color);
                     }                    
                 }
@@ -468,15 +514,13 @@ namespace TriangulatedTopology
             return true;
         }
 
-        public static List<Cell> GridsToCells(Dictionary<TopologyNode, Cell[,]> grids)
+        public static List<Cell> IslandsToCells(List<Island> islands)
         {
             var cells = new List<Cell>();
 
-            foreach (var node in grids)
+            foreach (var island in islands)
             {
-                var iland = node.Value;
-
-                foreach (var cell in iland)
+                foreach (var cell in island.Grid.Enumerate())
                 {
                     cells.Add(cell);
                 }
@@ -487,11 +531,11 @@ namespace TriangulatedTopology
 
         public static void Main(string[] args)
         {
-            //var random = new Random();
-            //int seed = random.Next();
-            //Console.WriteLine(seed);
-            //CollectionsHelper.UseSeed(seed);
-            CollectionsHelper.UseSeed(404963574);
+            var random = new Random();
+            int seed = random.Next();
+            Console.WriteLine(seed);
+            CollectionsHelper.UseSeed(seed);
+            //CollectionsHelper.UseSeed(404963574);
 
             using var engine = new Engine();
 
@@ -500,51 +544,17 @@ namespace TriangulatedTopology
             operatorGo.Add<LightComponent>();
             operatorGo.Position = new Vector3(0, 0, 0);
 
-            //var model = Model.Load("Content/Models/Cube.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            //var model = Model.Load("Content/Models/Room.obj");
-            //var model = Model.Load("Content/Models/Line.obj");
-            //var model = Model.Load("Content/Models/Corner.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            //var model = Model.Load("Content/Models/Scene.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
-            var model = Model.Load("Content/Models/Tower.obj", PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder);
+            var model = Model.Load("Content/Models/TriangulatedTower.obj");
 
             int size = 2048;
             int step = 32;
 
-            //var topology = new Topology(model.Meshes[0], 3);
-            //var dirtyPolies = ExtractPolies(topology);
-            //var cleanPolies = CleanUpPolies(dirtyPolies);
-            //var retopology = new Topology(cleanPolies);
-            //var grids = BuildCells(retopology, size, step);
-            //ConnectCells(grids, size);
-
-            var topology = new Topology(model.Meshes[0], 4);
-            var grids = BuildCells(topology, size, step);
-            ConnectCells(grids, size);
+            var topology = new Topology(model.Meshes[0], 3);
+            var islands = CreateIslands(topology, size, step);
 
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
-            var triangulatedModel = new Model(model.Meshes[0].TriangulateQuadMesh());            
-            roomRenderer.Model = triangulatedModel;
-
-            //var texture = TextureCreator.CreateGridTexture(retopology, initials, size, step);
-            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
-            //var bmp = TextureHelper.TextureToBitmap(texture, size);
-            //bmp.Save("Test.bmp");
-
-            //var texture = TextureCreator.CreateDebugGridTexture(retopology, initials, grids, size, step);
-            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
-            //var bmp = TextureHelper.TextureToBitmap(texture, size);
-            //bmp.Save("Test.bmp");
-
-            //var texture = TextureCreator.CreateDebugCellTexture(grids, initials, size, step);
-            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
-            //var bmp = TextureHelper.TextureToBitmap(texture, size);
-            //bmp.Save("Test.bmp");
-
-            //var texture = TextureCreator.CreateDebugStitchesTexture(grids, initials, size, step);
-            //roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
-            //var bmp = TextureHelper.TextureToBitmap(texture, size);
-            //bmp.Save("Test.bmp");
+            roomRenderer.Model = model;
 
             var wallRules = RulesLoader.CreateRules(
                 "Content/WallLogical.png",
@@ -564,12 +574,11 @@ namespace TriangulatedTopology
                 LogicalResolution,
                 DetailedResolution);
 
-            var cells = GridsToCells(grids);
-            var triangulatedTopology = new Topology(triangulatedModel.Meshes[0], 3);
+            var cells = IslandsToCells(islands);
             Wfc.GraphWfc(cells, wallRules, floorRules, ceilRules);
-            GenerateDetails(engine, triangulatedTopology, cells, size);
+            GenerateDetails(engine, topology, cells, size);
 
-            var texture = TextureCreator.CreateDetailedTexture(grids, size, step);                 
+            var texture = TextureCreator.CreateDetailedTexture(cells, size, step);
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);
             var bmp = TextureHelper.TextureToBitmap(texture, size);
             bmp.Save("Test.bmp");

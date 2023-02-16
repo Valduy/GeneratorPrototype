@@ -7,12 +7,12 @@ namespace TriangulatedTopology
     {
         public bool Equals(Edge? x, Edge? y)
         {
-            if (x == null && y == null)
+            if (x is null && y is null)
             {
                 return true;
             }
 
-            if (x != null && y != null)
+            if (x is not null && y is not null)
             {
                 return x.HasSamePositions(y);
             }

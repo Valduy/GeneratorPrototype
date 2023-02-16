@@ -92,6 +92,12 @@
     <None Update="Content\Models\Tower.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Models\TriangulatedTower.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Models\TriangulatedTower.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Room.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
