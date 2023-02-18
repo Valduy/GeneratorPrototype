@@ -8,6 +8,7 @@ namespace GameEngine.Graphics
         public static readonly Model Empty = new(Enumerable.Empty<Mesh>());
         public static readonly Model Cube = Load("Content/Cube.obj");
         public static readonly Model Pyramid = Load("Content/Pyramid.obj");
+        public static readonly Model Sphere = Load("Content/Sphere.obj");
 
         public readonly IReadOnlyList<Mesh> Meshes;
 

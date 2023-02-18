@@ -20,5 +20,16 @@ namespace GameEngine.Utils
             cube.Scale = scale;
             return cube;
         }
+
+        public static GameObject CreateSphere(this Engine engine, Vector3 position, Vector3 scale)
+        {
+            var sphere = engine.CreateGameObject();
+            var render = sphere.Add<MaterialRenderComponent>();
+            render.Model = Model.Sphere;
+            render.Material.Color = Colors.Gray;
+            sphere.Position = position;
+            sphere.Scale = scale;
+            return sphere;
+        }
     }
 }

@@ -19,6 +19,11 @@ namespace GameEngine.Graphics
             _points = new List<Vector3>(points.Select(p => new Vector3(p.X, p.Y, 0.0f)));
         }
 
+        public Line(params Vector3[] points)
+        {
+            _points = points.ToList();
+        }
+
         public Vector3 this[int index] 
             => _points[index];
 

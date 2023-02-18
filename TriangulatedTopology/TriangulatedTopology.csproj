@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Engine\GameEngine.csproj" />
+    <ProjectReference Include="..\Graph\Net.csproj" />
     <ProjectReference Include="..\MeshTopology\MeshTopology.csproj" />
     <ProjectReference Include="..\TextureUtils\TextureUtils.csproj" />
   </ItemGroup>

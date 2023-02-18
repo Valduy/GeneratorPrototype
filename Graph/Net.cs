@@ -74,5 +74,42 @@ namespace Graph
                 visited.Add(node);
             }
         }
+
+        public IEnumerable<Net<T>> GetSubNets()
+        {
+            var nodes = new HashSet<Node<T>>(_nodes);
+
+            while (nodes.Any())
+            {
+                var subNet = new Net<T>();
+                var visited = new Dictionary<Node<T>, Node<T>>();
+                var node = nodes.First();
+                Bfs(subNet, nodes, visited, node);
+                yield return subNet;
+            }
+        }
+
+        private Node<T> Bfs(
+            Net<T> net, 
+            HashSet<Node<T>> nodes,
+            Dictionary<Node<T>, Node<T>> visited, 
+            Node<T> node)
+        {
+            nodes.Remove(node);
+            var newNode = net.CreateNode(node.Item);
+            visited[node] = newNode;
+
+            foreach (var neighbour in node.Neighbours)
+            {
+                if (!visited.TryGetValue(neighbour, out var newNeighbour))
+                {
+                    newNeighbour = Bfs(net, nodes, visited, neighbour);
+                }
+
+                net.Connect(newNode, newNeighbour);
+            }
+
+            return newNode;
+        }
     }
 }

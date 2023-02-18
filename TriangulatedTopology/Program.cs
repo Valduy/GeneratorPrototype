@@ -11,13 +11,41 @@ using TriangulatedTopology.RulesAdapters;
 using System.Drawing;
 using Quaternion = OpenTK.Mathematics.Quaternion;
 using TriangulatedTopology.TextureIsland;
+using TriangulatedTopology.Geometry;
+using Graph;
+using System.Reflection;
+using GameEngine.Mathematics;
 
 namespace TriangulatedTopology
 {
+    public enum RotationDirection
+    {
+        Positive,
+        Negative,
+    }
+
+    public class CoordSystem
+    {
+        public Vector2i Origin;
+        public Vector2i XAxis;
+        public Vector2i YAxis;
+
+        public CoordSystem(Vector2i origin, Vector2i xAxis, Vector2i yAxis)
+        {
+            Origin = origin;
+            XAxis = xAxis;
+            YAxis = yAxis;
+        }
+    }
+
     public class Program
     {
         public const int LogicalResolution = 4;
         public const int DetailedResolution = 20;
+
+        public static readonly Color PipesColor = Color.FromArgb(255, 217, 0);
+        public static readonly Color WireColor = Color.FromArgb(255, 0, 24);
+        public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
 
         public static Model RingModel = Model.Load("Content/Models/Ring.obj");
 
@@ -145,7 +173,7 @@ namespace TriangulatedTopology
             return corners;
         }
 
-        public static Cell[,] CreateGrid(List<Vertex> corners, int size, int step)
+        public static Cell[,] CreateGrid(IReadOnlyList<Vertex> corners, int size, int step)
         {
             var normal = GetNormal(corners);
             var prev = corners[0].TextureCoords * size;
@@ -192,6 +220,13 @@ namespace TriangulatedTopology
         {
             var a = Vector3.Normalize(face[0].Position - face[1].Position);
             var b = Vector3.Normalize(face[2].Position - face[1].Position);
+            return Vector3.Cross(a, b).Normalized();
+        }
+
+        public static Vector3 GetNormal(IReadOnlyList<Vector3> face)
+        {
+            var a = Vector3.Normalize(face[0] - face[1]);
+            var b = Vector3.Normalize(face[2] - face[1]);
             return Vector3.Cross(a, b).Normalized();
         }
 
@@ -364,13 +399,201 @@ namespace TriangulatedTopology
             return islands.First(o => !o.Equals(island) && o.IsContainsSegment(segment.A.Position, segment.B.Position));
         }
 
+        public static List<Net<LogicalNode>> ExtractNets(Topology topology, List<Cell> cells, int size)
+        {
+            var cellToLogicalNode = CreateLogicalNodes(topology, cells, size);
+            var net = ConnectLogicalNodes(cells, cellToLogicalNode);
+            return net.GetSubNets().ToList();
+        }
+
+        public static Dictionary<Cell, LogicalNode> CreateLogicalNodes(Topology topology, List<Cell> cells, int size)
+        {
+            var cellToLogicalNode = new Dictionary<Cell, LogicalNode>();
+
+            foreach (var cell in cells)
+            {
+                var rule = cell.Rules[0].Logical;
+
+                if (rule.Enumerate().Any(c => c.IsSame(PipesColor)))
+                {
+                    var corners = GetNodeCorners(topology, cell, size);
+                    var connections = GetConnections(cell, PipesColor);
+                    cellToLogicalNode[cell] = new LogicalNode(corners, PipesColor, connections);
+                }
+                if (rule.Enumerate().Any(c => c.IsSame(WireColor)))
+                {
+                    var corners = GetNodeCorners(topology, cell, size);
+                    var connections = GetConnections(cell, WireColor);
+                    cellToLogicalNode[cell] = new LogicalNode(corners, WireColor, connections);
+                }
+                if (rule.Enumerate().Any(c => c.IsSame(VentilationColor)))
+                {
+                    var corners = GetNodeCorners(topology, cell, size);
+                    var connections = GetConnections(cell, VentilationColor);
+                    cellToLogicalNode[cell] = new LogicalNode(corners, VentilationColor, connections);
+                }
+            }
+
+            return cellToLogicalNode;
+        }
+
+        public static List<Vector3> GetNodeCorners(Topology topology, Cell cell, int size)
+        {
+            var corners = new List<Vector3>();
+
+            foreach (var uv in cell)
+            {
+                var point = GetPoint(topology, uv, size);
+                corners.Add(point);
+            }
+
+            return corners;
+        }
+
+        public static bool[] GetConnections(Cell cell, Color color)
+        {
+            var connections = new bool[4];
+            var rule = cell.Rules[0];
+
+            for (int i = 0; i < Cell.NeighboursCount; i++)
+            {
+                var side = rule[i];
+                connections[i] = side[1].IsSame(color) && side[2].IsSame(color);
+            }
+
+            return connections;
+        }
+
+        public static Net<LogicalNode> ConnectLogicalNodes(List<Cell> cells, Dictionary<Cell, LogicalNode> cellToLogicalNode)
+        {
+            var cellToNetNode = new Dictionary<Cell, Node<LogicalNode>>();
+            var net = new Net<LogicalNode>();
+
+            foreach (var cell in cells)
+            {
+                if (!cellToLogicalNode.TryGetValue(cell, out var thisLogicalNode))
+                {
+                    continue;
+                }
+                if (!cellToNetNode.TryGetValue(cell, out var thisNetNode))
+                {
+                    thisNetNode = net.CreateNode(thisLogicalNode);
+                    cellToNetNode[cell] = thisNetNode;
+                }
+
+                for (int i = 0; i < cell.Neighbours.Length; i++)
+                {
+                    if (!thisLogicalNode.Connections[i])
+                    {
+                        continue;
+                    }
+
+                    var otherCell = cell.Neighbours[i]!.Cell;
+
+                    if (!cellToLogicalNode.TryGetValue(otherCell, out var otherLogicalNode))
+                    {
+                        continue;
+                    }
+                    if (!cellToNetNode.TryGetValue(otherCell, out var otherNetNode))
+                    {
+                        otherNetNode = net.CreateNode(otherLogicalNode);
+                        cellToNetNode[otherCell] = otherNetNode;                        
+                    }
+
+                    net.Connect(thisNetNode, otherNetNode);
+                }
+
+                var expected = thisLogicalNode.Connections.Count(o => o);
+                var actual = thisNetNode.Neighbours.Count;
+            }
+
+            return net;
+        }
+
+        public static void VisualizeNets(Engine engine, List<Net<LogicalNode>> nets)
+        {
+            float extrusionFactor = 0.3f;
+
+            foreach (var net in nets)
+            {
+                foreach (var node in net.GetNodes())
+                {
+                    var centroid = GetCentroid(node.Item.Corners);
+                    var normal = GetNormal(node.Item.Corners);
+                    var from = centroid + extrusionFactor * normal;
+                    var scale = new Vector3(0.3f);                    
+
+                    foreach (var neighbour in node.Neighbours)
+                    {
+                        var lineGo = engine.CreateGameObject();
+                        var render = lineGo.Add<LineRenderComponent>();
+                        render.Color = RgbaToVector3(node.Item.Color);
+
+                        var neighbourNormal = GetNormal(neighbour.Item.Corners);
+                        var extrusionDirection = Vector3.Lerp(normal, neighbourNormal, 0.5f).Normalized();
+                        var sharedPoints = GetSharedPoints(node.Item.Corners, neighbour.Item.Corners);
+                        var to = GetCentroid(sharedPoints) + extrusionFactor * extrusionDirection;
+
+                        render.Line = new Line(from, to);
+                        render.Width = 5.0f;
+                    }
+
+                    {
+                        var lineGo = engine.CreateGameObject();
+                        var render = lineGo.Add<LineRenderComponent>();
+                        render.Line = new Line(centroid, centroid + normal);
+                        render.Color = Colors.Red;
+                    }
+                    if (node.Neighbours.Count == 1)
+                    {
+                        var rotation = Mathematics.GetRotation(Vector3.UnitY, normal);
+                        var cube = InstantiateCube(engine, from, rotation, scale, node.Item.Color);
+
+                        var lineGo = engine.CreateGameObject();
+                        var render = lineGo.Add<LineRenderComponent>();
+                        render.Line = new Line(Vector3.Zero, Vector3.UnitY);
+                        render.Color = Colors.Blue;
+                        cube.AddChild(lineGo);
+                    }
+                    if (node.Neighbours.Count >= 3)
+                    {
+                        InstantiateSphere(engine, from, Quaternion.Identity, scale, node.Item.Color);
+                    }
+                }
+            }
+        }
+
+        public static Vector3 GetCentroid(IReadOnlyList<Vector3> points)
+        {
+            return points.Aggregate((p1, p2) => p1 + p2) / points.Count;
+        }
+
+        public static List<Vector3> GetSharedPoints(IEnumerable<Vector3> poly1, IEnumerable<Vector3> poly2)
+        {
+            var sharedPoints = new List<Vector3>();
+            var epsilon = 0.01f; // Just great enough;
+
+            foreach (var a in poly1)
+            {
+                foreach (var b in poly2)
+                {
+                    if (Mathematics.ApproximatelyEqualEpsilon(a, b, epsilon))
+                    {
+                        sharedPoints.Add(a);
+                    }
+                }
+            }
+
+            return sharedPoints;
+        }
+
         public static void GenerateDetails(Engine engine, Topology topology, List<Cell> cells, int size)
         {
             foreach (var cell in cells)
             {
-                BuildNet(engine, topology, cell, Color.FromArgb(255, 255, 217, 0), size);
-                BuildNet(engine, topology, cell, Color.FromArgb(255, 255, 0, 24), size);
-                BuildNet(engine, topology, cell, Color.FromArgb(255, 255, 60, 246), size);
+                BuildNet(engine, topology, cell, PipesColor, size);
+                BuildNet(engine, topology, cell, WireColor, size);
+                BuildNet(engine, topology, cell, VentilationColor, size);
             }
         }
 
@@ -443,7 +666,7 @@ namespace TriangulatedTopology
                 if (side[1].IsSame(color) && side[2].IsSame(color))
                 {                    
                     var uv = (cell[i] + cell.GetCircular(i + 1)) / 2;
-                    uv += (centroidUV - uv).Normalized(); // Move inside right face;
+                    uv += (centroidUV - uv).Normalized(); // Move inside face;
                     var edgePoint = GetPoint(topology, uv, size);
                     var direction = centroid - edgePoint;
                     var length = direction.Length;
@@ -469,7 +692,21 @@ namespace TriangulatedTopology
             Vector3 scale,
             Color color)
         {
-            var cube = engine.CreateCube(position, new Vector3(0.3f));
+            var cube = engine.CreateCube(position, scale);
+            var renderer = cube.Get<MaterialRenderComponent>();
+            renderer!.Material.Color = RgbaToVector3(color);
+            cube.Rotation = rotation;
+            return cube;
+        }
+
+        public static GameObject InstantiateSphere(
+            Engine engine,
+            Vector3 position,
+            Quaternion rotation,
+            Vector3 scale,
+            Color color)
+        {
+            var cube = engine.CreateSphere(position, scale);
             var renderer = cube.Get<MaterialRenderComponent>();
             renderer!.Material.Color = RgbaToVector3(color);
             cube.Rotation = rotation;
@@ -531,11 +768,11 @@ namespace TriangulatedTopology
 
         public static void Main(string[] args)
         {
-            var random = new Random();
-            int seed = random.Next();
-            Console.WriteLine(seed);
-            CollectionsHelper.UseSeed(seed);
-            //CollectionsHelper.UseSeed(404963574);
+            //var random = new Random();
+            //int seed = random.Next();
+            //Console.WriteLine(seed);
+            //CollectionsHelper.UseSeed(seed);
+            CollectionsHelper.UseSeed(1628667546);
 
             using var engine = new Engine();
 
@@ -576,7 +813,9 @@ namespace TriangulatedTopology
 
             var cells = IslandsToCells(islands);
             Wfc.GraphWfc(cells, wallRules, floorRules, ceilRules);
-            GenerateDetails(engine, topology, cells, size);
+            var nets = ExtractNets(topology, cells, size);
+            VisualizeNets(engine, nets);
+            //GenerateDetails(engine, topology, cells, size);
 
             var texture = TextureCreator.CreateDetailedTexture(cells, size, step);
             roomRenderer.Texture = Texture.LoadFromMemory(texture, size, size);

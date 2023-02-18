@@ -6,26 +6,6 @@ using TextureUtils;
 
 namespace TriangulatedTopology.RulesAdapters
 {
-    public enum RotationDirection
-    {
-        Positive,
-        Negative,
-    }
-
-    public class CoordSystem
-    {
-        public Vector2i Origin;
-        public Vector2i XAxis;
-        public Vector2i YAxis;
-
-        public CoordSystem(Vector2i origin, Vector2i xAxis, Vector2i yAxis)
-        {
-            Origin = origin;
-            XAxis = xAxis;
-            YAxis = yAxis;
-        }
-    }
-
     public class RuleRotationAdapter : RuleAdapter
     {
         private Vector2i _origin;
