@@ -5,18 +5,27 @@ namespace GameEngine.Components
 {
     public class MaterialRenderComponent : MeshRenderComponent
     {
+        private const string VertexShaderPath = "Shaders/Mesh.vert";
         private const string FragmentShaderPath = "Shaders/Material.frag";
 
         public Texture Texture { get; set; } = Texture.Default;
-
         public Material Material { get; set; } = new();
 
         public MaterialRenderComponent() 
-            : base(FragmentShaderPath)
+            : base(VertexShaderPath, FragmentShaderPath)
         {}
 
-        protected override void SetupFragmentShader()
+        protected override MeshBuffers DescribeLayout(Mesh mesh)
         {
+            return Layouts.DescribeStaticMeshLayout(Shader, mesh);
+        }
+
+        protected override void SetupShader()
+        {
+            Shader.SetMatrix4("transform.model", GameObject!.GetModelMatrix());
+            Shader.SetMatrix4("transform.view", GameObject!.Engine.Camera.GetViewMatrix());
+            Shader.SetMatrix4("transform.projection", GameObject!.Engine.Camera.GetProjectionMatrix());
+
             Texture.Use(TextureUnit.Texture0);
             Shader.SetVector3("viewPosition", GameObject!.Engine.Camera.Position);
 

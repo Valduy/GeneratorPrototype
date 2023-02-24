@@ -72,7 +72,7 @@ namespace GameEngine.Graphics
             for (var i = 0; i < numberOfUniforms; i++)
             {
                 // get the name of this uniform,
-                var key = GL.GetActiveUniform(Handle, i, out _, out _);
+                var key = GL.GetActiveUniform(Handle, i, out var size, out _);
 
                 // get the location,
                 var location = GL.GetUniformLocation(Handle, key);
@@ -169,6 +169,12 @@ namespace GameEngine.Graphics
         {
             GL.UseProgram(Handle);
             GL.UniformMatrix4(_uniformLocations[name], true, ref data);
+        }
+
+        public void SetMatrices4(string name, Matrix4[] data)
+        {
+            GL.UseProgram(Handle);
+            GL.UniformMatrix4(_uniformLocations[name], data.Length, true, ref data[0].Row0.X);
         }
 
         /// <summary>

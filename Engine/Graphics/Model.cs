@@ -4,21 +4,36 @@ using OpenTK.Mathematics;
 namespace GameEngine.Graphics
 {
     public class Model
-    {
+    {      
         public static readonly Model Empty = new(Enumerable.Empty<Mesh>());
         public static readonly Model Cube = Load("Content/Cube.obj");
         public static readonly Model Pyramid = Load("Content/Pyramid.obj");
         public static readonly Model Sphere = Load("Content/Sphere.obj");
 
         public readonly IReadOnlyList<Mesh> Meshes;
+        public readonly Skeleton? Skeleton;
 
         public Model(Mesh meshes)
         {
-            Meshes = new List<Mesh> { meshes };
+            Skeleton = null;
+            Meshes = new List<Mesh> { meshes };            
+        }
+
+        public Model(Skeleton? skeleton, Mesh meshes)
+        {
+            Skeleton = skeleton;
+            Meshes = new List<Mesh> { meshes };            
         }
 
         public Model(IEnumerable<Mesh> meshes)
         {
+            Skeleton = null;
+            Meshes = meshes.ToList();
+        }
+
+        public Model(Skeleton? skeleton, IEnumerable<Mesh> meshes)
+        {
+            Skeleton = skeleton;
             Meshes = meshes.ToList();
         }
 
@@ -100,33 +115,40 @@ namespace GameEngine.Graphics
             PostProcessSteps flags = PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs | PostProcessSteps.FlipWindingOrder)
         {
             var aiImporter = new AssimpContext();
-            Scene aiScene = aiImporter.ImportFile(path, flags);
-
+            var aiScene = aiImporter.ImportFile(path, flags);
             return ProcessNode(aiScene, aiScene.RootNode);
         }
 
-        private static Model ProcessNode(Scene aiScene, Node aiRoot)
+        private static Model ProcessNode(Assimp.Scene aiScene, Assimp.Node aiRoot)
         {
             var meshes = new List<Mesh>();
-            ProcessNode(aiScene, aiRoot, meshes);
-            return new Model(meshes);
+            var namesToBones = new Dictionary<string, Bone>();
+            ProcessNode(aiScene, aiRoot, meshes, namesToBones);
+            var skeleton = BuildSkeleton(aiScene, namesToBones);
+            return new Model(skeleton, meshes);
         }
 
-        private static void ProcessNode(Scene aiScene, Node aiNode, List<Mesh> meshes)
-        {
+        private static void ProcessNode(
+            Assimp.Scene aiScene, 
+            Assimp.Node aiNode, 
+            List<Mesh> meshes,
+            Dictionary<string, Bone> namesToBones)
+        {          
             for (int i = 0; i < aiNode.MeshCount; i++)
             {
                 var mesh = aiScene.Meshes[aiNode.MeshIndices[i]];
-                meshes.Add(ProcessMesh(mesh));
+                meshes.Add(ProcessMesh(mesh, namesToBones));
             }
 
             for (int i = 0; i < aiNode.ChildCount; i++)
             {
-                ProcessNode(aiScene, aiNode.Children[i], meshes);
+                ProcessNode(aiScene, aiNode.Children[i], meshes, namesToBones);
             }
         }
 
-        private static Mesh ProcessMesh(Assimp.Mesh aiMesh)
+        private static Mesh ProcessMesh(
+            Assimp.Mesh aiMesh,
+            Dictionary<string, Bone> namesToBones)
         {
             var vertices = new List<Vertex>();
             var indices = new List<int>();
@@ -153,10 +175,123 @@ namespace GameEngine.Graphics
                 }
             }
 
+            if (aiMesh.HasBones)
+            {
+                var weights = ProcessBones(aiMesh, vertices, namesToBones);
+                return new Mesh(vertices, indices, weights);
+            }
+
             return new Mesh(vertices, indices);
+        }
+
+        private static VertexWeights[] ProcessBones(
+            Assimp.Mesh aiMesh, 
+            List<Vertex> vertices, 
+            Dictionary<string, Bone> namesToBones)
+        {
+            var verticesWeights = new VertexWeights[vertices.Count];
+            var weights = new List<float>[vertices.Count];
+            var indices = new List<int>[vertices.Count];
+            int boneCounter = 0;
+
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                weights[i] = new List<float>();
+                indices[i] = new List<int>();
+            }
+
+            for (int boneIndex = 0; boneIndex < aiMesh.Bones.Count; boneIndex++)
+            {
+                var aiBone = aiMesh.Bones[boneIndex];
+                var boneId = -1;
+
+                if (!namesToBones.TryGetValue(aiBone.Name, out var bone))
+                {
+                    var offset = ToMatrix4(aiBone.OffsetMatrix);
+                    bone = new Bone(aiBone.Name, boneCounter, offset);
+                    namesToBones[bone.Name] = bone;
+                    boneId = bone.Id;
+                    boneCounter += 1;
+                }
+                else
+                {
+                    boneId = bone.Id;
+                }
+
+                var aiWeights = aiMesh.Bones[boneIndex].VertexWeights;
+
+                foreach (var aiWeight in aiWeights)
+                {
+                    weights[aiWeight.VertexID].Add(aiWeight.Weight);
+                    indices[aiWeight.VertexID].Add(boneId);
+                }
+            }
+
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                verticesWeights[i] = new VertexWeights(weights[i], indices[i]);
+            }
+
+            return verticesWeights;
+        }
+
+        private static Skeleton BuildSkeleton(
+            Assimp.Scene aiScene,
+            Dictionary<string, Bone> namesToBones)
+        {
+            // Not shure about offset
+            var root = new Bone("Root", namesToBones.Count, Matrix4.Identity);
+            var notConnectedBones = new HashSet<Bone>(namesToBones.Values);
+            
+            while (notConnectedBones.Any())
+            {
+                var node = notConnectedBones.First();
+                var aiNode = FindNodeWithName(aiScene.RootNode, node.Name)!;
+                aiNode = aiNode.Parent;
+
+                while (namesToBones.TryGetValue(aiNode.Name, out var parent))
+                {
+                    notConnectedBones.Remove(node);
+                    node.Parent = parent;
+                    node.Parent.AddChildren(node);
+                    node = parent;
+                }
+
+                notConnectedBones.Remove(node);
+                node.Parent = root;
+                node.Parent.AddChildren(node);
+            }
+
+            return new Skeleton(root);
+        }
+
+        private static Assimp.Node? FindNodeWithName(Assimp.Node aiNode, string name)
+        {
+            if (aiNode.Name == name)
+            {
+                return aiNode;
+            }
+
+            for(int i = 0; i < aiNode.ChildCount; i++)
+            {
+                var result = FindNodeWithName(aiNode.Children[i], name);
+
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
         }
 
         private static Vector3 ToVector3(Vector3D vector)
             => new(vector.X, vector.Y, vector.Z);
+
+        private static Matrix4 ToMatrix4(Matrix4x4 matrix) => new(
+                matrix.A1, matrix.A2, matrix.A3, matrix.A4,
+                matrix.B1, matrix.B2, matrix.B3, matrix.B4,
+                matrix.C1, matrix.C2, matrix.C3, matrix.C4,
+                matrix.D1, matrix.D2, matrix.D3, matrix.D4);
     }
 }

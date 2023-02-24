@@ -7,10 +7,7 @@ namespace GameEngine.Utils
 {
     public static class Primitives
     {
-        public static GameObject CreateCube(this Engine engine, Vector3 position) 
-            => engine.CreateCube(position, new Vector3(1.0f));
-
-        public static GameObject CreateCube(this Engine engine, Vector3 position, Vector3 scale)
+        public static GameObject CreateCube(this Engine engine, Vector3 position, Quaternion rotation, Vector3 scale)
         {
             var cube = engine.CreateGameObject();
             var render = cube.Add<MaterialRenderComponent>();

@@ -692,7 +692,7 @@ namespace TriangulatedTopology
             Vector3 scale,
             Color color)
         {
-            var cube = engine.CreateCube(position, scale);
+            var cube = engine.CreateCube(position, Quaternion.Identity, scale);
             var renderer = cube.Get<MaterialRenderComponent>();
             renderer!.Material.Color = RgbaToVector3(color);
             cube.Rotation = rotation;

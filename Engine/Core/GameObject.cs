@@ -87,7 +87,12 @@ namespace GameEngine.Core
             model *= Matrix4.CreateScale(LocalScale);
             model *= Matrix4.CreateFromQuaternion(LocalRotation);
             model *= Matrix4.CreateTranslation(LocalPosition);
-            if (Parent != null) model *= Parent.GetModelMatrix();
+
+            if (Parent != null)
+            {
+                model *= Parent.GetModelMatrix();
+            }
+
             return model;
         }
 

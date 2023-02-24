@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace GameEngine.Graphics
 {
     public struct Vertex
-    {
+    {       
         public readonly Vector3 Position;
         public readonly Vector3 Normal;
         public readonly Vector2 TextureCoords;
@@ -27,7 +27,6 @@ namespace GameEngine.Graphics
         {
             return !(lhs == rhs);
         }
-
 
         public override int GetHashCode()
         {

@@ -4,14 +4,19 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Shaders\Shape.vert" />
+    <None Remove="Shaders\Skeletal.vert" />
     <None Remove="Shaders\Solid.frag" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Shaders\Skeletal.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Shaders\Solid.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

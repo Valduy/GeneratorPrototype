@@ -51,7 +51,7 @@ namespace PatternDemo
                 }
 
                 Console.WriteLine(index);
-                Engine!.CreateCube(MeshTopology[index].Face.Centroid(), new Vector3(0.2f));
+                Engine!.CreateCube(MeshTopology[index].Face.Centroid(), Quaternion.Identity, new Vector3(0.2f));
             }
         }
     }
