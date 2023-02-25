@@ -124,8 +124,14 @@ namespace GameEngine.Graphics
             var meshes = new List<Mesh>();
             var namesToBones = new Dictionary<string, Bone>();
             ProcessNode(aiScene, aiRoot, meshes, namesToBones);
-            var skeleton = BuildSkeleton(aiScene, namesToBones);
-            return new Model(skeleton, meshes);
+
+            if (namesToBones.Count > 1)
+            {
+                var skeleton = BuildSkeleton(aiScene, namesToBones);
+                return new Model(skeleton, meshes);
+            }
+            
+            return new Model(null, meshes);
         }
 
         private static void ProcessNode(
@@ -240,29 +246,36 @@ namespace GameEngine.Graphics
             Dictionary<string, Bone> namesToBones)
         {
             // Not shure about offset
-            var root = new Bone("Root", namesToBones.Count, Matrix4.Identity);
+            //var root = new Bone("Root", namesToBones.Count, Matrix4.Identity);
             var notConnectedBones = new HashSet<Bone>(namesToBones.Values);
-            
+            int boneCounter = namesToBones.Count;
+
             while (notConnectedBones.Any())
             {
-                var node = notConnectedBones.First();
+                var node = notConnectedBones.First();                
                 var aiNode = FindNodeWithName(aiScene.RootNode, node.Name)!;
                 aiNode = aiNode.Parent;
 
-                while (namesToBones.TryGetValue(aiNode.Name, out var parent))
-                {
-                    notConnectedBones.Remove(node);
+                while (aiNode.Name != "RootNode")
+                {                
+                    if (!namesToBones.TryGetValue(aiNode.Name, out var parent))
+                    {
+                        parent = new Bone(aiNode.Name, boneCounter, Matrix4.Identity);
+                        namesToBones[aiNode.Name] = parent;
+                        boneCounter += 1;
+                    }
+
                     node.Parent = parent;
                     node.Parent.AddChildren(node);
+                    notConnectedBones.Remove(node);
                     node = parent;
+                    aiNode = aiNode.Parent;
                 }
 
                 notConnectedBones.Remove(node);
-                node.Parent = root;
-                node.Parent.AddChildren(node);
             }
 
-            return new Skeleton(root);
+            return new Skeleton(namesToBones.Values.First(b => b.Parent == null));
         }
 
         private static Assimp.Node? FindNodeWithName(Assimp.Node aiNode, string name)

@@ -28,6 +28,7 @@ void main()
     vec4 vertex = vec4(vertexPosition, 1.0);
     vec4 blendVertex = vec4(0.0);
     vec3 blendNormal = vec3(0.0);
+    int influences = 0;
 
     for (int i = 0; i < MAX_BONES_INFLUENCE; i++)
     {
@@ -39,6 +40,13 @@ void main()
         int index = int(bonesIds[i]);
         blendVertex += (vertex * bonesMatrices[index]) * weights[i];
         blendNormal += (vec4(vertexNormal, 0.0) * bonesMatrices[index]).xyz * weights[i];
+        influences += 1;
+    }
+
+    if (influences == 0) 
+    {
+        blendVertex = vertex;
+        blendNormal = vertexNormal;
     }
 
     gl_Position = vec4(blendVertex.xyz, 1.0) * transform.model * transform.view * transform.projection;

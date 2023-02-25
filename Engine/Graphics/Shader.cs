@@ -93,6 +93,7 @@ namespace GameEngine.Graphics
             {
                 // We can use `GL.GetShaderInfoLog(shader)` to get information about the error.
                 var infoLog = GL.GetShaderInfoLog(shader);
+                Console.WriteLine(infoLog);
                 throw new Exception($"Error occurred whilst compiling Shader({shader}).\n\n{infoLog}");
             }
         }
