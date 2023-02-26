@@ -15,7 +15,8 @@ class Program
         operatorGo.Add<LightComponent>();
         operatorGo.Position = new Vector3(0, 1, 1);
 
-        CreateSkeletalTube(engine, Vector3.Zero, Vector3.Zero, 1.0f);
+        var position = new Vector3(0.0f, 3.0f, 4.0f);
+        CreateSkeletalTube(engine, position, Vector3.Zero, 1.0f);
 
         var gird = engine.Grid(20);
         var axis = engine.Axis(2);
@@ -37,28 +38,33 @@ class Program
 
         var root = skeleton["Root"];
 
-        var disirable = new Vector3(0.0f, -5.0f, 5.0f);
-      
+        var topDisirable = new Vector3(3.0f, 2.0f, 0.0f);
+        var bottomDisirable = new Vector3(-3.0f, -2.0f, 0.0f);
+
         var top = skeleton["Top"];
-        top.Position = disirable;
+        top.Position = topDisirable;
 
-        var handRotation = 90;
-
-        var handCoerce = Matrix4.CreateTranslation(Vector3.UnitZ);
-        handCoerce *= Matrix4.CreateRotationX(MathHelper.DegreesToRadians(handRotation));
+        var topHandRotation = 0;
+        var topHandCoerce = Matrix4.CreateTranslation(Vector3.UnitZ);
+        topHandCoerce *= Matrix4.CreateRotationX(MathHelper.DegreesToRadians(topHandRotation));
 
         var topHand = skeleton["TopHand"];
-        topHand.Position = -handCoerce.ExtractTranslation();
-        topHand.Rotation = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(handRotation), 0, 0);
+        topHand.Position = -topHandCoerce.ExtractTranslation();
+        topHand.Rotation = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(topHandRotation), 0, 0);
 
         var bottom = skeleton["Bottom"];
-        bottom.Position = new Vector3(0.0f, 0.0f, 0.0f);
+        bottom.Position = bottomDisirable;
+
+        var bottomHandRotation = 0;
+        var bottomHandCoerce = Matrix4.CreateTranslation(-Vector3.UnitZ);
+        bottomHandCoerce *= Matrix4.CreateRotationX(MathHelper.DegreesToRadians(bottomHandRotation));
 
         var bottomHand = skeleton["BottomHand"];
-        bottomHand.Position = new Vector3(0.0f, 0.0f, 0.0f);
+        bottomHand.Position = -bottomHandCoerce.ExtractTranslation();
+        bottomHand.Rotation = Quaternion.FromEulerAngles(MathHelper.DegreesToRadians(bottomHandRotation), 0, 0);
 
-        engine.CreateCube(position, Quaternion.Identity, new Vector3(0.3f));
-        engine.CreateCube(disirable, Quaternion.Identity, new Vector3(0.3f));
+        engine.CreateCube(topDisirable + position, Quaternion.Identity, new Vector3(0.3f));
+        engine.CreateCube(bottomDisirable + position, Quaternion.Identity, new Vector3(0.3f));
         return go;
     }
 }

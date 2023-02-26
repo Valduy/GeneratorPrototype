@@ -48,6 +48,7 @@ namespace TriangulatedTopology
         public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
 
         public static Model RingModel = Model.Load("Content/Models/Ring.obj");
+        public static Model PipeModel = Model.Load("Content/Models/PipeSegment.fbx");
 
         public static List<Island> CreateIslands(Topology topology, int size, int step)
         {
@@ -544,6 +545,7 @@ namespace TriangulatedTopology
                         render.Line = new Line(centroid, centroid + normal);
                         render.Color = Colors.Red;
                     }
+
                     if (node.Neighbours.Count == 1)
                     {
                         var rotation = Mathematics.GetRotation(Vector3.UnitY, normal);
@@ -559,6 +561,88 @@ namespace TriangulatedTopology
                     {
                         InstantiateSphere(engine, from, Quaternion.Identity, scale, node.Item.Color);
                     }
+                }
+            }
+        }
+
+        public static void VisualizePipes(Engine engine, List<Net<LogicalNode>> nets)
+        {
+            float extrusionFactor = 0.3f;
+
+            foreach (var net in nets)
+            {
+                // Search for purple lines.
+                if (!net.GetNodes().First().Item.Color.IsSame(VentilationColor))
+                {
+                    continue;
+                }
+
+                foreach (var node in net.GetNodes())
+                {
+                    if (node.Neighbours.Count > 2 || node.Neighbours.Count <= 0)
+                    {
+                        throw new ArgumentException("Pipe should has 1 or 2 neighbours.");
+                    }
+
+                    var centroid = GetCentroid(node.Item.Corners);
+                    var normal = GetNormal(node.Item.Corners);
+                    var pivot = centroid + extrusionFactor * normal;
+                    var scale = new Vector3(0.3f);
+
+                    if (node.Neighbours.Count == 2)
+                    {
+                        var pipe = InstantiatePipe(engine, pivot);
+                        var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
+
+                        var root = skeleton["Root"];
+                        var top = skeleton["Top"];
+                        var topHand = skeleton["TopHand"];
+                        var bottom = skeleton["Bottom"];
+                        var bottomHand = skeleton["BottomHand"];
+
+                        var neighbour1 = node.Neighbours[1];
+                        var neighbourNormal1 = GetNormal(neighbour1.Item.Corners);
+                        var extrusionDirection1 = Vector3.Lerp(normal, neighbourNormal1, 0.5f).Normalized();
+                        var sharedPoints1 = GetSharedPoints(node.Item.Corners, neighbour1.Item.Corners);
+                        //var to = GetCentroid(sharedPoints1) + extrusionFactor * extrusionDirection1;
+                        var to = GetCentroid(sharedPoints1) + extrusionFactor * normal;
+                        var neighbourCentroid1 = GetCentroid(neighbour1.Item.Corners);
+                        //var toNeighbourDirection1 = neighbourCentroid1 - to;
+                        var toNeighbourDirection1 = to - pivot;
+                        toNeighbourDirection1.Normalize();
+                        var toRotation = Mathematics.GetRotation(Vector3.UnitZ, toNeighbourDirection1);
+                        var topHandCoerce = Matrix4.CreateTranslation(Vector3.UnitZ);
+                        topHandCoerce *= Matrix4.CreateFromQuaternion(toRotation);
+
+                        top.Position = to - pivot;
+                        topHand.Position = -topHandCoerce.ExtractTranslation();
+                        topHand.Rotation = toRotation;
+
+                        var neighbour0 = node.Neighbours[0];
+                        var neighbourNormal0 = GetNormal(neighbour0.Item.Corners);
+                        var extrusionDirection0 = Vector3.Lerp(normal, neighbourNormal0, 0.5f).Normalized();
+                        var sharedPoints0 = GetSharedPoints(node.Item.Corners, neighbour0.Item.Corners);
+                        //var from = GetCentroid(sharedPoints0) + extrusionFactor * extrusionDirection0;
+                        var from = GetCentroid(sharedPoints0) + extrusionFactor * normal;
+                        var neighbourCentroid0 = GetCentroid(neighbour0.Item.Corners);
+                        //var toNeighbourDirection0 = neighbourCentroid0 - from;
+                        var toNeighbourDirection0 = from - pivot;
+                        toNeighbourDirection0.Normalize();
+                        var fromRotation = Mathematics.GetRotation(-Vector3.UnitZ, toNeighbourDirection0);
+                        var bottomHandCoerce = Matrix4.CreateTranslation(-Vector3.UnitZ);
+                        bottomHandCoerce *= Matrix4.CreateFromQuaternion(fromRotation);
+
+                        bottom.Position = from - pivot;
+                        bottomHand.Position = -bottomHandCoerce.ExtractTranslation();
+                        bottomHand.Rotation = fromRotation;
+
+                        InstantiateCube(engine, from, Quaternion.Identity, new Vector3(0.2f), VentilationColor);
+                        InstantiateCube(engine, to, Quaternion.Identity, new Vector3(0.2f), VentilationColor);
+                    }
+                    else
+                    {
+                        InstantiateSphere(engine, pivot, Quaternion.Identity, new Vector3(0.3f), VentilationColor);
+                    }                    
                 }
             }
         }
@@ -587,15 +671,15 @@ namespace TriangulatedTopology
             return sharedPoints;
         }
 
-        public static void GenerateDetails(Engine engine, Topology topology, List<Cell> cells, int size)
-        {
-            foreach (var cell in cells)
-            {
-                BuildNet(engine, topology, cell, PipesColor, size);
-                BuildNet(engine, topology, cell, WireColor, size);
-                BuildNet(engine, topology, cell, VentilationColor, size);
-            }
-        }
+        //public static void GenerateDetails(Engine engine, Topology topology, List<Cell> cells, int size)
+        //{
+        //    foreach (var cell in cells)
+        //    {
+        //        BuildNet(engine, topology, cell, PipesColor, size);
+        //        BuildNet(engine, topology, cell, WireColor, size);
+        //        BuildNet(engine, topology, cell, VentilationColor, size);
+        //    }
+        //}
 
         public static Vector3 GetPoint(Topology topology, Vector2 uv, int size)
         {
@@ -644,46 +728,46 @@ namespace TriangulatedTopology
             return new Vector2(u, v);
         }
 
-        public static void BuildNet(Engine engine, Topology topology, Cell cell, Color color, int size)
-        {
-            if (!cell.Rules[0].Logical.Enumerate().Any(c => c.IsSame(color)))
-            {
-                return;
-            }
+        //public static void BuildNet(Engine engine, Topology topology, Cell cell, Color color, int size)
+        //{
+        //    if (!cell.Rules[0].Logical.Enumerate().Any(c => c.IsSame(color)))
+        //    {
+        //        return;
+        //    }
 
-            var scaleFactor = 2.2f;
-            var scale = new Vector3(scaleFactor);            
-            var rule = cell.Rules[0];
+        //    var scaleFactor = 2.2f;
+        //    var scale = new Vector3(scaleFactor);            
+        //    var rule = cell.Rules[0];
 
-            var centroidUV = cell.Aggregate((p1, p2) => p1 + p2) / 4;
-            var centroid = GetPoint(topology, centroidUV, size);
-            float step = 0.1f;
+        //    var centroidUV = cell.Aggregate((p1, p2) => p1 + p2) / 4;
+        //    var centroid = GetPoint(topology, centroidUV, size);
+        //    float step = 0.1f;
 
-            for (int i = 0; i < 4; i++)
-            {
-                var side = rule[i];
+        //    for (int i = 0; i < 4; i++)
+        //    {
+        //        var side = rule[i];
 
-                if (side[1].IsSame(color) && side[2].IsSame(color))
-                {                    
-                    var uv = (cell[i] + cell.GetCircular(i + 1)) / 2;
-                    uv += (centroidUV - uv).Normalized(); // Move inside face;
-                    var edgePoint = GetPoint(topology, uv, size);
-                    var direction = centroid - edgePoint;
-                    var length = direction.Length;
-                    direction.Normalize();
+        //        if (side[1].IsSame(color) && side[2].IsSame(color))
+        //        {                    
+        //            var uv = (cell[i] + cell.GetCircular(i + 1)) / 2;
+        //            uv += (centroidUV - uv).Normalized(); // Move inside face;
+        //            var edgePoint = GetPoint(topology, uv, size);
+        //            var direction = centroid - edgePoint;
+        //            var length = direction.Length;
+        //            direction.Normalize();
 
-                    var rotation = Mathematics.GetRotation(Vector3.UnitY, direction);
+        //            var rotation = Mathematics.GetRotation(Vector3.UnitY, direction);
 
-                    for (float offset = 0; offset < length; offset += step)
-                    {
-                        var position = edgePoint + direction * offset + cell.Normal * 0.3f;
-                        InstantiateRing(engine, position, rotation, scale, color);
-                    }                    
-                }
-            }
+        //            for (float offset = 0; offset < length; offset += step)
+        //            {
+        //                var position = edgePoint + direction * offset + cell.Normal * 0.3f;
+        //                InstantiateRing(engine, position, rotation, scale, color);
+        //            }                    
+        //        }
+        //    }
 
-            //InstantiateCube(engine, centroid, rotation, scale, color);
-        }
+        //    //InstantiateCube(engine, centroid, rotation, scale, color);
+        //}
 
         public static GameObject InstantiateCube(
             Engine engine, 
@@ -728,6 +812,15 @@ namespace TriangulatedTopology
             ring.Rotation = rotation;
             ring.Scale = scale;
             return ring;
+        }
+
+        public static GameObject InstantiatePipe(Engine engine, Vector3 position)
+        {
+            var pipe = engine.CreateGameObject();
+            var renderer = pipe.Add<SkeletalMeshRenderComponent>();
+            renderer.Model = Model.Load("Content/Models/PipeSegment.fbx");
+            pipe.Position = position;
+            return pipe;
         }
 
         public static Vector3 RgbaToVector3(Color color)
@@ -814,7 +907,8 @@ namespace TriangulatedTopology
             var cells = IslandsToCells(islands);
             Wfc.GraphWfc(cells, wallRules, floorRules, ceilRules);
             var nets = ExtractNets(topology, cells, size);
-            VisualizeNets(engine, nets);
+            //VisualizeNets(engine, nets);
+            VisualizePipes(engine, nets);
             //GenerateDetails(engine, topology, cells, size);
 
             var texture = TextureCreator.CreateDetailedTexture(cells, size, step);
