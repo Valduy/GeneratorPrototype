@@ -50,6 +50,8 @@ namespace TriangulatedTopology
         public static Model RingModel = Model.Load("Content/Models/Ring.obj");
         public static Model PipeModel = Model.Load("Content/Models/PipeSegment.fbx");
 
+        public static Engine Engine;
+
         public static List<Island> CreateIslands(Topology topology, int size, int step)
         {
             var islands = new List<Island>();
@@ -614,6 +616,9 @@ namespace TriangulatedTopology
                         bottom.Position = bottomSideDirection;
                         bottomHand.Position = bottomSocketCoerce;
                         bottomHand.Rotation = bottomSocketRotation;
+
+                        var bt = bottom.GetBoneMatrix();
+                        InstantiateCube(engine, bt.ExtractTranslation() + pivot, Quaternion.Identity, new Vector3(0.3f), VentilationColor);
                     }
                     else
                     {
@@ -636,13 +641,25 @@ namespace TriangulatedTopology
             out Quaternion socketRotation)
         {
             var sharedPoints = GetSharedPoints(node.Corners, neighbour.Corners);
+            var to = GetCentroid(sharedPoints) + extrusionFactor * normal;
 
-            sideDirection = GetCentroid(sharedPoints) + extrusionFactor * normal - pivot;
+            sideDirection = to - pivot;
             socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
+
+            // TODO: Check this algorithm with cube!
+            var yAxis = Vector3.Transform(Vector3.UnitY, socketRotation);
+            var yRotation = Mathematics.GetRotation(yAxis, normal);
 
             var socketTransform = Matrix4.CreateTranslation(socketOffset);
             socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
             socketCoerce = -socketTransform.ExtractTranslation();
+            socketRotation = yRotation * socketRotation;
+
+            var a = pivot + sideDirection;
+            var b = a + Vector3.Transform(Vector3.UnitY * 2, socketRotation);
+
+            var bottomLine = Engine.Line(a, b, socketOffset.Z > 0 ? Colors.Blue : Colors.Red);
+            bottomLine.Get<LineRenderComponent>()!.Width = 2;
         }
 
         public static Vector3 GetCentroid(IReadOnlyList<Vector3> points)
@@ -864,9 +881,12 @@ namespace TriangulatedTopology
             //int seed = random.Next();
             //Console.WriteLine(seed);
             //CollectionsHelper.UseSeed(seed);
+
             CollectionsHelper.UseSeed(1628667546);
+            //CollectionsHelper.UseSeed(1145917631);
 
             using var engine = new Engine();
+            Engine = engine;
 
             var operatorGo = engine.CreateGameObject();
             operatorGo.Add<Operator3DComponent>();
