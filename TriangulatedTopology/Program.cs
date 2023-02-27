@@ -635,21 +635,10 @@ namespace TriangulatedTopology
             out Vector3 socketCoerce,
             out Quaternion socketRotation)
         {
-            var neighbourNormal = GetNormal(neighbour.Corners);
-            var extrusionDirection = Vector3.Lerp(normal, neighbourNormal, 0.5f).Normalized();
             var sharedPoints = GetSharedPoints(node.Corners, neighbour.Corners);
-            //var to = GetCentroid(sharedPoints1) + extrusionFactor * extrusionDirection1;
-
-            //var test = Matrix4.CreateTranslation(socketOffset);
-            //test *= Matrix4.CreateFromQuaternion(rotation);
 
             sideDirection = GetCentroid(sharedPoints) + extrusionFactor * normal - pivot;
-            sideDirection.Normalize();
-
             socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
-
-            //socketCoerce = Vector3.Zero;
-            //socketRotation = Quaternion.Identity;
 
             var socketTransform = Matrix4.CreateTranslation(socketOffset);
             socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
