@@ -567,7 +567,7 @@ namespace TriangulatedTopology
 
         public static void VisualizePipes(Engine engine, List<Net<LogicalNode>> nets)
         {
-            float extrusionFactor = 0.3f;
+            float extrusionFactor = 0.5f;
 
             foreach (var net in nets)
             {
@@ -587,57 +587,33 @@ namespace TriangulatedTopology
                     var centroid = GetCentroid(node.Item.Corners);
                     var normal = GetNormal(node.Item.Corners);
                     var pivot = centroid + extrusionFactor * normal;
-                    var scale = new Vector3(0.3f);
 
                     if (node.Neighbours.Count == 2)
                     {
-                        var pipe = InstantiatePipe(engine, pivot);
+                        //var rotation = Mathematics.GetRotation(Vector3.UnitY, normal);
+                        var rotation = Quaternion.Identity;
+                        var pipe = InstantiatePipe(engine, pivot, rotation);
                         var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
 
-                        var root = skeleton["Root"];
+                        GetPipSideDeformations(node.Item, node.Neighbours[0].Item,
+                            pivot, rotation, normal, Vector3.UnitZ, extrusionFactor,
+                            out var topSideDirection, out var topSocketCoerce, out var topSocketRotation);
+
                         var top = skeleton["Top"];
                         var topHand = skeleton["TopHand"];
+                        top.Position = topSideDirection;
+                        topHand.Position = topSocketCoerce;
+                        topHand.Rotation = topSocketRotation;
+
+                        GetPipSideDeformations(node.Item, node.Neighbours[1].Item,
+                            pivot, rotation, normal, -Vector3.UnitZ, extrusionFactor,
+                            out var bottomSideDirection, out var bottomSocketCoerce, out var bottomSocketRotation);
+
                         var bottom = skeleton["Bottom"];
                         var bottomHand = skeleton["BottomHand"];
-
-                        var neighbour1 = node.Neighbours[1];
-                        var neighbourNormal1 = GetNormal(neighbour1.Item.Corners);
-                        var extrusionDirection1 = Vector3.Lerp(normal, neighbourNormal1, 0.5f).Normalized();
-                        var sharedPoints1 = GetSharedPoints(node.Item.Corners, neighbour1.Item.Corners);
-                        //var to = GetCentroid(sharedPoints1) + extrusionFactor * extrusionDirection1;
-                        var to = GetCentroid(sharedPoints1) + extrusionFactor * normal;
-                        var neighbourCentroid1 = GetCentroid(neighbour1.Item.Corners);
-                        //var toNeighbourDirection1 = neighbourCentroid1 - to;
-                        var toNeighbourDirection1 = to - pivot;
-                        toNeighbourDirection1.Normalize();
-                        var toRotation = Mathematics.GetRotation(Vector3.UnitZ, toNeighbourDirection1);
-                        var topHandCoerce = Matrix4.CreateTranslation(Vector3.UnitZ);
-                        topHandCoerce *= Matrix4.CreateFromQuaternion(toRotation);
-
-                        top.Position = to - pivot;
-                        topHand.Position = -topHandCoerce.ExtractTranslation();
-                        topHand.Rotation = toRotation;
-
-                        var neighbour0 = node.Neighbours[0];
-                        var neighbourNormal0 = GetNormal(neighbour0.Item.Corners);
-                        var extrusionDirection0 = Vector3.Lerp(normal, neighbourNormal0, 0.5f).Normalized();
-                        var sharedPoints0 = GetSharedPoints(node.Item.Corners, neighbour0.Item.Corners);
-                        //var from = GetCentroid(sharedPoints0) + extrusionFactor * extrusionDirection0;
-                        var from = GetCentroid(sharedPoints0) + extrusionFactor * normal;
-                        var neighbourCentroid0 = GetCentroid(neighbour0.Item.Corners);
-                        //var toNeighbourDirection0 = neighbourCentroid0 - from;
-                        var toNeighbourDirection0 = from - pivot;
-                        toNeighbourDirection0.Normalize();
-                        var fromRotation = Mathematics.GetRotation(-Vector3.UnitZ, toNeighbourDirection0);
-                        var bottomHandCoerce = Matrix4.CreateTranslation(-Vector3.UnitZ);
-                        bottomHandCoerce *= Matrix4.CreateFromQuaternion(fromRotation);
-
-                        bottom.Position = from - pivot;
-                        bottomHand.Position = -bottomHandCoerce.ExtractTranslation();
-                        bottomHand.Rotation = fromRotation;
-
-                        InstantiateCube(engine, from, Quaternion.Identity, new Vector3(0.2f), VentilationColor);
-                        InstantiateCube(engine, to, Quaternion.Identity, new Vector3(0.2f), VentilationColor);
+                        bottom.Position = bottomSideDirection;
+                        bottomHand.Position = bottomSocketCoerce;
+                        bottomHand.Rotation = bottomSocketRotation;
                     }
                     else
                     {
@@ -645,6 +621,39 @@ namespace TriangulatedTopology
                     }                    
                 }
             }
+        }
+
+        public static void GetPipSideDeformations(
+            LogicalNode node,
+            LogicalNode neighbour,            
+            Vector3 pivot,
+            Quaternion rotation,
+            Vector3 normal,
+            Vector3 socketOffset,
+            float extrusionFactor,
+            out Vector3 sideDirection,
+            out Vector3 socketCoerce,
+            out Quaternion socketRotation)
+        {
+            var neighbourNormal = GetNormal(neighbour.Corners);
+            var extrusionDirection = Vector3.Lerp(normal, neighbourNormal, 0.5f).Normalized();
+            var sharedPoints = GetSharedPoints(node.Corners, neighbour.Corners);
+            //var to = GetCentroid(sharedPoints1) + extrusionFactor * extrusionDirection1;
+
+            //var test = Matrix4.CreateTranslation(socketOffset);
+            //test *= Matrix4.CreateFromQuaternion(rotation);
+
+            sideDirection = GetCentroid(sharedPoints) + extrusionFactor * normal - pivot;
+            sideDirection.Normalize();
+
+            socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
+
+            //socketCoerce = Vector3.Zero;
+            //socketRotation = Quaternion.Identity;
+
+            var socketTransform = Matrix4.CreateTranslation(socketOffset);
+            socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
+            socketCoerce = -socketTransform.ExtractTranslation();
         }
 
         public static Vector3 GetCentroid(IReadOnlyList<Vector3> points)
@@ -814,12 +823,13 @@ namespace TriangulatedTopology
             return ring;
         }
 
-        public static GameObject InstantiatePipe(Engine engine, Vector3 position)
+        public static GameObject InstantiatePipe(Engine engine, Vector3 position, Quaternion rotation)
         {
             var pipe = engine.CreateGameObject();
             var renderer = pipe.Add<SkeletalMeshRenderComponent>();
             renderer.Model = Model.Load("Content/Models/PipeSegment.fbx");
             pipe.Position = position;
+            pipe.Rotation = rotation;
             return pipe;
         }
 
