@@ -646,9 +646,10 @@ namespace TriangulatedTopology
             sideDirection = to - pivot;
             socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
 
-            // TODO: Check this algorithm with cube!
-            var yAxis = Vector3.Transform(Vector3.UnitY, socketRotation);
-            var yRotation = Mathematics.GetRotation(yAxis, normal);
+            // TODO: Check this algorithm with cube! Not sure if this crutch is the best solution...
+            var top = (normal - Vector3.UnitZ).Length < 0.1f ? -Vector3.UnitY : Vector3.UnitY;
+            top = Vector3.Transform(top, socketRotation);
+            var yRotation = Mathematics.GetRotation(top, normal);
 
             var socketTransform = Matrix4.CreateTranslation(socketOffset);
             socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
@@ -882,8 +883,8 @@ namespace TriangulatedTopology
             //Console.WriteLine(seed);
             //CollectionsHelper.UseSeed(seed);
 
-            CollectionsHelper.UseSeed(1628667546);
-            //CollectionsHelper.UseSeed(1145917631);
+            //CollectionsHelper.UseSeed(1628667546);
+            CollectionsHelper.UseSeed(1145917631);
 
             using var engine = new Engine();
             Engine = engine;
