@@ -9,10 +9,52 @@ namespace GameEngine.Components
 {
     public class Operator3DComponent : Component
     {
+        private float _cameraMinSpeed = 1.0f;
+        private float _cameraMaxSpeed = 10.0f;
+        private float _cameraSpeed = 3.0f;
+
         private bool _firstMove;
         private Vector2 _lastPos;
 
-        public float CameraSpeed { get; set; } = 1.5f;
+        public float CameraMinSpeed 
+        { 
+            get => _cameraMinSpeed;
+            set
+            {
+                if (value > _cameraMaxSpeed)
+                {
+                    throw new ArgumentException($"{nameof(CameraMinSpeed)} should be <= then{nameof(CameraMaxSpeed)}.");
+                }
+
+                _cameraMinSpeed = value;
+                _cameraSpeed = MathF.Max(_cameraSpeed, _cameraMinSpeed);
+            } 
+        }
+
+        public float CameraMaxSpeed 
+        { 
+            get => _cameraMaxSpeed;
+            set
+            {
+                if (value < _cameraMinSpeed)
+                {
+                    throw new ArgumentException($"{nameof(CameraMaxSpeed)} should be >= then {nameof(CameraMinSpeed)}.");
+                }
+
+                _cameraMaxSpeed = value;
+                _cameraSpeed = MathF.Min(_cameraSpeed, _cameraMaxSpeed);
+            } 
+        }
+
+        public float CameraSpeed 
+        { 
+            get => _cameraSpeed;
+            set
+            {
+                _cameraSpeed = Math.Clamp(value, _cameraMinSpeed, _cameraMaxSpeed);
+            } 
+        }
+        
         public float Sensitivity { get; set; } = 0.2f;
 
         private Window Window => GameObject!.Engine.Window;
@@ -80,6 +122,8 @@ namespace GameEngine.Components
                 Camera.Yaw += deltaX * Sensitivity;
                 Camera.Pitch -= deltaY * Sensitivity;
             }
+
+            CameraSpeed += Mouse.ScrollDelta.Y;
         }
     }
 }
