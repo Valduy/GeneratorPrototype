@@ -592,13 +592,11 @@ namespace TriangulatedTopology
 
                     if (node.Neighbours.Count == 2)
                     {
-                        //var rotation = Mathematics.GetRotation(Vector3.UnitY, normal);
-                        var rotation = Quaternion.Identity;
-                        var pipe = InstantiatePipe(engine, pivot, rotation);
+                        var pipe = InstantiatePipe(engine, pivot, Quaternion.Identity);
                         var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
 
-                        GetPipSideDeformations(node.Item, node.Neighbours[0].Item,
-                            pivot, rotation, normal, Vector3.UnitZ, extrusionFactor,
+                        GetPipeSideDeformations(node.Item, node.Neighbours[0].Item,
+                            pivot, normal, Vector3.UnitZ, extrusionFactor,
                             out var topSideDirection, out var topSocketCoerce, out var topSocketRotation);
 
                         var top = skeleton["Top"];
@@ -607,8 +605,8 @@ namespace TriangulatedTopology
                         topHand.Position = topSocketCoerce;
                         topHand.Rotation = topSocketRotation;
 
-                        GetPipSideDeformations(node.Item, node.Neighbours[1].Item,
-                            pivot, rotation, normal, -Vector3.UnitZ, extrusionFactor,
+                        GetPipeSideDeformations(node.Item, node.Neighbours[1].Item,
+                            pivot, normal, -Vector3.UnitZ, extrusionFactor,
                             out var bottomSideDirection, out var bottomSocketCoerce, out var bottomSocketRotation);
 
                         var bottom = skeleton["Bottom"];
@@ -622,17 +620,43 @@ namespace TriangulatedTopology
                     }
                     else
                     {
-                        InstantiateSphere(engine, pivot, Quaternion.Identity, new Vector3(0.3f), VentilationColor);
+                        var pipe = InstantiatePipe(engine, pivot, Quaternion.Identity);
+                        var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
+
+                        GetPipeSideDeformations(node.Item, node.Neighbours[0].Item,
+                            pivot, normal, Vector3.UnitZ, extrusionFactor,
+                            out var topSideDirection, out var topSocketCoerce, out var topSocketRotation);
+
+                        var top = skeleton["Top"];
+                        var topHand = skeleton["TopHand"];
+                        top.Position = topSideDirection;
+                        topHand.Position = topSocketCoerce;
+                        topHand.Rotation = topSocketRotation;
+
+                        var shared = GetSharedPoints(node.Item.Corners, node.Neighbours[0].Item.Corners);
+                        var to = GetCentroid(shared) + extrusionFactor * normal;
+                        var toNeighbour = to - pivot;
+                        toNeighbour.Normalize();
+
+                        GetPipeEndingDeformations(node.Item, centroid,
+                            pivot, -toNeighbour, -Vector3.UnitZ,
+                            out var bottomSideDirection, out var bottomSocketCoerce, out var bottomSocketRotation);
+
+                        var bottom = skeleton["Bottom"];
+                        var bottomHand = skeleton["BottomHand"];
+                        bottom.Position = bottomSideDirection;
+                        bottomHand.Position = bottomSocketCoerce;
+                        bottomHand.Rotation = bottomSocketRotation;
+                        //InstantiateSphere(engine, pivot, Quaternion.Identity, new Vector3(0.3f), VentilationColor);
                     }                    
                 }
             }
         }
 
-        public static void GetPipSideDeformations(
+        public static void GetPipeSideDeformations(
             LogicalNode node,
             LogicalNode neighbour,            
             Vector3 pivot,
-            Quaternion rotation,
             Vector3 normal,
             Vector3 socketOffset,
             float extrusionFactor,
@@ -647,17 +671,49 @@ namespace TriangulatedTopology
             socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
 
             // TODO: Check this algorithm with cube! Not sure if this crutch is the best solution...
-            var top = (normal - Vector3.UnitZ).Length < 0.1f ? -Vector3.UnitY : Vector3.UnitY;
-            top = Vector3.Transform(top, socketRotation);
-            var yRotation = Mathematics.GetRotation(top, normal);
+            var yAxis = (normal - Vector3.UnitZ).Length < 0.1f ? -Vector3.UnitY : Vector3.UnitY;
+            var up = yAxis;
+            up = Vector3.Transform(up, socketRotation);
+            var unwinding = Mathematics.GetRotation(up, normal);
 
             var socketTransform = Matrix4.CreateTranslation(socketOffset);
             socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
             socketCoerce = -socketTransform.ExtractTranslation();
-            socketRotation = yRotation * socketRotation;
+            socketRotation = unwinding * socketRotation;
 
-            var a = pivot + sideDirection;
-            var b = a + Vector3.Transform(Vector3.UnitY * 2, socketRotation);
+            //var a = pivot + sideDirection;
+            //var b = a + Vector3.Transform(yAxis * 2, socketRotation);
+
+            //var bottomLine = Engine.Line(a, b, socketOffset.Z > 0 ? Colors.Blue : Colors.Red);
+            //bottomLine.Get<LineRenderComponent>()!.Width = 2;
+        }
+
+        public static void GetPipeEndingDeformations(
+            LogicalNode node,
+            Vector3 centroid,
+            Vector3 pivot,
+            Vector3 normal,
+            Vector3 socketOffset,
+            out Vector3 sideDirection,
+            out Vector3 socketCoerce,
+            out Quaternion socketRotation)
+        {
+            sideDirection = centroid - pivot;
+            socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
+
+            // TODO: Check this algorithm with cube! Not sure if this crutch is the best solution...
+            //var yAxis = (normal - Vector3.UnitY).Length < 0.1f ? -Vector3.UnitY : Vector3.UnitY;
+            var yAxis = Vector3.UnitY;
+            var up = Vector3.Transform(yAxis, socketRotation);
+            var unwinding = Mathematics.GetRotation(up, normal);
+
+            var socketTransform = Matrix4.CreateTranslation(socketOffset);
+            socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
+            socketCoerce = -socketTransform.ExtractTranslation();
+            socketRotation = unwinding * socketRotation;
+
+            var a = centroid;
+            var b = a + Vector3.Transform(yAxis * 2, socketRotation);
 
             var bottomLine = Engine.Line(a, b, socketOffset.Z > 0 ? Colors.Blue : Colors.Red);
             bottomLine.Get<LineRenderComponent>()!.Width = 2;
