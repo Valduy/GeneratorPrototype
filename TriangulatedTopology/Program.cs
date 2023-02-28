@@ -700,23 +700,59 @@ namespace TriangulatedTopology
         {
             sideDirection = centroid - pivot;
             socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
-
-            // TODO: Check this algorithm with cube! Not sure if this crutch is the best solution...
-            //var yAxis = (normal - Vector3.UnitY).Length < 0.1f ? -Vector3.UnitY : Vector3.UnitY;
+            var withoutUnwinding = socketRotation;
+                        
             var yAxis = Vector3.UnitY;
+            var tileAxis = -sideDirection.Normalized();
             var up = Vector3.Transform(yAxis, socketRotation);
-            var unwinding = Mathematics.GetRotation(up, normal);
+            var unwinding = GetRotation(tileAxis, up, normal);
+
+            var epsilon = 0.01f;
+            var socketRotationWithUnwinding = unwinding * socketRotation;
+            var upWithUnwinding = Vector3.Transform(yAxis, socketRotationWithUnwinding);
+            var angle = Vector3.Dot(upWithUnwinding.Normalized(), -normal);
+
+            // Fix not correct rotation for 90 degrees between up and normal case.
+            if (MathHelper.ApproximatelyEqualEpsilon(angle, 1.0f, epsilon))
+            {
+                unwinding *= Quaternion.FromAxisAngle(tileAxis, MathF.PI);
+            }
 
             var socketTransform = Matrix4.CreateTranslation(socketOffset);
             socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
             socketCoerce = -socketTransform.ExtractTranslation();
             socketRotation = unwinding * socketRotation;
 
-            var a = centroid;
-            var b = a + Vector3.Transform(yAxis * 2, socketRotation);
+            //var a0 = centroid;
+            //var b0 = a0 + Vector3.Transform(yAxis * 2, withoutUnwinding);
 
-            var bottomLine = Engine.Line(a, b, socketOffset.Z > 0 ? Colors.Blue : Colors.Red);
-            bottomLine.Get<LineRenderComponent>()!.Width = 2;
+            //var line0 = Engine.Line(a0, b0, Colors.Green);
+            //line0.Get<LineRenderComponent>()!.Width = 2;
+
+            var a1 = centroid;
+            var b1 = a1 + Vector3.Transform(yAxis * 2, socketRotation);
+
+            var line1 = Engine.Line(a1, b1, Colors.Red);
+            line1.Get<LineRenderComponent>()!.Width = 2;
+        }
+
+        public static Quaternion GetRotation(Vector3 axis, Vector3 from, Vector3 to)
+        {
+            from.Normalized();
+            to.Normalize();
+
+            if (Mathematics.ApproximatelyEqualEpsilon(from, to, float.Epsilon))
+            {
+                return Quaternion.Identity;
+            }
+            if (Mathematics.ApproximatelyEqualEpsilon(from, -to, float.Epsilon))
+            {
+                return Quaternion.FromAxisAngle(axis, MathF.PI);
+            }
+
+            float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
+            float angle = MathF.Acos(cosa);
+            return Quaternion.FromAxisAngle(axis, angle);
         }
 
         public static Vector3 GetCentroid(IReadOnlyList<Vector3> points)
