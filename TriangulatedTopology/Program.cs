@@ -684,6 +684,13 @@ namespace TriangulatedTopology
             socketCoerce = -socketTransform.ExtractTranslation();
             socketRotation = unwinding * socketRotation;
 
+            var neighbourNormal = GetNormal(neighbour.Corners);
+            var extrusionDirection = Vector3.Lerp(normal, neighbourNormal, 0.5f).Normalized();
+
+            var a = GetCentroid(sharedPoints);
+            var b = a + extrusionDirection * 3;
+            var line = Engine.Line(a, b, Colors.Cyan);
+
             //var a0 = to;
             //var b0 = a0 + Vector3.Transform(yAxis * 2, withoutUnwinding);
 
@@ -997,13 +1004,15 @@ namespace TriangulatedTopology
 
         public static void Main(string[] args)
         {
-            var random = new Random();
-            int seed = random.Next();
-            Console.WriteLine(seed);
-            CollectionsHelper.UseSeed(seed);
+            //var random = new Random();
+            //int seed = random.Next();
+            //Console.WriteLine(seed);
+            //CollectionsHelper.UseSeed(seed);
 
             //CollectionsHelper.UseSeed(1628667546);
             //CollectionsHelper.UseSeed(1145917631);
+            //CollectionsHelper.UseSeed(56224625);
+            CollectionsHelper.UseSeed(935418399); 
 
             using var engine = new Engine();
             Engine = engine;
