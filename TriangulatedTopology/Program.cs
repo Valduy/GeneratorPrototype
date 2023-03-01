@@ -595,9 +595,12 @@ namespace TriangulatedTopology
                         var pipe = InstantiatePipe(engine, pivot, Quaternion.Identity);
                         var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
 
-                        GetPipeSideDeformations(node.Item, node.Neighbours[0].Item,
+                        GetPipeSideDeformations(
+                            node.Item, node.Neighbours[0].Item,
                             pivot, normal, Vector3.UnitZ, extrusionFactor,
-                            out var topSideDirection, out var topSocketCoerce, out var topSocketRotation);
+                            out var topSideDirection, 
+                            out var topSocketCoerce, 
+                            out var topSocketRotation);
 
                         var top = skeleton["Top"];
                         var topHand = skeleton["TopHand"];
@@ -605,9 +608,12 @@ namespace TriangulatedTopology
                         topHand.Position = topSocketCoerce;
                         topHand.Rotation = topSocketRotation;
 
-                        GetPipeSideDeformations(node.Item, node.Neighbours[1].Item,
+                        GetPipeSideDeformations(
+                            node.Item, node.Neighbours[1].Item,
                             pivot, normal, -Vector3.UnitZ, extrusionFactor,
-                            out var bottomSideDirection, out var bottomSocketCoerce, out var bottomSocketRotation);
+                            out var bottomSideDirection, 
+                            out var bottomSocketCoerce, 
+                            out var bottomSocketRotation);
 
                         var bottom = skeleton["Bottom"];
                         var bottomHand = skeleton["BottomHand"];
@@ -625,7 +631,9 @@ namespace TriangulatedTopology
 
                         GetPipeSideDeformations(node.Item, node.Neighbours[0].Item,
                             pivot, normal, Vector3.UnitZ, extrusionFactor,
-                            out var topSideDirection, out var topSocketCoerce, out var topSocketRotation);
+                            out var topSideDirection, 
+                            out var topSocketCoerce, 
+                            out var topSocketRotation);
 
                         var top = skeleton["Top"];
                         var topHand = skeleton["TopHand"];
@@ -638,9 +646,11 @@ namespace TriangulatedTopology
                         var toNeighbour = to - pivot;
                         toNeighbour.Normalize();
 
-                        GetPipeEndingDeformations(node.Item, centroid,
-                            pivot, -toNeighbour, -Vector3.UnitZ,
-                            out var bottomSideDirection, out var bottomSocketCoerce, out var bottomSocketRotation);
+                        GetPipeEndingDeformations(
+                            centroid, pivot, -toNeighbour, -Vector3.UnitZ,
+                            out var bottomSideDirection, 
+                            out var bottomSocketCoerce, 
+                            out var bottomSocketRotation);
 
                         var bottom = skeleton["Bottom"];
                         var bottomHand = skeleton["BottomHand"];
@@ -669,27 +679,51 @@ namespace TriangulatedTopology
 
             sideDirection = to - pivot;
             socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
+            var withoutUnwinding = socketRotation;
 
-            // TODO: Check this algorithm with cube! Not sure if this crutch is the best solution...
-            var yAxis = (normal - Vector3.UnitZ).Length < 0.1f ? -Vector3.UnitY : Vector3.UnitY;
-            var up = yAxis;
-            up = Vector3.Transform(up, socketRotation);
-            var unwinding = Mathematics.GetRotation(up, normal);
+            var yAxis = Vector3.UnitY;
+            var tileAxis = sideDirection.Normalized();
+            var up = Vector3.Transform(yAxis, socketRotation);
+            var unwinding = GetRotation(tileAxis, up, normal);
+
+            var epsilon = 0.01f;
+            var unwindedUp = Vector3.Transform(up, unwinding);
+            var normalUpAngle = Vector3.Dot(unwindedUp, normal);
+
+            if (!MathHelper.ApproximatelyEqualEpsilon(normalUpAngle, 1.0f, 0.01f))
+            {
+                unwinding.Invert();
+            }
+            
+            var socketRotationWithUnwinding = unwinding * socketRotation;
+            var upWithUnwinding = Vector3.Transform(yAxis, socketRotationWithUnwinding);
+            var angle = Vector3.Dot(upWithUnwinding.Normalized(), -normal);
+
+            // Fix not correct rotation for 90 degrees between up and normal case.
+            if (MathHelper.ApproximatelyEqualEpsilon(angle, 1.0f, epsilon))
+            {
+                unwinding *= Quaternion.FromAxisAngle(tileAxis, MathF.PI);
+            }
 
             var socketTransform = Matrix4.CreateTranslation(socketOffset);
             socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
             socketCoerce = -socketTransform.ExtractTranslation();
             socketRotation = unwinding * socketRotation;
 
-            //var a = pivot + sideDirection;
-            //var b = a + Vector3.Transform(yAxis * 2, socketRotation);
+            //var a0 = to;
+            //var b0 = a0 + Vector3.Transform(yAxis * 2, withoutUnwinding);
 
-            //var bottomLine = Engine.Line(a, b, socketOffset.Z > 0 ? Colors.Blue : Colors.Red);
-            //bottomLine.Get<LineRenderComponent>()!.Width = 2;
+            //var line0 = Engine.Line(a0, b0, Colors.Green);
+            //line0.Get<LineRenderComponent>()!.Width = 2;
+
+            //var a1 = to;
+            //var b1 = a1 + Vector3.Transform(yAxis * 2, socketRotation);
+
+            //var line1 = Engine.Line(a1, b1, Colors.Red);
+            //line1.Get<LineRenderComponent>()!.Width = 2;
         }
 
         public static void GetPipeEndingDeformations(
-            LogicalNode node,
             Vector3 centroid,
             Vector3 pivot,
             Vector3 normal,
@@ -729,11 +763,11 @@ namespace TriangulatedTopology
             //var line0 = Engine.Line(a0, b0, Colors.Green);
             //line0.Get<LineRenderComponent>()!.Width = 2;
 
-            var a1 = centroid;
-            var b1 = a1 + Vector3.Transform(yAxis * 2, socketRotation);
+            //var a1 = centroid;
+            //var b1 = a1 + Vector3.Transform(yAxis * 2, socketRotation);
 
-            var line1 = Engine.Line(a1, b1, Colors.Red);
-            line1.Get<LineRenderComponent>()!.Width = 2;
+            //var line1 = Engine.Line(a1, b1, Colors.Red);
+            //line1.Get<LineRenderComponent>()!.Width = 2;
         }
 
         public static Quaternion GetRotation(Vector3 axis, Vector3 from, Vector3 to)
@@ -970,13 +1004,13 @@ namespace TriangulatedTopology
 
         public static void Main(string[] args)
         {
-            //var random = new Random();
-            //int seed = random.Next();
-            //Console.WriteLine(seed);
-            //CollectionsHelper.UseSeed(seed);
+            var random = new Random();
+            int seed = random.Next();
+            Console.WriteLine(seed);
+            CollectionsHelper.UseSeed(seed);
 
             //CollectionsHelper.UseSeed(1628667546);
-            CollectionsHelper.UseSeed(1145917631);
+            //CollectionsHelper.UseSeed(1145917631);
 
             using var engine = new Engine();
             Engine = engine;
