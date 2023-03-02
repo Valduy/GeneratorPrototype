@@ -671,12 +671,33 @@ namespace TriangulatedTopology
             out Vector3 socketCoerce,
             out Quaternion socketRotation)
         {
-            var sharedPoints = GetSharedPoints(node.Corners, neighbour.Corners);
-            var to = GetCentroid(sharedPoints) + extrusionFactor * normal;
+            var neighbourNormal = GetNormal(neighbour.Corners);
+            var extrusionDirection = Vector3.Lerp(normal, neighbourNormal, 0.5f).Normalized();
 
+            var sharedPoints = GetSharedPoints(node.Corners, neighbour.Corners);
+            var centroid = GetCentroid(sharedPoints);
+            
+            var to = centroid + extrusionFactor * extrusionDirection;
+            var forward = centroid + extrusionFactor * normal - pivot;            
             sideDirection = to - pivot;
-            socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
-            var unwinding = GetSideUnwinding(sideDirection, socketRotation, normal);
+
+            var edgeAxis = sharedPoints[1] - sharedPoints[0];
+            edgeAxis.Normalize();
+
+            var socketDirection = Vector3.Cross(edgeAxis, extrusionDirection);
+            socketDirection.Normalize();
+
+            // Rough but ok...
+            if (Vector3.Dot(socketDirection, sideDirection) < 0)
+            {
+                socketDirection = -socketDirection;
+            }
+
+            var normalRotation = Mathematics.GetRotation(forward, socketDirection);
+            normal = Vector3.Transform(normal, normalRotation).Normalized();
+
+            socketRotation = Mathematics.GetRotation(socketOffset, socketDirection);
+            var unwinding = GetUnwinding(socketDirection, socketRotation, normal);
             var withoutUnwinding = socketRotation; // for debug            
 
             var socketTransform = Matrix4.CreateTranslation(socketOffset);
@@ -684,23 +705,16 @@ namespace TriangulatedTopology
             socketCoerce = -socketTransform.ExtractTranslation();
             socketRotation = unwinding * socketRotation;
 
-            var neighbourNormal = GetNormal(neighbour.Corners);
-            var extrusionDirection = Vector3.Lerp(normal, neighbourNormal, 0.5f).Normalized();
-
-            var a = GetCentroid(sharedPoints);
-            var b = a + extrusionDirection * 3;
-            var line = Engine.Line(a, b, Colors.Cyan);
-
             //var a0 = to;
-            //var b0 = a0 + Vector3.Transform(yAxis * 2, withoutUnwinding);
+            //var b0 = a0 + Vector3.Transform(Vector3.UnitY * 2, withoutUnwinding);
 
             //var line0 = Engine.Line(a0, b0, Colors.Green);
             //line0.Get<LineRenderComponent>()!.Width = 2;
 
             //var a1 = to;
-            //var b1 = a1 + Vector3.Transform(yAxis * 2, socketRotation);
+            //var b1 = a1 + Vector3.Transform(Vector3.UnitY * 2, socketRotation);
 
-            //var line1 = Engine.Line(a1, b1, Colors.Red);
+            //var line1 = Engine.Line(a1, b1, Colors.Green);
             //line1.Get<LineRenderComponent>()!.Width = 2;
         }
 
@@ -715,7 +729,7 @@ namespace TriangulatedTopology
         {
             sideDirection = centroid - pivot;
             socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
-            var unwinding = GetSideUnwinding(sideDirection, socketRotation, normal);
+            var unwinding = GetUnwinding(sideDirection, socketRotation, normal);
             var withoutUnwinding = socketRotation; // for debug           
 
             var socketTransform = Matrix4.CreateTranslation(socketOffset);
@@ -736,7 +750,7 @@ namespace TriangulatedTopology
             //line1.Get<LineRenderComponent>()!.Width = 2;
         }
 
-        public static Quaternion GetSideUnwinding(
+        public static Quaternion GetUnwinding(
             Vector3 sideDirection,
             Quaternion socketRotation,
             Vector3 normal)
@@ -752,17 +766,17 @@ namespace TriangulatedTopology
 
             // GetRotation return always positive value.
             // We invert unwinding rotation if we should use negative angle.
-            if (!MathHelper.ApproximatelyEqualEpsilon(normalUpAngle, 1.0f, 0.01f))
+            if (!MathHelper.ApproximatelyEqualEpsilon(normalUpAngle, 1.0f, epsilon))
             {
                 unwinding.Invert();
             }
 
             var socketRotationWithUnwinding = unwinding * socketRotation;
             var upWithUnwinding = Vector3.Transform(yAxis, socketRotationWithUnwinding);
-            var angle = Vector3.Dot(upWithUnwinding.Normalized(), -normal);
+            var angle = Vector3.Dot(upWithUnwinding.Normalized(), normal);
 
             // Fix not correct rotation for 90 degrees between up and normal case.
-            if (MathHelper.ApproximatelyEqualEpsilon(angle, 1.0f, epsilon))
+            if (MathHelper.ApproximatelyEqualEpsilon(angle, -1.0f, epsilon))
             {
                 unwinding *= Quaternion.FromAxisAngle(tileAxis, MathF.PI);
             }
@@ -1004,15 +1018,16 @@ namespace TriangulatedTopology
 
         public static void Main(string[] args)
         {
-            //var random = new Random();
-            //int seed = random.Next();
-            //Console.WriteLine(seed);
-            //CollectionsHelper.UseSeed(seed);
+            var random = new Random();
+            int seed = random.Next();
+            Console.WriteLine(seed);
+            CollectionsHelper.UseSeed(seed);
 
             //CollectionsHelper.UseSeed(1628667546);
             //CollectionsHelper.UseSeed(1145917631);
             //CollectionsHelper.UseSeed(56224625);
-            CollectionsHelper.UseSeed(935418399); 
+            //CollectionsHelper.UseSeed(935418399);
+            //CollectionsHelper.UseSeed(1310155548);
 
             using var engine = new Engine();
             Engine = engine;

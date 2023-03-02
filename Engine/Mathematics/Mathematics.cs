@@ -299,7 +299,7 @@ namespace GameEngine.Mathematics
 
         public static Quaternion GetRotation(Vector3 from, Vector3 to)
         {
-            from.Normalized();
+            from.Normalize();
             to.Normalize();
 
             if (ApproximatelyEqualEpsilon(from, to, float.Epsilon))
