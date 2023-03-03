@@ -63,6 +63,9 @@
     <None Update="Content\Models\Cube.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Models\CurvePipe.fbx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Models\Line.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -590,6 +590,7 @@ namespace TriangulatedTopology
                     var centroid = GetCentroid(node.Item.Corners);
                     var normal = GetNormal(node.Item.Corners);
                     var pivot = centroid + extrusionFactor * normal;
+                    float k = 0.96f;
 
                     if (node.Neighbours.Count == 2)
                     {
@@ -598,7 +599,7 @@ namespace TriangulatedTopology
 
                         GetPipeSideDeformations(
                             node.Item, node.Neighbours[0].Item,
-                            pivot, normal, Vector3.UnitZ, extrusionFactor,
+                            pivot, normal, Vector3.UnitZ * k, extrusionFactor,
                             out var topSideDirection, 
                             out var topSocketCoerce, 
                             out var topSocketRotation);
@@ -611,7 +612,7 @@ namespace TriangulatedTopology
 
                         GetPipeSideDeformations(
                             node.Item, node.Neighbours[1].Item,
-                            pivot, normal, -Vector3.UnitZ, extrusionFactor,
+                            pivot, normal, -Vector3.UnitZ * k, extrusionFactor,
                             out var bottomSideDirection, 
                             out var bottomSocketCoerce, 
                             out var bottomSocketRotation);
@@ -628,7 +629,7 @@ namespace TriangulatedTopology
                         var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
 
                         GetPipeSideDeformations(node.Item, node.Neighbours[0].Item,
-                            pivot, normal, Vector3.UnitZ, extrusionFactor,
+                            pivot, normal, Vector3.UnitZ * k, extrusionFactor,
                             out var topSideDirection, 
                             out var topSocketCoerce, 
                             out var topSocketRotation);
@@ -645,7 +646,7 @@ namespace TriangulatedTopology
                         toNeighbour.Normalize();
 
                         GetPipeEndingDeformations(
-                            centroid, pivot, -toNeighbour, -Vector3.UnitZ,
+                            centroid, pivot, -toNeighbour, -Vector3.UnitZ * k,
                             out var bottomSideDirection, 
                             out var bottomSocketCoerce, 
                             out var bottomSocketRotation);
@@ -756,9 +757,9 @@ namespace TriangulatedTopology
             Vector3 normal)
         {
             var yAxis = Vector3.UnitY;
-            var tileAxis = sideDirection.Normalized();
+            var axis = sideDirection.Normalized();
             var up = Vector3.Transform(yAxis, socketRotation);
-            var unwinding = GetRotation(tileAxis, up, normal);
+            var unwinding = GetRotation(axis, up, normal);
 
             var epsilon = 0.01f;
             var unwindedUp = Vector3.Transform(up, unwinding);
@@ -778,7 +779,7 @@ namespace TriangulatedTopology
             // Fix not correct rotation for 90 degrees between up and normal case.
             if (MathHelper.ApproximatelyEqualEpsilon(angle, -1.0f, epsilon))
             {
-                unwinding *= Quaternion.FromAxisAngle(tileAxis, MathF.PI);
+                unwinding *= Quaternion.FromAxisAngle(axis, MathF.PI);
             }
 
             return unwinding;
@@ -974,7 +975,8 @@ namespace TriangulatedTopology
         {
             var pipe = engine.CreateGameObject();
             var renderer = pipe.Add<SkeletalMeshRenderComponent>();
-            renderer.Model = Model.Load("Content/Models/PipeSegment.fbx");
+            //renderer.Model = Model.Load("Content/Models/PipeSegment.fbx");
+            renderer.Model = Model.Load("Content/Models/CurvePipe.fbx");
             pipe.Position = position;
             pipe.Rotation = rotation;
             return pipe;
