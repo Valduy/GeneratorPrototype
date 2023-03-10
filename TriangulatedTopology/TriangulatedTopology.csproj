@@ -105,6 +105,9 @@
     <None Update="Content\Models\TriangulatedTower.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Models\Wire.fbx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Room.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
