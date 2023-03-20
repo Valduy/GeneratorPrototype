@@ -1,4 +1,5 @@
-﻿using GameEngine.Components;
+﻿using Assimp;
+using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
@@ -10,6 +11,8 @@ using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Numerics;
+using System.Reflection;
 using TextureUtils;
 using TriangulatedTopology.Geometry;
 using TriangulatedTopology.RulesAdapters;
@@ -17,6 +20,8 @@ using TriangulatedTopology.TextureIsland;
 using Mathematics = GameEngine.Mathematics.Mathematics;
 using Mesh = GameEngine.Graphics.Mesh;
 using Quaternion = OpenTK.Mathematics.Quaternion;
+using Vector2 = OpenTK.Mathematics.Vector2;
+using Vector3 = OpenTK.Mathematics.Vector3;
 
 namespace TriangulatedTopology
 {
@@ -51,6 +56,10 @@ namespace TriangulatedTopology
 
         public static Model RingModel = Model.Load("Content/Models/Ring.obj");
         public static Model PipeModel = Model.Load("Content/Models/PipeSegment.fbx");
+        public static Model MonitorModel = Model.Load("Content/Models/Monitor.fbx");
+        public static Model SupportModel = Model.Load("Content/Models/Support.fbx");
+
+        public static Texture MonitorTexture = Texture.LoadFromFile("Content/Textures/Monitor.png");
 
         public static Engine Engine;
 
@@ -576,18 +585,23 @@ namespace TriangulatedTopology
                 // Search for purple lines.
                 if (net.GetNodes().First().Item.Color.IsSame(VentilationColor))
                 {
-                    //VisualizePipes(engine, net);
-                    var model = AlternativePipes(engine, net);
-                    var go = engine.CreateGameObject();
-                    var render = go.Add<MaterialRenderComponent>();
-                    render.Model = model;
+                    VisualizePipes(engine, net);
+
+                }
+                if (net.GetNodes().First().Item.Color.IsSame(WireColor))
+                {
+                    var models = AlternativeWires(engine, net);
+
+                    foreach (var model in models)
+                    {
+                        var go = engine.CreateGameObject();
+                        var render = go.Add<MaterialRenderComponent>();
+                        render.Material.Color = new Vector3(0.1f, 0.7f, 0.4f);
+                        render.Model = model;
+                    }
+
                     continue;
                 }
-                //if (net.GetNodes().First().Item.Color.IsSame(WireColor))
-                //{
-                //    VisualizeWires(engine, net);
-                //    continue;
-                //}
             }
         }
 
@@ -605,34 +619,40 @@ namespace TriangulatedTopology
             }
         }
 
-        public static Model AlternativePipes(Engine engine, Net<LogicalNode> net)
+        public static List<Model> AlternativeWires(Engine engine, Net<LogicalNode> net)
         {
-            var nodes = GetNodesSequence(net);
-            var spline = GetSpline(nodes);
-
-            if (spline.Count == 0 || spline.Count == 1)
-            {
-                return Model.Empty;
-            }
-
-            //var line = engine.Line(spline[0].Position, spline[1].Position, Colors.Navy);
-            //var renderer = line.Get<LineRenderComponent>()!;
-            //renderer.Width = 10;
-
-            //for (int i = 1; i < spline.Count; i++)
-            //{
-            //    line = engine.Line(spline[i - 1].Position, spline[i].Position, Colors.Navy);
-            //    renderer = line.Get<LineRenderComponent>()!;
-            //    renderer.Width = 10;
-            //}
-
-            //return Model.Empty;
-
             int resolution = 32;
             float radius = 0.1f;
-            var model = CreateTubeFromSpline(spline, resolution, radius);
 
-            return model;
+            var models = new List<Model>();
+            var nodes = GetNodesSequence(net);
+            var pointsLines = GetPointsLines(nodes, 3);
+            
+            foreach (var line in pointsLines)
+            {
+                var spline = GetSpline(line);
+                var model = CreateTubeFromSpline(spline, resolution, radius);
+                models.Add(model);
+            }
+
+            var middle = pointsLines[pointsLines.Count / 2];
+            PlaceSupports(engine, middle);
+
+            var first = middle[0];
+            var last = middle[middle.Count - 1];
+
+            // Monitors
+            if (MathHelper.ApproximatelyEqualEpsilon(Vector3.Dot(first.Up, Vector3.UnitY), 0.0f, 0.01f))
+            {
+                InstantiateMonitor(engine, first.Position + first.Up * 0.2f, Mathematics.GetRotation(Vector3.UnitZ, first.Up));
+            }
+
+            if (MathHelper.ApproximatelyEqualEpsilon(Vector3.Dot(last.Up, Vector3.UnitY), 0.0f, 0.01f))
+            {
+                InstantiateMonitor(engine, last.Position + last.Up * 0.2f, Mathematics.GetRotation(Vector3.UnitZ, last.Up));
+            }            
+
+            return models;
         }
 
         public static bool IsLoop(Net<LogicalNode> net)
@@ -672,157 +692,18 @@ namespace TriangulatedTopology
             return nodes;
         }
 
-        public static List<SplineVertex> GetSpline(List<LogicalNode> nodes)
+        public static List<List<SplineVertex>> GetPointsLines(List<LogicalNode> nodes, int count)
         {
-            float extrusionFactor = 0.15f;
-            var points = new List<SplineVertex>();
-            var spline = new List<SplineVertex>();
+            float extrusionFactor = 0.2f;
+            float offset = 0.2f;
+            int half = count / 2;
 
-            //{ // First
-            //    // Nodes
-            //    var current = nodes[0];
-            //    var next = nodes[1];
+            var pointsLines = new List<List<SplineVertex>>();
 
-            //    // Normals
-            //    var currentNormal = GetNormal(current.Corners);
-            //    var nextNormal = GetNormal(next.Corners);
-            //    var blendedNormal = Vector3.Normalize(Vector3.Lerp(currentNormal, nextNormal, 0.5f));
-
-            //    // Pivots
-            //    var currentJoint = GetCentroid(current.Corners);
-            //    var currentPivot = currentJoint + extrusionFactor * currentNormal;
-
-            //    // Shared points
-            //    var sharedPoints = GetSharedPoints(current.Corners, next.Corners);
-            //    var sharedPointsCentroid = GetCentroid(sharedPoints);
-
-            //    // Joints
-            //    var nextJoint = sharedPointsCentroid + extrusionFactor * blendedNormal;
-
-            //    // Directions
-            //    var toNextDirection = Vector3.Normalize(nextJoint - currentPivot);
-            //    var currentJointDirection = currentNormal;                
-            //    var pivotDirection = Vector3.Normalize(Vector3.Lerp(currentJointDirection, toNextDirection, 0.5f));
-
-            //    // Up
-            //    var currentJointUp = Vector3.Normalize(currentJoint - sharedPointsCentroid);
-            //    var pivotUp = Vector3.Normalize(Vector3.Lerp(currentJointUp, currentNormal, 0.5f));
-
-            //    // Spline
-            //    spline.Add(new SplineVertex(currentJoint, currentJointUp, currentNormal));
-            //    spline.Add(new SplineVertex(currentPivot, pivotUp, pivotDirection));
-            //}
-
-            //for (int i = 1; i < nodes.Count - 1; i++)
-            //{
-            //    // Nodes
-            //    var previous = nodes[i - 1];
-            //    var current = nodes[i];
-            //    var next = nodes[i + 1];
-
-            //    // Normals
-            //    var previousNormal = GetNormal(previous.Corners);
-            //    var currentNormal = GetNormal(current.Corners);
-            //    var nextNormal = GetNormal(next.Corners);
-            //    var previousBlendedNormal = Vector3.Normalize(Vector3.Lerp(previousNormal, currentNormal, 0.5f));
-            //    var nextBlendedNormal = Vector3.Normalize(Vector3.Lerp(currentNormal, nextNormal, 0.5f));
-
-            //    // Pivots
-            //    var previousPivot = GetCentroid(previous.Corners) + extrusionFactor * previousNormal;
-            //    var currentPivot = GetCentroid(current.Corners) + extrusionFactor * currentNormal;
-
-            //    // Shared points
-            //    var previousSharedPoints = GetSharedPoints(previous.Corners, current.Corners);
-            //    var nextSharedPoints = GetSharedPoints(current.Corners, next.Corners);
-
-            //    // Joints
-            //    var previousJoint = GetCentroid(previousSharedPoints) + extrusionFactor * previousBlendedNormal;                
-            //    var nextJoint = GetCentroid(nextSharedPoints) + extrusionFactor * nextBlendedNormal;
-
-            //    // Directions
-            //    var toPreviousJointDirection = Vector3.Normalize(previousJoint - previousPivot);
-            //    var toCurrentPivotDirection = Vector3.Normalize(currentPivot - previousJoint);
-            //    var toNextJointDirection = Vector3.Normalize(nextJoint - currentPivot);
-            //    var previousBlendedDirection = Vector3.Normalize(Vector3.Lerp(toPreviousJointDirection, toCurrentPivotDirection, 0.5f));
-            //    var nextBlendedDirection = Vector3.Normalize(Vector3.Lerp(toCurrentPivotDirection, toNextJointDirection, 0.5f));
-
-            //    var sharedShared = GetSharedPoints(previousSharedPoints, nextSharedPoints);
-
-            //    if (sharedShared.Any())
-            //    {
-            //        var ellipseCenter = sharedShared.First();
-
-            //        var first = new SplineVertex(previousJoint, previousBlendedNormal, previousBlendedDirection);
-            //        var last = new SplineVertex(nextJoint, nextBlendedNormal, toNextJointDirection);
-
-            //        var line0 = Engine.Line(first.Position, first.Position + 3 * first.Forward, Colors.Green);
-            //        var line1 = Engine.Line(last.Position, last.Position + 3 * last.Forward, Colors.Green);
-
-            //        spline.Add(first);
-
-            //        int resolution = 10;
-
-            //        for (int j = 0; j < resolution; j++)
-            //        {
-            //            float percent = (float)j / resolution;
-
-            //            //var position = ellipseCenter + Slerp(first.Position - ellipseCenter, last.Position - ellipseCenter, percent);
-            //            //var position = Vector3.Lerp(first.Position, last.Position, MathF.Sin(percent * (MathF.PI / 2)));
-            //            var position = Curves.Hermite(first.Position, last.Position, 3 * first.Forward, 3 * last.Forward, percent);
-            //            var normal = Vector3.Lerp(first.Up, last.Up, percent);
-            //            var direction = Vector3.Lerp(first.Forward, last.Forward, percent);
-
-            //            spline.Add(new SplineVertex(position, normal, direction));
-            //        }                    
-            //    }
-            //    else
-            //    {
-            //        // Spline
-            //        spline.Add(new SplineVertex(previousJoint, previousBlendedNormal, previousBlendedDirection));
-            //        spline.Add(new SplineVertex(currentPivot, currentNormal, nextBlendedDirection));
-            //    }
-            //}
-
-            //{ // last
-            //    // Nodes
-            //    var previous = nodes[nodes.Count - 2];
-            //    var current = nodes[nodes.Count - 1];
-
-            //    // Normals
-            //    var previousNormal = GetNormal(previous.Corners);
-            //    var currentNormal = GetNormal(current.Corners);
-            //    var blendedNormal = Vector3.Normalize(Vector3.Lerp(previousNormal, currentNormal, 0.5f));
-
-            //    // Pivots
-            //    var currentJoint = GetCentroid(current.Corners);
-            //    var previousPivot = GetCentroid(previous.Corners) + extrusionFactor * previousNormal;
-            //    var currentPivot = currentJoint + extrusionFactor * currentNormal;
-
-            //    // Shared points
-            //    var sharedPoints = GetSharedPoints(previous.Corners, current.Corners);
-            //    var sharedPointsCentroid = GetCentroid(sharedPoints);
-
-            //    // Joints
-            //    var previousJoint = sharedPointsCentroid + extrusionFactor * blendedNormal;
-
-            //    // Directions                
-            //    var toPreviousJointDirection = Vector3.Normalize(previousJoint - previousPivot);
-            //    var toCurrentPivotDirection = Vector3.Normalize(currentPivot - previousJoint);
-            //    var currentJointDirection = -currentNormal;
-            //    var previousBlendedDirection = Vector3.Normalize(Vector3.Lerp(toPreviousJointDirection, toCurrentPivotDirection, 0.5f));                
-            //    var currentBlendedDirection = Vector3.Normalize(Vector3.Lerp(toCurrentPivotDirection, currentJointDirection, 0.5f));
-
-            //    // Up
-            //    var currentJointUp = Vector3.Normalize(currentJoint - sharedPointsCentroid);
-            //    var currentPivotUp = Vector3.Normalize(Vector3.Lerp(currentNormal, currentJointUp, 0.5f));
-
-            //    // Spline
-            //    spline.Add(new SplineVertex(previousJoint, blendedNormal, previousBlendedDirection));
-            //    spline.Add(new SplineVertex(currentPivot, currentPivotUp, currentBlendedDirection));
-            //    spline.Add(new SplineVertex(currentJoint, currentJointUp, currentJointDirection));
-            //}
-
-            // return spline;
+            for (int i = 0; i < count; i++)
+            {
+                pointsLines.Add(new List<SplineVertex>());
+            }
 
             { // First 
                 var temp = nodes[0];
@@ -833,8 +714,14 @@ namespace TriangulatedTopology
                 var centroid = GetCentroid(shared);
                 var pivot = GetCentroid(temp.Corners);
                 var direction = Vector3.Normalize(centroid - pivot);
+                var right = Vector3.Cross(direction, normal);
+                var position = pivot + extrusionFactor * normal;
 
-                points.Add(new SplineVertex(pivot, normal, direction));
+                for (int i = 0; i < count; i++)
+                {
+                    int factor = i - half;
+                    pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, direction));
+                }
             }
 
             for (int i = 1; i < nodes.Count - 1; i++)
@@ -856,7 +743,14 @@ namespace TriangulatedTopology
                 var fromPivotDirection = Vector3.Normalize(nextJoint - pivot);
                 var blendedDirection = Vector3.Normalize(Vector3.Lerp(toPivotDirection, fromPivotDirection, 0.5f));
 
-                points.Add(new SplineVertex(pivot + extrusionFactor * normal, normal, blendedDirection));
+                var right = Vector3.Cross(blendedDirection, normal);
+                var position = pivot + extrusionFactor * normal;
+
+                for (int j = 0; j < count; j++)
+                {
+                    int factor = j - half;
+                    pointsLines[j].Add(new SplineVertex(position + offset * factor * right, normal, blendedDirection));
+                }
             }
 
             { // Last
@@ -868,83 +762,73 @@ namespace TriangulatedTopology
                 var centroid = GetCentroid(shared);
                 var pivot = GetCentroid(temp.Corners);
                 var direction = Vector3.Normalize(pivot - centroid);
+                var right = Vector3.Cross(direction, normal);
+                var position = pivot + extrusionFactor * normal;
 
-                points.Add(new SplineVertex(pivot, normal, direction));
-            }
-
-            if (points.Count == 0)
-            {
-                return spline;
-            }
-
-            //Engine
-            //    .Line(points[0].Position, points[0].Position + 3 * points[0].Forward, Colors.Green)
-            //    .Get<LineRenderComponent>()!.Width = 4.0f;
-
-            //Engine
-            //    .CreateCube(points[0].Position, Quaternion.Identity, new Vector3(0.3f))
-            //    .Get<MaterialRenderComponent>()!.Material.Color = Colors.Red;
-
-            for (int i = 1; i < points.Count; i++)
-            {
-                var previous = points[i - 1];
-                var next = points[i];              
-               
-                //Engine
-                //    .Line(next.Position, next.Position + 3 * next.Forward, Colors.Green)
-                //    .Get<LineRenderComponent>()!.Width = 4.0f;
-
-                //Engine
-                //    .CreateCube(next.Position, Quaternion.Identity, new Vector3(0.3f))
-                //    .Get<MaterialRenderComponent>()!.Material.Color = Colors.Red;
-
-                int resolution = 10;
-
-                for (int j = 0; j < resolution; j++)
+                for (int i = 0; i < count; i++)
                 {
-                    float percent = (float)j / resolution;
-                    float nextPercent = (float)(j + 1) / resolution;
-                    float coerce = 3.0f;
-
-                    var position = Curves.Hermite(
-                        previous.Position, 
-                        next.Position, 
-                        coerce * previous.Forward, 
-                        coerce * next.Forward, 
-                        percent);
-                    
-                    var nextPosition = Curves.Hermite(
-                        previous.Position, 
-                        next.Position, 
-                        coerce * previous.Forward,
-                        coerce * next.Forward, 
-                        nextPercent);
-                   
-                    var normal = Vector3.Lerp(previous.Up, next.Up, percent);
-                    var direction = Vector3.Normalize(nextPosition - position);
-
-                    spline.Add(new SplineVertex(position, normal, direction));
+                    int factor = i - half;
+                    pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, direction));
                 }
             }
 
-            spline.Add(new SplineVertex(
-                points[points.Count - 1].Position, 
-                points[points.Count - 1].Up, 
-                points[points.Count - 1].Forward));
+            return pointsLines;
+        }
+
+        public static List<SplineVertex> GetSpline(List<SplineVertex> points)
+        {
+            var spline = new List<SplineVertex>();
+
+            for (int i = 1; i < points.Count; i++)
+            {
+                spline.AddRange(GenerateInnerVertices(points[i - 1], points[i]));
+            }
 
             return spline;
         }
 
-        public static Vector3 Slerp(Vector3 start, Vector3 end, float percent)
+        public static void PlaceSupports(Engine engine, List<SplineVertex> points)
         {
-            float dot = Vector3.Dot(start, end);
-            dot = Math.Clamp(dot, -1.0f, 1.0f);
+            for (int i = 1; i < points.Count - 1; i++)
+            {
+                var rotation = Mathematics.GetRotation(Vector3.UnitY, points[i].Up);
+                var forward = Vector3.Transform(Vector3.UnitX, rotation);
+                rotation = Mathematics.GetRotation(forward, points[i].Forward) * rotation;
+                InstantiateSupport(engine, points[i].Position, rotation);
+            }
+        }
 
-            float theta = MathF.Acos(dot) * percent;
-            Vector3 relativeVec = end - start * dot;
-            relativeVec.Normalize();
+        public static List<SplineVertex> GenerateInnerVertices(SplineVertex a, SplineVertex b)
+        {
+            int resolution = 20;
+            var inner = new List<SplineVertex>();
 
-            return (start * MathF.Cos(theta)) + (relativeVec * MathF.Sin(theta));
+            for (int j = 0; j < resolution; j++)
+            {
+                float tempPercent = (float)j / resolution;
+                float nextPercent = (float)(j + 1) / resolution;
+                float coerce = 3.0f;
+
+                var position = Curves.Hermite(
+                    a.Position,
+                    b.Position,
+                    coerce * a.Forward,
+                    coerce * b.Forward,
+                    tempPercent);
+
+                var nextPosition = Curves.Hermite(
+                    a.Position,
+                    b.Position,
+                    coerce * a.Forward,
+                    coerce * b.Forward,
+                    nextPercent);
+
+                var normal = Vector3.Lerp(a.Up, b.Up, tempPercent);
+                var direction = Vector3.Normalize(nextPosition - position);
+                inner.Add(new SplineVertex(position, normal, direction));
+            }
+
+            return inner;
         }
 
         public static Model CreateTubeFromSpline(List<SplineVertex> spline, int resolution, float radius)
@@ -1184,90 +1068,6 @@ namespace TriangulatedTopology
             //line1.Get<LineRenderComponent>()!.Width = 2;
         }
 
-        public static void VisualizeWires(Engine engine, Net<LogicalNode> net)
-        {
-            float extrusionFactor = 0.2f;
-
-            foreach (var node in net.GetNodes())
-            {
-                if (node.Neighbours.Count > 2 || node.Neighbours.Count <= 0)
-                {
-                    throw new ArgumentException("Pipe should has 1 or 2 neighbours.");
-                }
-
-                var centroid = GetCentroid(node.Item.Corners);
-                var normal = GetNormal(node.Item.Corners);
-                var pivot = centroid + extrusionFactor * normal;
-                float k = 0.96f;
-
-                if (node.Neighbours.Count == 2)
-                {
-                    var pipe = InstantiateWire(engine, pivot, Quaternion.Identity);
-                    var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
-
-                    GetPipeSideDeformations(
-                        node.Item, node.Neighbours[0].Item,
-                        pivot, normal, Vector3.UnitZ * k, extrusionFactor,
-                        out var topSideDirection,
-                        out var topSocketCoerce,
-                        out var topSocketRotation);
-
-                    var top = skeleton["Top"];
-                    var topHand = skeleton["TopHand"];
-                    top.Position = topSideDirection;
-                    topHand.Position = topSocketCoerce;
-                    topHand.Rotation = topSocketRotation;
-
-                    GetPipeSideDeformations(
-                        node.Item, node.Neighbours[1].Item,
-                        pivot, normal, -Vector3.UnitZ * k, extrusionFactor,
-                        out var bottomSideDirection,
-                        out var bottomSocketCoerce,
-                        out var bottomSocketRotation);
-
-                    var bottom = skeleton["Bottom"];
-                    var bottomHand = skeleton["BottomHand"];
-                    bottom.Position = bottomSideDirection;
-                    bottomHand.Position = bottomSocketCoerce;
-                    bottomHand.Rotation = bottomSocketRotation;
-                }
-                else
-                {
-                    //var pipe = InstantiateWire(engine, pivot, Quaternion.Identity);
-                    //var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
-
-                    //GetPipeSideDeformations(node.Item, node.Neighbours[0].Item,
-                    //    pivot, normal, Vector3.UnitZ * k, extrusionFactor,
-                    //    out var topSideDirection,
-                    //    out var topSocketCoerce,
-                    //    out var topSocketRotation);
-
-                    //var top = skeleton["Top"];
-                    //var topHand = skeleton["TopHand"];
-                    //top.Position = topSideDirection;
-                    //topHand.Position = topSocketCoerce;
-                    //topHand.Rotation = topSocketRotation;
-
-                    //var shared = GetSharedPoints(node.Item.Corners, node.Neighbours[0].Item.Corners);
-                    //var to = GetCentroid(shared) + extrusionFactor * normal;
-                    //var toNeighbour = to - pivot;
-                    //toNeighbour.Normalize();
-
-                    //GetPipeEndingDeformations(
-                    //    centroid, pivot, -toNeighbour, -Vector3.UnitZ * k,
-                    //    out var bottomSideDirection,
-                    //    out var bottomSocketCoerce,
-                    //    out var bottomSocketRotation);
-
-                    //var bottom = skeleton["Bottom"];
-                    //var bottomHand = skeleton["BottomHand"];
-                    //bottom.Position = bottomSideDirection;
-                    //bottomHand.Position = bottomSocketCoerce;
-                    //bottomHand.Rotation = bottomSocketRotation;
-                }
-            }
-        }
-
         public static Quaternion GetUnwinding(
             Vector3 sideDirection,
             Quaternion socketRotation,
@@ -1364,11 +1164,11 @@ namespace TriangulatedTopology
                 Vertex c = node.Face[2];
 
                 Vector2 barycentric = GetBarycentric(
-                    a.TextureCoords * size, 
-                    b.TextureCoords * size, 
-                    c.TextureCoords * size, 
+                    a.TextureCoords * size,
+                    b.TextureCoords * size,
+                    c.TextureCoords * size,
                     uv);
-                
+
                 float u = barycentric.X;
                 float v = barycentric.Y;
 
@@ -1510,6 +1310,27 @@ namespace TriangulatedTopology
             return wire;
         }
 
+        public static GameObject InstantiateMonitor(Engine engine, Vector3 position, Quaternion rotation)
+        {
+            var wire = engine.CreateGameObject();
+            var renderer = wire.Add<MaterialRenderComponent>();
+            renderer.Model = MonitorModel;
+            renderer.Texture = MonitorTexture;
+            wire.Position = position;
+            wire.Rotation = rotation;
+            return wire;
+        }
+
+        public static GameObject InstantiateSupport(Engine engine, Vector3 position, Quaternion rotation)
+        {
+            var wire = engine.CreateGameObject();
+            var renderer = wire.Add<MaterialRenderComponent>();
+            renderer.Model = SupportModel;
+            wire.Position = position;
+            wire.Rotation = rotation;
+            return wire;
+        }
+
         public static Vector3 RgbaToVector3(Color color)
         {
             return new Vector3((float)color.R / 255, (float)color.G / 255, (float)color.B / 255);
@@ -1553,7 +1374,7 @@ namespace TriangulatedTopology
             Console.WriteLine(seed);
             CollectionsHelper.UseSeed(seed);
 
-            //CollectionsHelper.UseSeed(1628667546);
+            //CollectionsHelper.UseSeed(1628667546);1176043099
             //CollectionsHelper.UseSeed(1145917631);
             //CollectionsHelper.UseSeed(56224625);
             //CollectionsHelper.UseSeed(935418399);
