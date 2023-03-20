@@ -10,6 +10,7 @@ using MeshTopology;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Drawing;
 using System.Numerics;
 using System.Reflection;
@@ -582,7 +583,6 @@ namespace TriangulatedTopology
         {           
             foreach (var net in nets)
             {
-                // Search for purple lines.
                 if (net.GetNodes().First().Item.Color.IsSame(VentilationColor))
                 {
                     VisualizePipes(engine, net);
@@ -631,6 +631,12 @@ namespace TriangulatedTopology
             foreach (var line in pointsLines)
             {
                 var spline = GetSpline(line);
+
+                if (spline.Count == 0)
+                {
+                    continue;
+                }
+
                 var model = CreateTubeFromSpline(spline, resolution, radius);
                 models.Add(model);
             }
@@ -705,24 +711,8 @@ namespace TriangulatedTopology
                 pointsLines.Add(new List<SplineVertex>());
             }
 
-            { // First 
-                var temp = nodes[0];
-                var next = nodes[1];
-
-                var normal = GetNormal(temp.Corners);
-                var shared = GetSharedPoints(temp.Corners, next.Corners);
-                var centroid = GetCentroid(shared);
-                var pivot = GetCentroid(temp.Corners);
-                var direction = Vector3.Normalize(centroid - pivot);
-                var right = Vector3.Cross(direction, normal);
-                var position = pivot + extrusionFactor * normal;
-
-                for (int i = 0; i < count; i++)
-                {
-                    int factor = i - half;
-                    pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, direction));
-                }
-            }
+            AddFirstSplineVertex(pointsLines, nodes[0], nodes[1], extrusionFactor, offset, count);
+            AddSharedSplineVertex(pointsLines, nodes[0], nodes[1], extrusionFactor, offset, count);
 
             for (int i = 1; i < nodes.Count - 1; i++)
             {
@@ -730,66 +720,146 @@ namespace TriangulatedTopology
                 var temp = nodes[i];
                 var next = nodes[i + 1];
 
-                var normal = GetNormal(temp.Corners);
-
-                var prevSharedPoints = GetSharedPoints(prev.Corners, temp.Corners);
-                var nextSharedPoints = GetSharedPoints(temp.Corners, next.Corners);
-
-                var pivot = GetCentroid(temp.Corners);
-                var prevJoint = GetCentroid(prevSharedPoints);
-                var nextJoint = GetCentroid(nextSharedPoints);
-
-                var toPivotDirection = Vector3.Normalize(pivot - prevJoint);
-                var fromPivotDirection = Vector3.Normalize(nextJoint - pivot);
-                var blendedDirection = Vector3.Normalize(Vector3.Lerp(toPivotDirection, fromPivotDirection, 0.5f));
-
-                var right = Vector3.Cross(blendedDirection, normal);
-                var position = pivot + extrusionFactor * normal;
-
-                for (int j = 0; j < count; j++)
-                {
-                    int factor = j - half;
-                    pointsLines[j].Add(new SplineVertex(position + offset * factor * right, normal, blendedDirection));
-                }
+                AddSplineVertexInsideNode(pointsLines, prev, temp, next, extrusionFactor, offset, count);
+                AddSharedSplineVertex(pointsLines, temp, next, extrusionFactor, offset, count);
             }
 
-            { // Last
-                var prev = nodes[nodes.Count - 2];
-                var temp = nodes[nodes.Count - 1];
-                var normal = GetNormal(temp.Corners);
-
-                var shared = GetSharedPoints(prev.Corners, temp.Corners);
-                var centroid = GetCentroid(shared);
-                var pivot = GetCentroid(temp.Corners);
-                var direction = Vector3.Normalize(pivot - centroid);
-                var right = Vector3.Cross(direction, normal);
-                var position = pivot + extrusionFactor * normal;
-
-                for (int i = 0; i < count; i++)
-                {
-                    int factor = i - half;
-                    pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, direction));
-                }
-            }
-
+            AddLastSplineVertex(pointsLines, nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, offset, count);
             return pointsLines;
+        }
+
+        public static void AddFirstSplineVertex(
+            List<List<SplineVertex>> pointsLines,
+            LogicalNode temp,
+            LogicalNode next,
+            float extrusionFactor,
+            float offset,
+            int count)
+        {
+            int half = count / 2;
+            var normal = GetNormal(temp.Corners);
+            var shared = GetSharedPoints(temp.Corners, next.Corners);
+            var centroid = GetCentroid(shared);
+            var pivot = GetCentroid(temp.Corners);
+            var direction = Vector3.Normalize(centroid - pivot);
+            var right = Vector3.Cross(direction, normal);
+            var position = pivot + extrusionFactor * normal;
+
+            for (int i = 0; i < count; i++)
+            {
+                int factor = i - half;
+                pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, direction));
+            }
+        }
+
+        public static void AddLastSplineVertex(
+            List<List<SplineVertex>> pointsLines,
+            LogicalNode prev,
+            LogicalNode temp,
+            float extrusionFactor,
+            float offset,
+            int count)
+        {
+            int half = count / 2;
+            var normal = GetNormal(temp.Corners);
+
+            var shared = GetSharedPoints(prev.Corners, temp.Corners);
+            var centroid = GetCentroid(shared);
+            var pivot = GetCentroid(temp.Corners);
+            var direction = Vector3.Normalize(pivot - centroid);
+            var right = Vector3.Cross(direction, normal);
+            var position = pivot + extrusionFactor * normal;
+
+            for (int i = 0; i < count; i++)
+            {
+                int factor = i - half;
+                pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, direction));
+            }
+        }
+
+        public static void AddSplineVertexInsideNode(
+            List<List<SplineVertex>> pointsLines,
+            LogicalNode prev,
+            LogicalNode temp, 
+            LogicalNode next,
+            float extrusionFactor,
+            float offset,
+            int count)
+        {
+            int half = count / 2;
+            var normal = GetNormal(temp.Corners);
+
+            var prevSharedPoints = GetSharedPoints(prev.Corners, temp.Corners);
+            var nextSharedPoints = GetSharedPoints(temp.Corners, next.Corners);
+
+            var pivot = GetCentroid(temp.Corners);
+            var prevJoint = GetCentroid(prevSharedPoints);
+            var nextJoint = GetCentroid(nextSharedPoints);
+
+            var toPivotDirection = Vector3.Normalize(pivot - prevJoint);
+            var fromPivotDirection = Vector3.Normalize(nextJoint - pivot);
+            var blendedDirection = Vector3.Normalize(Vector3.Lerp(toPivotDirection, fromPivotDirection, 0.5f));
+
+            var right = Vector3.Cross(blendedDirection, normal);
+            var position = pivot + extrusionFactor * normal;
+
+            for (int i = 0; i < count; i++)
+            {
+                int factor = i - half;
+                pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, blendedDirection));
+            }
+        }
+
+        public static void AddSharedSplineVertex(
+            List<List<SplineVertex>> pointsLines,
+            LogicalNode prev,
+            LogicalNode next,
+            float extrusionFactor,
+            float offset,
+            int count)
+        {
+            int half = count / 2;
+            var prevNormal = GetNormal(prev.Corners);
+            var nextNormal = GetNormal(next.Corners);
+            var normal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, 0.5f));
+
+            var prevPivot = GetCentroid(prev.Corners);
+            var nextPivot = GetCentroid(next.Corners);
+
+            var sharedPoints = GetSharedPoints(prev.Corners, next.Corners);
+            var joint = GetCentroid(sharedPoints);
+
+            var toJointDirection = Vector3.Normalize(joint - prevPivot);
+            var fromJointDirection = Vector3.Normalize(nextPivot - joint);
+            var blendedDirection = Vector3.Normalize(Vector3.Lerp(toJointDirection, fromJointDirection, 0.5f));
+
+            var right = Vector3.Cross(blendedDirection, normal);
+            var position = joint + extrusionFactor * normal;
+
+            for (int i = 0; i < count; i++)
+            {
+                int factor = i - half;
+                pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, blendedDirection));
+            }
         }
 
         public static List<SplineVertex> GetSpline(List<SplineVertex> points)
         {
             var spline = new List<SplineVertex>();
+            spline.AddRange(GenerateInnerVertices(points[0], points[1]));
 
-            for (int i = 1; i < points.Count; i++)
+            for (int i = 0; i < points.Count - 3; i++)
             {
-                spline.AddRange(GenerateInnerVertices(points[i - 1], points[i]));
+                spline.AddRange(GenerateInnerVertices(points[i], points[i + 1], points[i + 2], points[i + 3]));
             }
 
+            spline.AddRange(GenerateInnerVertices(points[points.Count - 2], points[points.Count - 1]));
             return spline;
         }
 
         public static void PlaceSupports(Engine engine, List<SplineVertex> points)
         {
-            for (int i = 1; i < points.Count - 1; i++)
+            for (int i = 2; i < points.Count - 1; i += 2)
             {
                 var rotation = Mathematics.GetRotation(Vector3.UnitY, points[i].Up);
                 var forward = Vector3.Transform(Vector3.UnitX, rotation);
@@ -807,7 +877,7 @@ namespace TriangulatedTopology
             {
                 float tempPercent = (float)j / resolution;
                 float nextPercent = (float)(j + 1) / resolution;
-                float coerce = 3.0f;
+                float coerce = 0.5f;
 
                 var position = Curves.Hermite(
                     a.Position,
@@ -824,6 +894,45 @@ namespace TriangulatedTopology
                     nextPercent);
 
                 var normal = Vector3.Lerp(a.Up, b.Up, tempPercent);
+                var direction = Vector3.Normalize(nextPosition - position);
+                inner.Add(new SplineVertex(position, normal, direction));
+            }
+
+            return inner;
+        }
+
+        public static List<SplineVertex> GenerateInnerVertices(
+            SplineVertex p0,
+            SplineVertex p1,
+            SplineVertex p2,
+            SplineVertex p3)
+        {
+            int resolution = 20;
+            var inner = new List<SplineVertex>();
+
+            for (int j = 0; j < resolution; j++)
+            {
+                float tempPercent = (float)j / resolution;
+                float nextPercent = (float)(j + 1) / resolution;
+                float alpha = 0.5f;
+
+                var position = Curves.CatmullRom(
+                    p0.Position,
+                    p1.Position,
+                    p2.Position,
+                    p3.Position,
+                    tempPercent,
+                    alpha);
+
+                var nextPosition = Curves.CatmullRom(
+                    p0.Position,
+                    p1.Position,
+                    p2.Position,
+                    p3.Position,
+                    nextPercent,
+                    alpha);
+
+                var normal = Vector3.Lerp(p1.Up, p2.Up, tempPercent);
                 var direction = Vector3.Normalize(nextPosition - position);
                 inner.Add(new SplineVertex(position, normal, direction));
             }
