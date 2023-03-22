@@ -21,7 +21,6 @@ namespace GeneratorDungeonGraph
 				Gen();
 			}
 
-
 			public UndirectedAdjacencyListGraph<string> g;
 
 			public List<int> signature = new List<int>();
