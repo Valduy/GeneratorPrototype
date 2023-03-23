@@ -96,7 +96,10 @@
     <None Update="Content\Models\Scene.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Models\Support.fbx">
+    <None Update="Content\Models\PipeSupport.fbx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Models\WireSupport.fbx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Models\Tower.mtl">

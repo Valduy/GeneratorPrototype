@@ -276,6 +276,25 @@ namespace GameEngine.Mathematics
             return new Vector2(vector3d.X, vector3d.Y);
         }
 
+        public static Vector2 GetBarycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 p)
+        {
+            Vector2 v0 = c - a;
+            Vector2 v1 = b - a;
+            Vector2 v2 = p - a;
+
+            float dot00 = Vector2.Dot(v0, v0);
+            float dot01 = Vector2.Dot(v0, v1);
+            float dot02 = Vector2.Dot(v0, v2);
+            float dot11 = Vector2.Dot(v1, v1);
+            float dot12 = Vector2.Dot(v1, v2);
+
+            float inverseDenominator = 1.0f / (dot00 * dot11 - dot01 * dot01);
+            float u = (dot11 * dot02 - dot01 * dot12) * inverseDenominator;
+            float v = (dot00 * dot12 - dot01 * dot02) * inverseDenominator;
+
+            return new Vector2(u, v);
+        }
+
         public static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
         {
             return MathF.Abs(a - b) <= epsilon;

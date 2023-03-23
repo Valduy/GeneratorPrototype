@@ -57,8 +57,9 @@ namespace TriangulatedTopology
 
         public static Model RingModel = Model.Load("Content/Models/Ring.obj");
         public static Model PipeModel = Model.Load("Content/Models/PipeSegment.fbx");
+        public static Model PipeSupportModel = Model.Load("Content/Models/PipeSupport.fbx");
         public static Model MonitorModel = Model.Load("Content/Models/Monitor.fbx");
-        public static Model SupportModel = Model.Load("Content/Models/Support.fbx");
+        public static Model WireSupportModel = Model.Load("Content/Models/WireSupport.fbx");
 
         public static Texture MonitorTexture = Texture.LoadFromFile("Content/Textures/Monitor.png");
 
@@ -586,7 +587,7 @@ namespace TriangulatedTopology
                 if (net.GetNodes().First().Item.Color.IsSame(VentilationColor))
                 {
                     //VisualizePipes(engine, net);
-                    var model = AlternativeTubes(engine, net);
+                    var model = AlternativePipes(engine, net);
                     var go = engine.CreateGameObject();
                     var render = go.Add<MaterialRenderComponent>();
                     render.Model = model;
@@ -867,7 +868,7 @@ namespace TriangulatedTopology
                 var rotation = Mathematics.GetRotation(Vector3.UnitY, points[i].Up);
                 var forward = Vector3.Transform(Vector3.UnitX, rotation);
                 rotation = Mathematics.GetRotation(forward, points[i].Forward) * rotation;
-                InstantiateSupport(engine, points[i].Position, rotation);
+                InstantiateWireSupport(engine, points[i].Position, rotation);
             }
         }
 
@@ -943,30 +944,94 @@ namespace TriangulatedTopology
             return inner;
         }
 
-        public static Model AlternativeTubes(Engine engine, Net<LogicalNode> net)
+        public static Model AlternativePipes(Engine engine, Net<LogicalNode> net)
         {
             int resolution = 32;
-            float radius = 0.25f;
+            float radius = 0.3f;
+            float minSegmentLength = 0.5f;
 
             var nodes = GetNodesSequence(net);
             var points = GetPipePoints(nodes, radius);
+            var lines = ExtractStraightLines(points);           
 
-            for (int i = 1; i < points.Count; i++)
+            foreach (var line in lines)
             {
-                var prev = points[i - 1];
-                var next = points[i];
+                var first = line[0];
+                var last = line[line.Count - 1];
 
-                var line = engine.Line(prev.Position, next.Position, Colors.Green);
-                line.Get<LineRenderComponent>()!.Width = 10;
+                if (Vector3.Distance(first.Position, last.Position) < minSegmentLength)
+                {
+                    //var position = (first.Position + last.Position) / 2;
+                    //var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
+                    //var rotation = GetRotation(axis, Vector3.UnitY, first.Forward);
+
+                    //InstantiatePipeSupport(
+                    //    engine,
+                    //    position,
+                    //    rotation);
+
+                    //InstantiatePipeSupport(
+                    //    engine,
+                    //    position,
+                    //    Quaternion.FromAxisAngle(axis, MathF.PI) * rotation);
+
+                    continue;
+                }
+
+                engine.Line(first.Position, first.Position + 3 * first.Up, Colors.Red);
+                engine.Line(last.Position, last.Position + 3 * last.Up, Colors.Red);
+
+                engine.Line(first.Position, first.Position + 3 * first.Forward, Colors.Blue);
+                engine.Line(last.Position, last.Position + 3 * last.Forward, Colors.Blue);
+
+                engine.Line(first.Position, first.Position + 3 * Vector3.UnitY, Colors.Green);
+                engine.Line(last.Position, last.Position + 3 * Vector3.UnitY, Colors.Green);
+               
+                if (first.Forward.Y == 0)
+                {
+                    var t = 0;
+                }
+
+                var firstRotation = GetRotation(first.Up, Vector3.UnitY, first.Forward);
+                var lastRotation = GetRotation(last.Up, Vector3.UnitY, last.Forward);
+
+                InstantiatePipeSupport(
+                    engine,
+                    first.Position,
+                    firstRotation);
+
+                InstantiatePipeSupport(
+                    engine,
+                    first.Position,
+                    Quaternion.FromAxisAngle(first.Up, MathF.PI) * firstRotation);
+
+                InstantiatePipeSupport(
+                    engine,
+                    last.Position,
+                    lastRotation);
+
+                InstantiatePipeSupport(
+                    engine,
+                    last.Position,
+                    Quaternion.FromAxisAngle(last.Up, MathF.PI) * lastRotation);
             }
 
-            for (int i = 0; i < points.Count; i++)
-            {
-                var temp = points[i];
+            //for (int i = 1; i < points.Count; i++)
+            //{
+            //    var prev = points[i - 1];
+            //    var next = points[i];
 
-                var line = engine.Line(temp.Position, temp.Position + temp.Up * 3, Colors.Red);
-                line.Get<LineRenderComponent>()!.Width = 1;
-            }
+            //    var line = engine.Line(prev.Position, next.Position, Colors.Green);
+            //    line.Get<LineRenderComponent>()!.Width = 10;
+            //}
+
+            //for (int i = 0; i < points.Count; i++)
+            //{
+            //    var temp = points[i];
+
+            //    var line = engine.Line(temp.Position, temp.Position + temp.Up * 3, Colors.Red);
+            //    line.Get<LineRenderComponent>()!.Width = 1;
+            //}
 
             if (points.Count > 0)
             {
@@ -975,6 +1040,43 @@ namespace TriangulatedTopology
             }
 
             return Model.Empty;
+        }
+
+        public static List<List<SplineVertex>> ExtractStraightLines(List<SplineVertex> points)
+        {
+            float epsilon = 0.01f;
+            var lines = new List<List<SplineVertex>>();
+
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                var prev = points[i];
+                var next = points[i + 1];
+                var cosa = Vector3.Dot(prev.Forward, next.Forward);
+
+                if (Mathematics.ApproximatelyEqualEpsilon(cosa, 1, epsilon))
+                {
+                    var line = new List<SplineVertex>();
+
+                    for (var j = i; j < points.Count - 1; j++)
+                    {                        
+                        prev = points[j];
+                        next = points[j + 1];
+                        cosa = Vector3.Dot(prev.Forward, next.Forward);
+
+                        if (!Mathematics.ApproximatelyEqualEpsilon(cosa, 1, epsilon))
+                        {
+                            break; 
+                        }
+
+                        line.Add(prev);
+                    }
+
+                    line.Add(points[i + line.Count]);
+                    lines.Add(line);
+                    i += line.Count;
+                }
+            }
+            return lines;
         }
 
         public static List<SplineVertex> GetPipePoints(List<LogicalNode> nodes, float radius)
@@ -989,26 +1091,26 @@ namespace TriangulatedTopology
                 var prev = nodes[i - 1];
                 var next = nodes[i];
 
-                segments.Add(CreateTubePointsAroundJoint(prev, next, extrusionFactor, radius, resolution));
+                segments.Add(CreatePipePointsAroundJoint(prev, next, extrusionFactor, radius, resolution));
             }
 
-            points.AddRange(CreateTubeBegin(nodes[0], nodes[1], extrusionFactor, radius, resolution));
+            points.AddRange(CreatePipeBegin(nodes[0], nodes[1], extrusionFactor, radius, resolution));
 
             for (int i = 1; i < segments.Count; i++)
             {
                 var prev = segments[i - 1];
                 var next = segments[i];
 
-                var inner = CreateTubeInnerPoints(prev[prev.Count - 1], next[0], resolution);
+                var inner = CreatePipeInnerPoints(prev[prev.Count - 1], next[0], resolution);
                 points.AddRange(prev.Concat(inner));
             }
 
             points.AddRange(segments[segments.Count - 1]);
-            points.AddRange(CreateTubeEnd(nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, radius, resolution));
+            points.AddRange(CreatePipeEnd(nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, radius, resolution));
             return points;
         }
 
-        public static List<SplineVertex> CreateTubePointsAroundJoint(
+        public static List<SplineVertex> CreatePipePointsAroundJoint(
             LogicalNode prev,
             LogicalNode next,
             float extrusionFactor,
@@ -1074,7 +1176,7 @@ namespace TriangulatedTopology
             return points;
         }
 
-        public static List<SplineVertex> CreateTubeBegin(
+        public static List<SplineVertex> CreatePipeBegin(
             LogicalNode begin,
             LogicalNode next,
             float extrusionFactor,
@@ -1110,7 +1212,7 @@ namespace TriangulatedTopology
             return points;
         }
 
-        public static List<SplineVertex> CreateTubeEnd(
+        public static List<SplineVertex> CreatePipeEnd(
             LogicalNode prev,
             LogicalNode end,
             float extrusionFactor,
@@ -1145,7 +1247,7 @@ namespace TriangulatedTopology
             return points;
         }
 
-        public static List<SplineVertex> CreateTubeInnerPoints(SplineVertex p1, SplineVertex p2, int resolution)
+        public static List<SplineVertex> CreatePipeInnerPoints(SplineVertex p1, SplineVertex p2, int resolution)
         {
             var points = new List<SplineVertex>();
 
@@ -1197,55 +1299,6 @@ namespace TriangulatedTopology
             p = (p1 + p2) / 2;
             return true;
         }
-
-        //public static void CreateTubePointsInsideNode(
-        //    List<SplineVertex> points,
-        //    LogicalNode prev,
-        //    LogicalNode temp,
-        //    LogicalNode next,
-        //    float extrusionFactor,
-        //    float radius,
-        //    int resolution)
-        //{
-        //    float epsilon = 0.01f;
-
-        //    var prevNormal = GetNormal(prev.Corners);
-        //    var tempNormal = GetNormal(temp.Corners);
-        //    var nextNormal = GetNormal(next.Corners);
-
-        //    var prevBlendedNormal = Vector3.Normalize(Vector3.Lerp(prevNormal, tempNormal, 0.5f));
-        //    var nextBlendedNormal = Vector3.Normalize(Vector3.Lerp(tempNormal, nextNormal, 0.5f));
-
-        //    var pivot = GetCentroid(temp.Corners) + extrusionFactor * tempNormal;
-
-        //    var prevSharedPoints = GetSharedPoints(prev.Corners, temp.Corners);
-        //    var nextSharedPoints = GetSharedPoints(temp.Corners, next.Corners);
-
-        //    var prevJoint = GetCentroid(prevSharedPoints) + extrusionFactor * prevBlendedNormal;
-        //    var nextJoint = GetCentroid(nextSharedPoints) + extrusionFactor * nextBlendedNormal;
-
-        //    var toPivot = Vector3.Normalize(pivot - prevJoint);
-        //    var fromPivot = Vector3.Normalize(nextJoint - pivot);
-
-        //    var cosa = Vector3.Dot(toPivot, fromPivot);
-
-        //    // Curvature.
-        //    if (MathF.Abs(cosa) < (1 - epsilon))
-        //    {
-        //        var acos = MathF.Acos(cosa);
-        //        var offset = radius / MathF.Tan(acos / 2) + radius;
-
-        //        var prevPosition = pivot - offset * toPivot;
-        //        var nextPosition = pivot + offset * fromPivot;
-
-        //        points.Add(new SplineVertex(prevPosition, tempNormal, toPivot));
-        //        points.Add(new SplineVertex(nextPosition, tempNormal, fromPivot));
-        //    }
-        //    else
-        //    {
-        //        points.Add(new SplineVertex(pivot, tempNormal, fromPivot));
-        //    }
-        //}
 
         public static Model CreateTubeFromSpline(List<SplineVertex> spline, int resolution, float radius)
         {
@@ -1531,7 +1584,7 @@ namespace TriangulatedTopology
             {
                 return Quaternion.FromAxisAngle(axis, MathF.PI);
             }
-
+            
             float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
             float angle = MathF.Acos(cosa);
             return Quaternion.FromAxisAngle(axis, angle);
@@ -1579,7 +1632,7 @@ namespace TriangulatedTopology
                 Vertex b = node.Face[1];
                 Vertex c = node.Face[2];
 
-                Vector2 barycentric = GetBarycentric(
+                Vector2 barycentric = Mathematics.GetBarycentric(
                     a.TextureCoords * size,
                     b.TextureCoords * size,
                     c.TextureCoords * size,
@@ -1597,25 +1650,6 @@ namespace TriangulatedTopology
             }
 
             throw new ArgumentException();            
-        }
-
-        public static Vector2 GetBarycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 p)
-        {
-            Vector2 v0 = c - a;
-            Vector2 v1 = b - a;
-            Vector2 v2 = p - a;
-
-            float dot00 = Vector2.Dot(v0, v0);
-            float dot01 = Vector2.Dot(v0, v1);
-            float dot02 = Vector2.Dot(v0, v2);
-            float dot11 = Vector2.Dot(v1, v1);
-            float dot12 = Vector2.Dot(v1, v2);
-
-            float inverseDenominator = 1.0f / (dot00 * dot11 - dot01 * dot01);
-            float u = (dot11 * dot02 - dot01 * dot12) * inverseDenominator;
-            float v = (dot00 * dot12 - dot01 * dot02) * inverseDenominator;
-
-            return new Vector2(u, v);
         }
 
         //public static void BuildNet(Engine engine, Topology topology, Cell cell, Color color, int size)
@@ -1694,25 +1728,25 @@ namespace TriangulatedTopology
             Vector3 scale,
             Color color)
         {
-            var ring = engine.CreateGameObject();
-            var renderer = ring.Add<MaterialRenderComponent>();
+            var go = engine.CreateGameObject();
+            var renderer = go.Add<MaterialRenderComponent>();
             renderer!.Model = RingModel;
             renderer!.Material.Color = RgbaToVector3(color);
-            ring.Position = position;
-            ring.Rotation = rotation;
-            ring.Scale = scale;
-            return ring;
+            go.Position = position;
+            go.Rotation = rotation;
+            go.Scale = scale;
+            return go;
         }
 
         public static GameObject InstantiatePipe(Engine engine, Vector3 position, Quaternion rotation)
         {
-            var pipe = engine.CreateGameObject();
-            var renderer = pipe.Add<SkeletalMeshRenderComponent>();
+            var go = engine.CreateGameObject();
+            var renderer = go.Add<SkeletalMeshRenderComponent>();
             //renderer.Model = Model.Load("Content/Models/PipeSegment.fbx");
             renderer.Model = Model.Load("Content/Models/CurvePipe.fbx");
-            pipe.Position = position;
-            pipe.Rotation = rotation;
-            return pipe;
+            go.Position = position;
+            go.Rotation = rotation;
+            return go;
         }
 
         public static GameObject InstantiateWire(Engine engine, Vector3 position, Quaternion rotation)
@@ -1728,23 +1762,33 @@ namespace TriangulatedTopology
 
         public static GameObject InstantiateMonitor(Engine engine, Vector3 position, Quaternion rotation)
         {
-            var wire = engine.CreateGameObject();
-            var renderer = wire.Add<MaterialRenderComponent>();
+            var go = engine.CreateGameObject();
+            var renderer = go.Add<MaterialRenderComponent>();
             renderer.Model = MonitorModel;
             renderer.Texture = MonitorTexture;
-            wire.Position = position;
-            wire.Rotation = rotation;
-            return wire;
+            go.Position = position;
+            go.Rotation = rotation;
+            return go;
         }
 
-        public static GameObject InstantiateSupport(Engine engine, Vector3 position, Quaternion rotation)
+        public static GameObject InstantiateWireSupport(Engine engine, Vector3 position, Quaternion rotation)
         {
-            var wire = engine.CreateGameObject();
-            var renderer = wire.Add<MaterialRenderComponent>();
-            renderer.Model = SupportModel;
-            wire.Position = position;
-            wire.Rotation = rotation;
-            return wire;
+            var go = engine.CreateGameObject();
+            var renderer = go.Add<MaterialRenderComponent>();
+            renderer.Model = WireSupportModel;
+            go.Position = position;
+            go.Rotation = rotation;
+            return go;
+        }
+
+        public static GameObject InstantiatePipeSupport(Engine engine, Vector3 position, Quaternion rotation)
+        {
+            var go = engine.CreateGameObject();
+            var renderer = go.Add<MaterialRenderComponent>();
+            renderer.Model = PipeSupportModel;
+            go.Position = position;
+            go.Rotation = rotation;
+            return go;
         }
 
         public static Vector3 RgbaToVector3(Color color)
