@@ -276,17 +276,22 @@ namespace GameEngine.Mathematics
             return new Vector2(vector3d.X, vector3d.Y);
         }
 
+        public static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
+        {
+            return MathF.Abs(a - b) <= epsilon;
+        }
+
         public static bool ApproximatelyEqualEpsilon(Vector2 a, Vector2 b, float epsilon)
         {
-            return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon) 
-                && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
+            return ApproximatelyEqualEpsilon(a.X, b.X, epsilon) 
+                && ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
         }
 
         public static bool ApproximatelyEqualEpsilon(Vector3 a, Vector3 b, float epsilon)
         {
-            return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon)
-                && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon)
-                && MathHelper.ApproximatelyEqualEpsilon(a.Z, b.Z, epsilon);
+            return ApproximatelyEqualEpsilon(a.X, b.X, epsilon)
+                && ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon)
+                && ApproximatelyEqualEpsilon(a.Z, b.Z, epsilon);
         }
 
         public static bool IsBoundingBoxesIntersects(

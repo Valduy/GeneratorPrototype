@@ -585,8 +585,11 @@ namespace TriangulatedTopology
             {
                 if (net.GetNodes().First().Item.Color.IsSame(VentilationColor))
                 {
-                    VisualizePipes(engine, net);
-
+                    //VisualizePipes(engine, net);
+                    var model = AlternativeTubes(engine, net);
+                    var go = engine.CreateGameObject();
+                    var render = go.Add<MaterialRenderComponent>();
+                    render.Model = model;
                 }
                 if (net.GetNodes().First().Item.Color.IsSame(WireColor))
                 {
@@ -626,7 +629,7 @@ namespace TriangulatedTopology
 
             var models = new List<Model>();
             var nodes = GetNodesSequence(net);
-            var pointsLines = GetPointsLines(nodes, 3);
+            var pointsLines = GetWiresPointsLines(nodes, 3);
             
             foreach (var line in pointsLines)
             {
@@ -698,7 +701,7 @@ namespace TriangulatedTopology
             return nodes;
         }
 
-        public static List<List<SplineVertex>> GetPointsLines(List<LogicalNode> nodes, int count)
+        public static List<List<SplineVertex>> GetWiresPointsLines(List<LogicalNode> nodes, int count)
         {
             float extrusionFactor = 0.2f;
             float offset = 0.2f;
@@ -939,6 +942,310 @@ namespace TriangulatedTopology
 
             return inner;
         }
+
+        public static Model AlternativeTubes(Engine engine, Net<LogicalNode> net)
+        {
+            int resolution = 32;
+            float radius = 0.25f;
+
+            var nodes = GetNodesSequence(net);
+            var points = GetPipePoints(nodes, radius);
+
+            for (int i = 1; i < points.Count; i++)
+            {
+                var prev = points[i - 1];
+                var next = points[i];
+
+                var line = engine.Line(prev.Position, next.Position, Colors.Green);
+                line.Get<LineRenderComponent>()!.Width = 10;
+            }
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                var temp = points[i];
+
+                var line = engine.Line(temp.Position, temp.Position + temp.Up * 3, Colors.Red);
+                line.Get<LineRenderComponent>()!.Width = 1;
+            }
+
+            if (points.Count > 0)
+            {
+                var model = CreateTubeFromSpline(points, resolution, radius);
+                return model;
+            }
+
+            return Model.Empty;
+        }
+
+        public static List<SplineVertex> GetPipePoints(List<LogicalNode> nodes, float radius)
+        {
+            var points = new List<SplineVertex>();
+            var controlPoints = new List<SplineVertex>();
+            float extrusionFactor = 0.4f;
+            int resolution = 5;
+            
+            for (int i = 1; i < nodes.Count - 1; i += 3)
+            {
+                var prev = nodes[i - 1];
+                var temp = nodes[i];
+                var next = nodes[i + 1];
+
+                var prevJointPoints = CreateTubePointsAroundJoint( prev, temp, extrusionFactor, radius);
+                var nextJointPoints = CreateTubePointsAroundJoint( temp, next, extrusionFactor, radius);
+                var innerPoints = CreateTubeInnerPoints(prevJointPoints[prevJointPoints.Count - 1], nextJointPoints[0], 5);
+                points.AddRange(prevJointPoints.Concat(innerPoints).Concat(nextJointPoints));
+            }
+
+            //for (int i = 1; i < nodes.Count - 1; i++)
+            //{
+            //    var prev = nodes[i - 1];
+            //    var temp = nodes[i];
+            //    var next = nodes[i + 1];
+
+            //    CreateTubePointsBetweenNodes(controlPoints, prev, temp, extrusionFactor, radius);
+            //}
+
+            //CreateTubePointsBetweenNodes(controlPoints, nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, radius);
+
+            //for (int i = 1; i < controlPoints.Count; i++)
+            //{
+            //    var prev = controlPoints[i - 1];
+            //    var next = controlPoints[i];
+
+            //    for (int j = 0; j < resolution + 1; j++)
+            //    {
+            //        var t = (float)j / resolution;
+            //        var position = Curves.Hermite(prev.Position, next.Position, prev.Forward, next.Forward, t);
+            //        var direction = Vector3.Normalize(Vector3.Lerp(prev.Forward.Normalized(), next.Forward.Normalized(), t));
+            //        var normal = Vector3.Normalize(Vector3.Lerp(prev.Up, next.Up, t));
+            //        points.Add(new SplineVertex(position, normal, direction));
+            //    }
+            //}
+
+            return points;
+        }
+
+        public static void CreateTubePointsBetweenNodes(
+            List<SplineVertex> points,
+            LogicalNode prev, 
+            LogicalNode next,
+            float extrusionFactor,
+            float radius)
+        {
+            float epsilon = 0.01f;
+            int resolution = 5;
+
+            var prevNormal = GetNormal(prev.Corners);
+            var nextNormal = GetNormal(next.Corners);
+            var blendedNormal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, 0.5f));
+
+            var prevPivot = GetCentroid(prev.Corners) + extrusionFactor * prevNormal;
+            var nextPivot = GetCentroid(next.Corners) + extrusionFactor * nextNormal;
+
+            var sharedPonts = GetSharedPoints(prev.Corners, next.Corners);
+            var joint = GetCentroid(sharedPonts) + extrusionFactor * blendedNormal;
+
+            var prevDirection = joint - prevPivot;
+            var nextDirection = nextPivot - joint;
+            var blendedDirection = Vector3.Lerp(prevDirection, nextDirection, 0.5f);
+
+            points.Add(new SplineVertex(joint, blendedNormal, blendedDirection));
+        }
+
+        public static List<SplineVertex> CreateTubePointsAroundJoint(
+            LogicalNode prev,
+            LogicalNode next,
+            float extrusionFactor,
+            float radius)
+        {
+            float epsilon = 0.01f;
+            var points = new List<SplineVertex>();
+
+            var prevNormal = GetNormal(prev.Corners);
+            var nextNormal = GetNormal(next.Corners);
+            var blendedNormal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, 0.5f));
+
+            var prevPivot = GetCentroid(prev.Corners);
+            var nextPivot = GetCentroid(next.Corners);
+
+            var sharedPoints = GetSharedPoints(prev.Corners, next.Corners);
+            var joint = GetCentroid(sharedPoints);
+
+            var prevDirection = Vector3.Normalize(joint - prevPivot);
+            var nextDirection = Vector3.Normalize(nextPivot - joint);
+            var blendedDirection = Vector3.Normalize(Vector3.Lerp(prevDirection, nextDirection, 0.5f));
+
+            var prevP1 = prevPivot + extrusionFactor * prevNormal;
+            var prevP2 = joint + extrusionFactor * prevNormal;
+            var e1 = prevP2 - prevP1;
+            
+            var nextP1 = nextPivot + extrusionFactor * nextNormal;
+            var nextP2 = joint + extrusionFactor * nextNormal;
+            var e2 = nextP2 - nextP1;
+
+            if (GetIntersactionPoint(prevP1, e1, nextP1, e2, epsilon, out var p))
+            {
+                var cosa = Math.Clamp(Vector3.Dot(prevDirection, nextDirection), -1.0f, 1.0f);
+                var acos = MathF.Acos(cosa);
+                var b = MathF.PI - acos;
+                var offset = MathF.Abs(radius / MathF.Tan(b / 2));
+
+                var prevP = p - offset * prevDirection;
+                var nextP = p + offset * nextDirection;
+
+                if (!GetIntersactionPoint(prevP, prevNormal, nextP, nextNormal, epsilon, out var rotationPivot))
+                {
+                    throw new ArgumentException("Something damn happened.");
+                }
+
+                var sign = MathF.Sign(Vector3.Dot(p - rotationPivot, blendedNormal));
+
+                for (int i = 0; i <= 5; i++)
+                {
+                    var t = (float)i / 5;
+                    var normal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, t));
+                    var position = rotationPivot + sign * radius * normal;
+                    var direction = Vector3.Normalize(Vector3.Lerp(prevDirection, nextDirection, t));
+                    points.Add(new SplineVertex(position, normal, direction));
+                }
+
+                //points.Add(new SplineVertex(prevP, prevNormal, prevDirection));
+                //points.Add(new SplineVertex(nextP, nextNormal, nextDirection));
+                //Engine.CreateSphere(rotationPivot, new Vector3(0.1f));
+
+                //var c1 = GenerateCircle(points[points.Count - 2], 10, radius);
+                //var c2 = GenerateCircle(points[points.Count - 1], 10, radius);
+                //var c3 = GenerateCircle(new SplineVertex(rotationPivot + blendedNormal * radius, blendedNormal, blendedDirection), 10, radius);
+
+                //var c1 = GenerateCircle(new SplineVertex(prevP, prevNormal, prevDirection), 10, radius);
+                //var c2 = GenerateCircle(new SplineVertex(nextP, nextNormal, nextDirection), 10, radius);
+                //var c3 = GenerateCircle(new SplineVertex(rotationPivot + blendedNormal * radius, blendedNormal, blendedDirection), 10, radius);
+
+                //for (int i = 0; i < 10; i++)
+                //{
+                //    var prev1 = c1.GetCircular(i - 1).Position;
+                //    var next1 = c1.GetCircular(i).Position;
+
+                //    var prev2 = c2.GetCircular(i - 1).Position;
+                //    var next2 = c2.GetCircular(i).Position;
+
+                //    var prev3 = c3.GetCircular(i - 1).Position;
+                //    var next3 = c3.GetCircular(i).Position;
+
+                //    Engine.Line(prev1, next1, Colors.Magenta);
+                //    Engine.Line(prev2, next2, Colors.Magenta);
+                //    Engine.Line(prev3, next3, Colors.Magenta);
+                //}
+            }
+            else
+            {
+                points.Add(new SplineVertex(joint + extrusionFactor * blendedNormal, blendedNormal, blendedDirection));
+            }
+
+            return points;
+        }
+
+        public static List<SplineVertex> CreateTubeInnerPoints(SplineVertex p1, SplineVertex p2, int resolution)
+        {
+            var points = new List<SplineVertex>();
+
+            for (int i = 1; i < resolution; i++)
+            {
+                float t = (float)i / resolution;
+                var position = Curves.Hermite(p1.Position, p2.Position, p1.Forward * 2, p2.Forward * 2, t);
+                var normal = Vector3.Normalize(Vector3.Lerp(p1.Up, p2.Up, t));
+                var direction = Vector3.Normalize(Vector3.Lerp(p1.Forward, p2.Forward, t));
+                points.Add(new SplineVertex(position, normal, direction));
+            }
+
+            return points;
+        }
+
+        public static bool GetIntersactionPoint(
+            Vector3 r1,
+            Vector3 e1,
+            Vector3 r2,
+            Vector3 e2,
+            float epsilon,
+            out Vector3 p)
+        {
+            float distance = float.PositiveInfinity;            
+            var n = Vector3.Cross(e1, e2);
+            p = Vector3.Zero;
+
+            if (Mathematics.ApproximatelyEqualEpsilon(n, Vector3.Zero, epsilon))
+            {
+                return false;
+            }
+
+            distance = MathF.Abs(Vector3.Dot(n, r1 - r2)) / n.Length;
+            
+            if (distance > epsilon)
+            {
+                return false;
+            }
+
+            var squareN = Vector3.Dot(n, n);
+            var direction = r2 - r1;
+
+            var t1 = Vector3.Dot(Vector3.Cross(e2, n), direction) / squareN;
+            var t2 = Vector3.Dot(Vector3.Cross(e1, n), direction) / squareN;
+
+            var p1 = r1 + t1 * e1;
+            var p2 = r2 + t2 * e2;
+
+            p = (p1 + p2) / 2;
+            return true;
+        }
+
+        //public static void CreateTubePointsInsideNode(
+        //    List<SplineVertex> points,
+        //    LogicalNode prev,
+        //    LogicalNode temp,
+        //    LogicalNode next,
+        //    float extrusionFactor,
+        //    float radius,
+        //    int resolution)
+        //{
+        //    float epsilon = 0.01f;
+
+        //    var prevNormal = GetNormal(prev.Corners);
+        //    var tempNormal = GetNormal(temp.Corners);
+        //    var nextNormal = GetNormal(next.Corners);
+
+        //    var prevBlendedNormal = Vector3.Normalize(Vector3.Lerp(prevNormal, tempNormal, 0.5f));
+        //    var nextBlendedNormal = Vector3.Normalize(Vector3.Lerp(tempNormal, nextNormal, 0.5f));
+
+        //    var pivot = GetCentroid(temp.Corners) + extrusionFactor * tempNormal;
+
+        //    var prevSharedPoints = GetSharedPoints(prev.Corners, temp.Corners);
+        //    var nextSharedPoints = GetSharedPoints(temp.Corners, next.Corners);
+
+        //    var prevJoint = GetCentroid(prevSharedPoints) + extrusionFactor * prevBlendedNormal;
+        //    var nextJoint = GetCentroid(nextSharedPoints) + extrusionFactor * nextBlendedNormal;
+
+        //    var toPivot = Vector3.Normalize(pivot - prevJoint);
+        //    var fromPivot = Vector3.Normalize(nextJoint - pivot);
+
+        //    var cosa = Vector3.Dot(toPivot, fromPivot);
+
+        //    // Curvature.
+        //    if (MathF.Abs(cosa) < (1 - epsilon))
+        //    {
+        //        var acos = MathF.Acos(cosa);
+        //        var offset = radius / MathF.Tan(acos / 2) + radius;
+
+        //        var prevPosition = pivot - offset * toPivot;
+        //        var nextPosition = pivot + offset * fromPivot;
+
+        //        points.Add(new SplineVertex(prevPosition, tempNormal, toPivot));
+        //        points.Add(new SplineVertex(nextPosition, tempNormal, fromPivot));
+        //    }
+        //    else
+        //    {
+        //        points.Add(new SplineVertex(pivot, tempNormal, fromPivot));
+        //    }
+        //}
 
         public static Model CreateTubeFromSpline(List<SplineVertex> spline, int resolution, float radius)
         {
@@ -1487,7 +1794,8 @@ namespace TriangulatedTopology
             //CollectionsHelper.UseSeed(1145917631);
             //CollectionsHelper.UseSeed(56224625);
             //CollectionsHelper.UseSeed(935418399);
-            //CollectionsHelper.UseSeed(1310155548);
+            //CollectionsHelper.UseSeed(1310155548);887817102
+            //CollectionsHelper.UseSeed(887817102);
 
             using var engine = new Engine();
             Engine = engine;
