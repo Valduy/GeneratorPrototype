@@ -989,8 +989,10 @@ namespace TriangulatedTopology
                 var prev = nodes[i - 1];
                 var next = nodes[i];
 
-                segments.Add(CreateTubePointsAroundJoint(prev, next, extrusionFactor, radius));
+                segments.Add(CreateTubePointsAroundJoint(prev, next, extrusionFactor, radius, resolution));
             }
+
+            points.AddRange(CreateTubeBegin(nodes[0], nodes[1], extrusionFactor, radius, resolution));
 
             for (int i = 1; i < segments.Count; i++)
             {
@@ -1002,6 +1004,7 @@ namespace TriangulatedTopology
             }
 
             points.AddRange(segments[segments.Count - 1]);
+            points.AddRange(CreateTubeEnd(nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, radius, resolution));
             return points;
         }
 
@@ -1009,7 +1012,8 @@ namespace TriangulatedTopology
             LogicalNode prev,
             LogicalNode next,
             float extrusionFactor,
-            float radius)
+            float radius,
+            int resolution)
         {
             float epsilon = 0.01f;
             var points = new List<SplineVertex>();
@@ -1053,9 +1057,9 @@ namespace TriangulatedTopology
 
                 var sign = MathF.Sign(Vector3.Dot(p - rotationPivot, blendedNormal));
 
-                for (int i = 0; i <= 5; i++)
+                for (int i = 0; i <= resolution; i++)
                 {
-                    var t = (float)i / 5;
+                    var t = (float)i / resolution;
                     var normal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, t));
                     var position = rotationPivot + sign * radius * normal;
                     var direction = Vector3.Normalize(Vector3.Lerp(prevDirection, nextDirection, t));
@@ -1067,6 +1071,77 @@ namespace TriangulatedTopology
                 points.Add(new SplineVertex(joint + extrusionFactor * blendedNormal, blendedNormal, blendedDirection));
             }
 
+            return points;
+        }
+
+        public static List<SplineVertex> CreateTubeBegin(
+            LogicalNode begin,
+            LogicalNode next,
+            float extrusionFactor,
+            float radius, 
+            int resolution)
+        {
+            var points = new List<SplineVertex>();
+
+            var beginNormal = GetNormal(begin.Corners);      
+            
+            var pivot = GetCentroid(begin.Corners);
+
+            var sharedPoints = GetSharedPoints(begin.Corners, next.Corners);
+            var joint = GetCentroid(sharedPoints);
+
+            var fromPivotDirection = beginNormal;
+            var toJointDirection = Vector3.Normalize(joint - pivot);
+
+            var p = pivot + extrusionFactor * beginNormal;
+            var rotationPivot = p - radius * fromPivotDirection + radius * toJointDirection;
+
+            points.Add(new SplineVertex(pivot, -toJointDirection, fromPivotDirection));
+
+            for (int i = 0; i <= resolution; i++)
+            {
+                float t = (float)i / resolution;
+                var normal = Vector3.Normalize(Vector3.Lerp(-toJointDirection, beginNormal, t));
+                var direction = Vector3.Normalize(Vector3.Lerp(fromPivotDirection, toJointDirection, t));
+                var position = rotationPivot + radius * normal;
+                points.Add(new SplineVertex(position, normal, direction));
+            }
+
+            return points;
+        }
+
+        public static List<SplineVertex> CreateTubeEnd(
+            LogicalNode prev,
+            LogicalNode end,
+            float extrusionFactor,
+            float radius,
+            int resolution)
+        {
+            var points = new List<SplineVertex>();
+
+            var endNormal = GetNormal(end.Corners);
+
+            var pivot = GetCentroid(end.Corners);
+
+            var sharedPoints = GetSharedPoints(prev.Corners, end.Corners);
+            var joint = GetCentroid(sharedPoints);
+
+            var fromJointDirection = Vector3.Normalize(pivot - joint);
+            var toPivotDirection = -endNormal;
+
+            var p = pivot + extrusionFactor * endNormal;
+            var rotationPivot = p + radius * toPivotDirection - radius * fromJointDirection;
+
+            for (int i = 0; i <= resolution; i++)
+            {
+                float t = (float)i / resolution;
+                var normal = Vector3.Normalize(Vector3.Lerp(endNormal, fromJointDirection, t));
+                var direction = Vector3.Normalize(Vector3.Lerp(fromJointDirection, toPivotDirection, t));
+                var position = rotationPivot + radius * normal;
+                points.Add(new SplineVertex(position, normal, direction));
+            }
+
+            points.Add(new SplineVertex(pivot, fromJointDirection, toPivotDirection));
             return points;
         }
 
