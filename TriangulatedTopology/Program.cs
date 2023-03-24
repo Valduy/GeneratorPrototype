@@ -988,8 +988,8 @@ namespace TriangulatedTopology
                 var to = line.Count - 1;
                 bool canInstantiateOnlySingleJoint = false;
 
-                InstantiateSphere(engine, line[0].Position, Quaternion.Identity, new Vector3(0.4f), Color.Navy);
-                InstantiateSphere(engine, line[line.Count - 1].Position, Quaternion.Identity, new Vector3(0.4f), Color.Red);
+                //InstantiateSphere(engine, line[0].Position, Quaternion.Identity, new Vector3(0.4f), Color.Navy);
+                //InstantiateSphere(engine, line[line.Count - 1].Position, Quaternion.Identity, new Vector3(0.4f), Color.Red);
 
                 while (Vector3.Distance(line[0].Position, line[from].Position) <= minimumDistance)
                 {
@@ -1035,117 +1035,37 @@ namespace TriangulatedTopology
                     continue;
                 }
 
-                InstantiateSphere(engine, line[from].Position, Quaternion.Identity, new Vector3(0.4f), Color.Purple);
-                InstantiateSphere(engine, line[to].Position, Quaternion.Identity, new Vector3(0.4f), Color.Green);
+                //InstantiateSphere(engine, line[from].Position, Quaternion.Identity, new Vector3(0.4f), Color.Purple);
+                //InstantiateSphere(engine, line[to].Position, Quaternion.Identity, new Vector3(0.4f), Color.Green);
 
                 var innerDistance = Vector3.Distance(line[from].Position, line[to].Position);
 
                 if (innerDistance < minimumDistance)
                 {
-                    var vertex = line[(to - from) / 2];
-                    InstantiateSphere(engine, vertex.Position, Quaternion.Identity, new Vector3(0.4f), Color.Yellow);
-                    //InstantiateDualPipeJoints(engine, vertex.Up, vertex.Position, vertex.Forward);
-                    continue;
-                }
-
-                var jointsCount = (int)(innerDistance / desiredDistance) + 1;
-                var distanceBetweenJoints = innerDistance / jointsCount;
-
-                if (jointsCount == 1)
-                {
-                    if ((to - from) < 2)
-                    {
-                        var t = 0;
-                    }
-
-                    var vertex = line[(to - from) / 2];
-                    InstantiateDualPipeJoints(engine, vertex.Up, vertex.Position, vertex.Forward);
+                    var first = line[from];
+                    var last = line[to];
+                    var position = (first.Position + last.Position) / 2;
+                    var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
+                    var direction = Vector3.Normalize(Vector3.Lerp(first.Forward, last.Forward, 0.5f));
+                    InstantiateDualPipeJoints(engine, axis, position, direction);
                     continue;
                 }
 
                 InstantiateDualPipeJoints(engine, line[from].Up, line[from].Position, line[from].Forward);
+                InstantiateDualPipeJoints(engine, line[to].Up, line[to].Position, line[to].Forward);
+                SplitPipe(engine, line, from, to, desiredDistance);
+            }
+        }
 
-                for (int temp = from + 1; temp <= to; temp++)
-                {
-                    if (Vector3.Distance(line[from].Position, line[temp].Position) >= distanceBetweenJoints)
-                    {
-                        from = temp;
-                        var vertex = line[temp];
-                        InstantiateDualPipeJoints(engine, vertex.Up, vertex.Position, vertex.Forward);
-                    }
-                }
+        public static void SplitPipe(Engine engine, List<SplineVertex> line, int from, int to, float distance)
+        {
+            if (Vector3.Distance(line[from].Position, line[to].Position) > distance)
+            {
+                int pivot = (from + to) / 2;
+                InstantiateDualPipeJoints(engine, line[pivot].Up, line[pivot].Position, line[pivot].Forward);
 
-                //InstantiateDualPipeJoints(engine, line[to].Up, line[to].Position, line[to].Forward);
-
-                //var line = lines[i];
-                //float offset = 0.2f;
-
-                //var first = line[0];
-                //var last = line[line.Count - 1];
-
-                //var toLast = Vector3.Normalize(last.Position - first.Position);
-                //var toFirst = Vector3.Normalize(first.Position - last.Position);
-
-                ////var from = first.Position + offset * toLast;
-                ////var to = last.Position + offset * toFirst;
-                //var from = first.Position;
-                //var to = last.Position;
-
-                //if (Vector3.Distance(first.Position, last.Position) < minSegmentLength)
-                //{
-                //    var position = (first.Position + last.Position) / 2;
-                //    var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
-                //    var rotation = GetRotation(axis, Vector3.UnitY, first.Forward);
-
-                //    InstantiatePipeJoint(
-                //        engine,
-                //        position,
-                //        rotation);
-
-                //    InstantiatePipeJoint(
-                //        engine,
-                //        position,
-                //        Quaternion.FromAxisAngle(axis, MathF.PI) * rotation);
-
-                //    continue;
-                //}
-
-                //engine.Line(from, from + 3 * first.Up, Colors.Red);
-                //engine.Line(to, to + 3 * last.Up, Colors.Red);
-
-                //engine.Line(from, from + 3 * first.Forward, Colors.Blue);
-                //engine.Line(to, to + 3 * last.Forward, Colors.Blue);
-
-                //engine.Line(from, from + 3 * Vector3.UnitY, Colors.Green);
-                //engine.Line(to, to + 3 * Vector3.UnitY, Colors.Green);
-
-                //if (first.Forward.Y == 0)
-                //{
-                //    var t = 0;
-                //}
-
-                //var firstRotation = GetRotation(first.Up, Vector3.UnitY, first.Forward);
-                //var lastRotation = GetRotation(last.Up, Vector3.UnitY, last.Forward);
-
-                //InstantiatePipeJoint(
-                //    engine,
-                //    from,
-                //    firstRotation);
-
-                //InstantiatePipeJoint(
-                //    engine,
-                //    from,
-                //    Quaternion.FromAxisAngle(first.Up, MathF.PI) * firstRotation);
-
-                //InstantiatePipeJoint(
-                //    engine,
-                //    to,
-                //    lastRotation);
-
-                //InstantiatePipeJoint(
-                //    engine,
-                //    to,
-                //    Quaternion.FromAxisAngle(last.Up, MathF.PI) * lastRotation);
+                SplitPipe(engine, line, from, pivot, distance);
+                SplitPipe(engine, line, pivot, to, distance);
             }
         }
 
