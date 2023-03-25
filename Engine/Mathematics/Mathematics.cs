@@ -276,6 +276,78 @@ namespace GameEngine.Mathematics
             return new Vector2(vector3d.X, vector3d.Y);
         }
 
+        public static Vector2 GetCentroid(IReadOnlyList<Vector2> points)
+        {
+            return points.Aggregate((p1, p2) => p1 + p2) / points.Count;
+        }
+
+        public static Vector3 GetCentroid(IReadOnlyList<Vector3> points)
+        {
+            return points.Aggregate((p1, p2) => p1 + p2) / points.Count;
+        }
+
+        public static Vector3 GetNormal(IReadOnlyList<Vector3> face)
+        {
+            var a = Vector3.Normalize(face[0] - face[1]);
+            var b = Vector3.Normalize(face[2] - face[1]);
+            return Vector3.Cross(a, b).Normalized();
+        }
+
+        public static List<Vector3> GetSharedPoints(IEnumerable<Vector3> poly1, IEnumerable<Vector3> poly2, float epsilon)
+        {
+            var sharedPoints = new List<Vector3>();
+
+            foreach (var a in poly1)
+            {
+                foreach (var b in poly2)
+                {
+                    if (ApproximatelyEqualEpsilon(a, b, epsilon))
+                    {
+                        sharedPoints.Add(a);
+                    }
+                }
+            }
+
+            return sharedPoints;
+        }
+
+        public static bool TryGetIntersactionPoint(
+            Vector3 r1,
+            Vector3 e1,
+            Vector3 r2,
+            Vector3 e2,
+            float epsilon,
+            out Vector3 p)
+        {
+            float distance = float.PositiveInfinity;
+            var n = Vector3.Cross(e1, e2);
+            p = Vector3.Zero;
+
+            if (ApproximatelyEqualEpsilon(n, Vector3.Zero, epsilon))
+            {
+                return false;
+            }
+
+            distance = MathF.Abs(Vector3.Dot(n, r1 - r2)) / n.Length;
+
+            if (distance > epsilon)
+            {
+                return false;
+            }
+
+            var squareN = Vector3.Dot(n, n);
+            var direction = r2 - r1;
+
+            var t1 = Vector3.Dot(Vector3.Cross(e2, n), direction) / squareN;
+            var t2 = Vector3.Dot(Vector3.Cross(e1, n), direction) / squareN;
+
+            var p1 = r1 + t1 * e1;
+            var p2 = r2 + t2 * e2;
+
+            p = (p1 + p2) / 2;
+            return true;
+        }
+
         public static Vector2 GetBarycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 p)
         {
             Vector2 v0 = c - a;
@@ -321,7 +393,7 @@ namespace GameEngine.Mathematics
                 && Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
         }
 
-        public static Quaternion GetRotation(Vector3 from, Vector3 to)
+        public static Quaternion FromToRotation(Vector3 from, Vector3 to)
         {
             from.Normalize();
             to.Normalize();
@@ -337,6 +409,25 @@ namespace GameEngine.Mathematics
 
             float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
             var axis = Vector3.Cross(from, to);
+            float angle = MathF.Acos(cosa);
+            return Quaternion.FromAxisAngle(axis, angle);
+        }
+
+        public static Quaternion FromToRotation(Vector3 axis, Vector3 from, Vector3 to)
+        {
+            from.Normalize();
+            to.Normalize();
+
+            if (Mathematics.ApproximatelyEqualEpsilon(from, to, float.Epsilon))
+            {
+                return Quaternion.Identity;
+            }
+            if (Mathematics.ApproximatelyEqualEpsilon(from, -to, float.Epsilon))
+            {
+                return Quaternion.FromAxisAngle(axis, MathF.PI);
+            }
+
+            float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
             float angle = MathF.Acos(cosa);
             return Quaternion.FromAxisAngle(axis, angle);
         }

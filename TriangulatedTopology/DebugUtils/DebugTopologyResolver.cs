@@ -3,7 +3,7 @@ using MeshTopology;
 using System.Drawing;
 using TextureUtils;
 
-namespace TriangulatedTopology
+namespace TriangulatedTopology.DebugUtils
 {
     public class DebugTopologyResolver
     {

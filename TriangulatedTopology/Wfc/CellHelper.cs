@@ -1,4 +1,4 @@
-﻿namespace TriangulatedTopology
+﻿namespace TriangulatedTopology.Wfc
 {
     public static class CellHepler
     {

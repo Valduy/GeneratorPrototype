@@ -3,9 +3,9 @@ using OpenTK.Mathematics;
 using System.Drawing;
 using TextureUtils;
 
-namespace TriangulatedTopology
+namespace TriangulatedTopology.Wfc
 {
-    public static class Wfc
+    public static class WfcGenerator
     {
         private const float FloorTrashold = 45.0f;
         private const float CeilTrashold = 45.0f;
@@ -169,7 +169,7 @@ namespace TriangulatedTopology
         }
 
         private static List<Rule> SelectRuleSet(
-            Cell cell, 
+            Cell cell,
             List<Rule> wallRules,
             List<Rule> floorRules,
             List<Rule> ceilRules)
@@ -211,7 +211,7 @@ namespace TriangulatedTopology
             }
         }
 
-        private static List<Rule> FilterPossible(Cell cell) 
+        private static List<Rule> FilterPossible(Cell cell)
             => cell.Rules.Where(r => IsPossible(r, cell)).ToList();
 
         private static bool IsPossible(Rule rule, Cell cell)

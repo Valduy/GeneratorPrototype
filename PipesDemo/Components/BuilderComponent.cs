@@ -200,7 +200,7 @@ namespace PipesDemo.Components
             }
             else
             {
-                vector.Rotation = Mathematics.GetRotation(Vector3.UnitY, to);
+                vector.Rotation = Mathematics.FromToRotation(Vector3.UnitY, to);
             }
 
             _vectors.Add(vector);
