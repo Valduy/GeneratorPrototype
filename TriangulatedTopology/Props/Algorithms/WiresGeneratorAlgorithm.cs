@@ -97,8 +97,6 @@ namespace TriangulatedTopology.Props.Algorithms
         {
             float extrusionFactor = 0.2f;
             float offset = 0.2f;
-            int half = count / 2;
-
             var pointsLines = new List<List<SplineVertex>>();
 
             for (int i = 0; i < count; i++)

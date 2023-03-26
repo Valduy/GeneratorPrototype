@@ -8,25 +8,12 @@ using OpenTK.Mathematics;
 using System.Drawing;
 using TextureUtils;
 using TriangulatedTopology.Helpers;
+using static TriangulatedTopology.Props.Algorithms.PipesGeneratorAlgorithm;
 
 namespace TriangulatedTopology.Props.Algorithms
 {
     public class PipesGeneratorAlgorithm : INetAlgorithm
     {
-        public struct Joint
-        {
-            public readonly LogicalNode Prev;
-            public readonly LogicalNode Next;
-            public readonly int Index;
-
-            public Joint(LogicalNode prev, LogicalNode next, int index)
-            {
-                Prev = prev;
-                Next = next;
-                Index = index;
-            }
-        }
-
         public static readonly Color PipesColor = Color.FromArgb(255, 217, 0);
         public static readonly Color WireColor = Color.FromArgb(255, 0, 24);
         public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
@@ -58,9 +45,22 @@ namespace TriangulatedTopology.Props.Algorithms
             float radius = 0.3f;
 
             var nodes = net.ToList();
-            var points = GetPipePoints(nodes, radius);
+            var (points, joints) = GetPipePoints(nodes, radius);
             var model = MeshGenerator.GenerateTubeFromSpline(points, resolution, radius);
-            InstantiateJoints(engine, points);
+            InstantiateJoints(engine, points, joints);
+
+            //float epsilon = 0.01f;
+
+            //foreach (var joint in joints)
+            //{
+            //    var prevNormal = Mathematics.GetNormal(joint.Prev.Corners);
+            //    var nextNormal = Mathematics.GetNormal(joint.Next.Corners);
+
+            //    if (Mathematics.ApproximatelyEqualEpsilon(Vector3.Dot(prevNormal, nextNormal), 1.0f, epsilon))
+            //    {
+            //        InstantiateDualPipeJoints(engine, joint.Vertex.Up, joint.Vertex.Position, joint.Vertex.Forward);
+            //    }
+            //}
 
             //for (int i = 1; i < points.Count; i++)
             //{
@@ -84,9 +84,11 @@ namespace TriangulatedTopology.Props.Algorithms
             render.Model = model;
         }
 
-        private static List<SplineVertex> GetPipePoints(List<LogicalNode> nodes, float radius)
+        private static (List<SplineVertex> Points, List<SplineVertex> Joints) GetPipePoints(List<LogicalNode> nodes, float radius)
         {
+            float epsilon = 0.01f;
             var points = new List<SplineVertex>();
+            var joints = new List<SplineVertex>();
             var segments = new List<List<SplineVertex>>();
             float extrusionFactor = 0.5f;
             int resolution = 20;
@@ -96,7 +98,16 @@ namespace TriangulatedTopology.Props.Algorithms
                 var prev = nodes[i - 1];
                 var next = nodes[i];
 
-                segments.Add(CreatePipePointsAroundJoint(prev, next, extrusionFactor, radius, resolution));
+                var jointPoints = CreatePipePointsAroundJoint(prev, next, extrusionFactor, radius, resolution);
+                segments.Add(jointPoints);                
+
+                var prevNormal = Mathematics.GetNormal(prev.Corners);
+                var nextNormal = Mathematics.GetNormal(next.Corners);
+
+                if (Mathematics.ApproximatelyEqualEpsilon(Vector3.Dot(prevNormal, nextNormal), 1.0f, epsilon))
+                {
+                    joints.Add(jointPoints[jointPoints.Count / 2]);
+                }
             }
 
             points.AddRange(CreatePipeBegin(nodes[0], nodes[1], extrusionFactor, radius, resolution));
@@ -108,11 +119,16 @@ namespace TriangulatedTopology.Props.Algorithms
 
                 var inner = CreatePipeInnerPoints(prev[prev.Count - 1], next[0], resolution);
                 points.AddRange(prev.Concat(inner));
+
+                if (Mathematics.ApproximatelyEqualEpsilon(inner[0].Forward, inner[inner.Count - 1].Forward, epsilon))
+                {
+                    joints.Add(inner[inner.Count / 2]);
+                }                
             }
 
             points.AddRange(segments[segments.Count - 1]);
             points.AddRange(CreatePipeEnd(nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, radius, resolution));
-            return points;
+            return (points, joints);
         }
 
         private static List<SplineVertex> CreatePipePointsAroundJoint(
@@ -281,98 +297,112 @@ namespace TriangulatedTopology.Props.Algorithms
             return points;
         }
 
-        private static void InstantiateJoints(Engine engine, List<SplineVertex> points)
+        private static void InstantiateJoints(Engine engine, List<SplineVertex> points, List<SplineVertex> joints)
         {
             float minimumDistance = 0.2f;
             float desiredDistance = 2.0f;
-            var lines = ExtractStraightLines(points);
+
+            float epsilon = 0.01f;
+
+            InstantiateDualPipeJoints(engine, points[0].Up, points[0].Position, points[0].Forward);
+
+            foreach (var joint in joints)
+            {
+                InstantiateDualPipeJoints(engine, joint.Up, joint.Position, joint.Forward);
+            }
+
+            InstantiateDualPipeJoints(engine, points[points.Count - 1].Up, points[points.Count - 1].Position, points[points.Count - 1].Forward);
+            return;
+
+            //var (lines, curves) = ExtractLinesAndCurves(points);
 
             //for (int i = 1; i < lines.Count - 1; i++)
-            for (int i = 0; i < lines.Count; i++)
-            {
-                var line = lines[i];
-                var from = 0;
-                var to = line.Count - 1;
-                bool canInstantiateOnlySingleJoint = false;
+            ////for (int i = 0; i < lines.Count; i++)
+            //{
+            //    var line = lines[i];
+            //    var from = 0;
+            //    var to = line.Count - 1;
+            //    bool canInstantiateOnlySingleJoint = false;
 
-                if (Vector3.Distance(line[from].Position, line[to].Position) < minimumDistance)
-                {
-                    continue;
-                }
+            //    if (Vector3.Distance(line[from].Position, line[to].Position) < minimumDistance)
+            //    {
+            //        continue;
+            //    }
 
-                //InstantiateSphere(engine, line[0].Position, Quaternion.Identity, new Vector3(0.4f), Color.Navy);
-                //InstantiateSphere(engine, line[line.Count - 1].Position, Quaternion.Identity, new Vector3(0.4f), Color.Red);
+            //    //InstantiateSphere(engine, line[0].Position, Quaternion.Identity, new Vector3(0.4f), Color.Navy);
+            //    //InstantiateSphere(engine, line[line.Count - 1].Position, Quaternion.Identity, new Vector3(0.4f), Color.Red);
 
-                while (Vector3.Distance(line[0].Position, line[from].Position) < minimumDistance)
-                {
-                    from += 1;
+            //    while (Vector3.Distance(line[0].Position, line[from].Position) < minimumDistance)
+            //    {
+            //        from += 1;
 
-                    if (from >= line.Count)
-                    {
-                        canInstantiateOnlySingleJoint = true;
-                        break;
-                    }
-                }
+            //        if (from >= line.Count)
+            //        {
+            //            canInstantiateOnlySingleJoint = true;
+            //            break;
+            //        }
+            //    }
 
-                if (canInstantiateOnlySingleJoint || Vector3.Distance(line[from].Position, line[line.Count - 1].Position) < minimumDistance)
-                {
-                    var first = line[0];
-                    var last = line[line.Count - 1];
-                    var position = (first.Position + last.Position) / 2;
-                    var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
-                    var direction = Vector3.Normalize(Vector3.Lerp(first.Forward, last.Forward, 0.5f));
-                    InstantiateDualPipeJoints(engine, axis, position, direction);
-                    continue;
-                }
+            //    if (canInstantiateOnlySingleJoint || Vector3.Distance(line[from].Position, line[line.Count - 1].Position) < minimumDistance)
+            //    {
+            //        var first = line[0];
+            //        var last = line[line.Count - 1];
+            //        var position = (first.Position + last.Position) / 2;
+            //        var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
+            //        var direction = Vector3.Normalize(Vector3.Lerp(first.Forward, last.Forward, 0.5f));
+            //        InstantiateDualPipeJoints(engine, axis, position, direction);
+            //        continue;
+            //    }
 
-                while (Vector3.Distance(line[to].Position, line[line.Count - 1].Position) < minimumDistance)
-                {
-                    to -= 1;
+            //    while (Vector3.Distance(line[to].Position, line[line.Count - 1].Position) < minimumDistance)
+            //    {
+            //        to -= 1;
 
-                    if (to == from)
-                    {
-                        canInstantiateOnlySingleJoint = true;
-                        break;
-                    }
-                }
+            //        if (to == from)
+            //        {
+            //            canInstantiateOnlySingleJoint = true;
+            //            break;
+            //        }
+            //    }
 
-                if (canInstantiateOnlySingleJoint || Vector3.Distance(line[to].Position, line[0].Position) < minimumDistance)
-                {
-                    var first = line[0];
-                    var last = line[line.Count - 1];
-                    var position = (first.Position + last.Position) / 2;
-                    var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
-                    var direction = Vector3.Normalize(Vector3.Lerp(first.Forward, last.Forward, 0.5f));
-                    InstantiateDualPipeJoints(engine, axis, position, direction);
-                    continue;
-                }
+            //    if (canInstantiateOnlySingleJoint || Vector3.Distance(line[to].Position, line[0].Position) < minimumDistance)
+            //    {
+            //        var first = line[0];
+            //        var last = line[line.Count - 1];
+            //        var position = (first.Position + last.Position) / 2;
+            //        var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
+            //        var direction = Vector3.Normalize(Vector3.Lerp(first.Forward, last.Forward, 0.5f));
+            //        InstantiateDualPipeJoints(engine, axis, position, direction);
+            //        continue;
+            //    }
 
-                //InstantiateSphere(engine, line[from].Position, Quaternion.Identity, new Vector3(0.4f), Color.Purple);
-                //InstantiateSphere(engine, line[to].Position, Quaternion.Identity, new Vector3(0.4f), Color.Green);
+            //    //InstantiateSphere(engine, line[from].Position, Quaternion.Identity, new Vector3(0.4f), Color.Purple);
+            //    //InstantiateSphere(engine, line[to].Position, Quaternion.Identity, new Vector3(0.4f), Color.Green);
 
-                var innerDistance = Vector3.Distance(line[from].Position, line[to].Position);
+            //    var innerDistance = Vector3.Distance(line[from].Position, line[to].Position);
 
-                if (innerDistance < minimumDistance)
-                {
-                    var first = line[from];
-                    var last = line[to];
-                    var position = (first.Position + last.Position) / 2;
-                    var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
-                    var direction = Vector3.Normalize(Vector3.Lerp(first.Forward, last.Forward, 0.5f));
-                    InstantiateDualPipeJoints(engine, axis, position, direction);
-                    continue;
-                }
+            //    if (innerDistance < minimumDistance)
+            //    {
+            //        var first = line[from];
+            //        var last = line[to];
+            //        var position = (first.Position + last.Position) / 2;
+            //        var axis = Vector3.Normalize(Vector3.Lerp(first.Up, last.Up, 0.5f));
+            //        var direction = Vector3.Normalize(Vector3.Lerp(first.Forward, last.Forward, 0.5f));
+            //        InstantiateDualPipeJoints(engine, axis, position, direction);
+            //        continue;
+            //    }
 
-                InstantiateDualPipeJoints(engine, line[from].Up, line[from].Position, line[from].Forward);
-                InstantiateDualPipeJoints(engine, line[to].Up, line[to].Position, line[to].Forward);
-                SplitPipe(engine, line, from, to, desiredDistance);
-            }
+            //    InstantiateDualPipeJoints(engine, line[from].Up, line[from].Position, line[from].Forward);
+            //    InstantiateDualPipeJoints(engine, line[to].Up, line[to].Position, line[to].Forward);
+            //    SplitPipe(engine, line, from, to, desiredDistance);
+            //}
         }
 
-        private static List<List<SplineVertex>> ExtractStraightLines(List<SplineVertex> points)
+        private static (List<List<SplineVertex>> Lines, List<List<SplineVertex>> Curves) ExtractLinesAndCurves(List<SplineVertex> points)
         {
             float epsilon = 0.0001f;
             var lines = new List<List<SplineVertex>>();
+            var curves = new List<List<SplineVertex>>();
 
             for (int i = 0; i < points.Count - 1; i++)
             {
@@ -402,9 +432,44 @@ namespace TriangulatedTopology.Props.Algorithms
                     line.Add(points[i]);
                     lines.Add(line);
                 }
+                else
+                {
+                    var curve = new List<SplineVertex>();
+
+                    for (var j = i; j < points.Count - 1; j++)
+                    {
+                        prev = points[j];
+                        next = points[j + 1];
+                        cosa = Vector3.Dot(prev.Forward, next.Forward);
+
+                        if (Mathematics.ApproximatelyEqualEpsilon(cosa, 1, epsilon))
+                        {
+                            break;
+                        }
+
+                        curve.Add(prev);
+                    }
+
+                    i += curve.Count;
+                    curve.Add(points[i]);
+                    curves.Add(curve);
+                }
             }
 
-            return lines;
+            {
+                var cosa = Vector3.Dot(points[points.Count - 2].Forward, points[points.Count - 1].Forward);
+
+                if (Mathematics.ApproximatelyEqualEpsilon(cosa, 1, epsilon))
+                {
+                    lines[lines.Count - 1].Add(points[points.Count - 1]);
+                }
+                else
+                {
+                    curves[curves.Count - 1].Add(points[points.Count - 1]);
+                }
+            }
+
+            return (lines, curves);
         }
 
         private static void SplitPipe(Engine engine, List<SplineVertex> line, int from, int to, float distance)

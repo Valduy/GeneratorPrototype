@@ -27,8 +27,7 @@ namespace TriangulatedTopology.Props
 
         public PropsGenerator()
         {
-            _netAlgorithms.Add(WiresAlgorithm);
-            _netAlgorithms.Add(PipesAlgorithm);
+        
         }
 
         public PropsGenerator PushNetAlgorithm(INetAlgorithm netAlgorithm)

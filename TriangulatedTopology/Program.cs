@@ -13,6 +13,7 @@ using Vector2 = OpenTK.Mathematics.Vector2;
 using Vector3 = OpenTK.Mathematics.Vector3;
 using TriangulatedTopology.Wfc;
 using TriangulatedTopology.Props;
+using TriangulatedTopology.Props.Algorithms;
 
 namespace TriangulatedTopology
 {
@@ -468,7 +469,10 @@ namespace TriangulatedTopology
 
             var cells = IslandsToCells(islands);
             WfcGenerator.GraphWfc(cells, wallRules, floorRules, ceilRules);
-            var propsGenerator = new PropsGenerator();
+
+            var propsGenerator = new PropsGenerator()
+                .PushNetAlgorithm(new WiresGeneratorAlgorithm())
+                .PushNetAlgorithm(new PipesGeneratorAlgorithm());
             propsGenerator.Generate(engine, topology, cells, size);
 
             //var nets = ExtractNets(topology, cells, size);

@@ -348,6 +348,26 @@ namespace GameEngine.Mathematics
             return true;
         }
 
+        public static bool IsPointLieOnLine(Vector3 r, Vector3 e, Vector3 p, float epsilon)
+        {
+            var distacne = DistanceToLine(r, e, p);
+
+            if (ApproximatelyEqualEpsilon(distacne, 0.0f, epsilon))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static float DistanceToLine(Vector3 r, Vector3 e, Vector3 p)
+        {
+            var toPoint = p - r;
+            var projection = (Vector3.Dot(toPoint, e) * e) / e.LengthSquared;
+            var perpendicular = toPoint - projection;
+            return perpendicular.Length;
+        }
+
         public static Vector2 GetBarycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 p)
         {
             Vector2 v0 = c - a;
