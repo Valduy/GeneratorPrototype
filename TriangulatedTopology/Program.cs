@@ -472,7 +472,8 @@ namespace TriangulatedTopology
 
             var propsGenerator = new PropsGenerator()
                 .PushNetAlgorithm(new WiresGeneratorAlgorithm())
-                .PushNetAlgorithm(new PipesGeneratorAlgorithm());
+                .PushNetAlgorithm(new PipesGeneratorAlgorithm())
+                .PushNetAlgorithm(new VentilationGeneratorAlgorithm());
             propsGenerator.Generate(engine, topology, cells, size);
 
             //var nets = ExtractNets(topology, cells, size);

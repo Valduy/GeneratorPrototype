@@ -12,12 +12,11 @@ namespace TriangulatedTopology.Props.Algorithms
 {
     public class SkeletalPipesGeneratorAlgorithm : INetAlgorithm
     {
-        public static readonly Color PipesColor = Color.FromArgb(255, 217, 0);
         public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
 
         public bool CanProcessRule(Rule rule)
         {
-            return rule.Logical.Enumerate().Any(c => c.IsSame(PipesColor));
+            return rule.Logical.Enumerate().Any(c => c.IsSame(VentilationColor));
         }
 
         public bool[] GetRuleConnections(Rule rule)
@@ -27,7 +26,7 @@ namespace TriangulatedTopology.Props.Algorithms
             for (int i = 0; i < Cell.NeighboursCount; i++)
             {
                 var side = rule[i];
-                connections[i] = side[1].IsSame(PipesColor) && side[2].IsSame(PipesColor);
+                connections[i] = side[1].IsSame(VentilationColor) && side[2].IsSame(VentilationColor);
             }
 
             return connections;

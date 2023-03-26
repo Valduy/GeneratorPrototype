@@ -1,10 +1,5 @@
 ﻿using GameEngine.Graphics;
 using OpenTK.Mathematics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TriangulatedTopology.Props
 {
@@ -56,6 +51,50 @@ namespace TriangulatedTopology.Props
             return new Model(meshes);
         }
 
+        public static Model GenerateTubeFromSpline(List<SplineVertex> spline, float side)
+        {
+            var squares = new List<List<List<Vertex>>>();
+            var meshes = new List<Mesh>();
+
+            var first = spline[0];
+            squares.Add(GenerateSquare(first, side));
+
+            for (int i = 1; i < spline.Count; i++)
+            {
+                var temp = spline[i];
+                squares.Add(GenerateSquare(temp, side));
+
+                var previous = squares[i - 1];
+                var current = squares[i];
+
+                var vertices = new List<Vertex>();
+                var indices = new List<int>();
+
+                for (int j = 0; j < 4; j++)
+                {
+                    var edge1 = previous[j];
+                    var edge2 = current[j];
+
+                    vertices.Add(edge1[0]);
+                    vertices.Add(edge2[0]);
+                    vertices.Add(edge2[1]);
+                    vertices.Add(edge1[1]);
+
+                    indices.Add(4 * j + 1);
+                    indices.Add(4 * j);
+                    indices.Add(4 * j + 3);
+                    indices.Add(4 * j + 3);
+                    indices.Add(4 * j + 2);
+                    indices.Add(4 * j + 1);
+                }
+
+                var mesh = new Mesh(vertices, indices);
+                meshes.Add(mesh);
+            }
+
+            return new Model(meshes);
+        }
+
         private static List<Vertex> GenerateCircle(SplineVertex splineVertex, int resolution, float radius)
         {
             var circle = new List<Vertex>();
@@ -71,6 +110,41 @@ namespace TriangulatedTopology.Props
             }
 
             return circle;
+        }
+
+        private static List<List<Vertex>> GenerateSquare(SplineVertex splineVertex, float side)
+        {
+            var half = side / 2;
+            var square = new List<List<Vertex>>();
+            var right = Vector3.Normalize(Vector3.Cross(splineVertex.Up, splineVertex.Forward));
+
+            var a = splineVertex.Position + half * splineVertex.Up - half * right;
+            var b = splineVertex.Position + half * splineVertex.Up + half * right;
+            var c = splineVertex.Position - half * splineVertex.Up + half * right;
+            var d = splineVertex.Position - half * splineVertex.Up - half * right;
+
+            square.Add(new List<Vertex>
+            {
+                new Vertex(a, splineVertex.Up, Vector2.Zero),
+                new Vertex(b, splineVertex.Up, Vector2.Zero),
+            });
+            square.Add(new List<Vertex>
+            {
+                new Vertex(b, right, Vector2.Zero),
+                new Vertex(c, right, Vector2.Zero),
+            });
+            square.Add(new List<Vertex>
+            {
+                new Vertex(c, -splineVertex.Up, Vector2.Zero),
+                new Vertex(d, -splineVertex.Up, Vector2.Zero),
+            });
+            square.Add(new List<Vertex>
+            {
+                new Vertex(d, -right, Vector2.Zero),
+                new Vertex(a, -right, Vector2.Zero),
+            });
+
+            return square;
         }
     }
 }

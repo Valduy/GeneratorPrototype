@@ -14,7 +14,6 @@ namespace TriangulatedTopology.Props.Algorithms
     public class PipesGeneratorAlgorithm : INetAlgorithm
     {
         public static readonly Color PipesColor = Color.FromArgb(255, 217, 0);
-        public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
 
         private static Model PipeSupportModel = Model.Load("Content/Models/PipeSupport.fbx");
 
@@ -38,11 +37,12 @@ namespace TriangulatedTopology.Props.Algorithms
 
         public void ProcessNet(Engine engine, Net<LogicalNode> net)
         {
-            int resolution = 32;
+            int resolution = 32;            
             float radius = 0.28f;
+            float extrusionFactor = 0.5f;
 
             var nodes = net.ToList();
-            var (points, joints) = GetPipePoints(nodes, radius);
+            var (points, joints) = GetPipePoints(nodes, radius, extrusionFactor);
             var model = MeshGenerator.GenerateTubeFromSpline(points, resolution, radius);
             InstantiateJoints(engine, points, joints);
 
@@ -81,13 +81,15 @@ namespace TriangulatedTopology.Props.Algorithms
             render.Model = model;
         }
 
-        private static (List<SplineVertex> Points, List<SplineVertex> Joints) GetPipePoints(List<LogicalNode> nodes, float radius)
+        private static (List<SplineVertex> Points, List<SplineVertex> Joints) GetPipePoints(
+            List<LogicalNode> nodes, 
+            float radius,
+            float extrusionFactor)
         {
             float epsilon = 0.01f;
             var points = new List<SplineVertex>();
             var joints = new List<SplineVertex>();
             var segments = new List<List<SplineVertex>>();
-            float extrusionFactor = 0.5f;
             int resolution = 20;
 
             for (int i = 1; i < nodes.Count; i++)
