@@ -8,22 +8,19 @@ using OpenTK.Mathematics;
 using System.Drawing;
 using TextureUtils;
 using TriangulatedTopology.Helpers;
-using static TriangulatedTopology.Props.Algorithms.PipesGeneratorAlgorithm;
 
 namespace TriangulatedTopology.Props.Algorithms
 {
     public class PipesGeneratorAlgorithm : INetAlgorithm
     {
         public static readonly Color PipesColor = Color.FromArgb(255, 217, 0);
-        public static readonly Color WireColor = Color.FromArgb(255, 0, 24);
         public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
-        public static readonly Color ActualColor = VentilationColor;
 
         private static Model PipeSupportModel = Model.Load("Content/Models/PipeSupport.fbx");
 
         public bool CanProcessRule(Rule rule)
         {
-            return rule.Logical.Enumerate().Any(c => c.IsSame(ActualColor));
+            return rule.Logical.Enumerate().Any(c => c.IsSame(PipesColor));
         }
 
         public bool[] GetRuleConnections(Rule rule)
@@ -33,7 +30,7 @@ namespace TriangulatedTopology.Props.Algorithms
             for (int i = 0; i < Cell.NeighboursCount; i++)
             {
                 var side = rule[i];
-                connections[i] = side[1].IsSame(ActualColor) && side[2].IsSame(ActualColor);
+                connections[i] = side[1].IsSame(PipesColor) && side[2].IsSame(PipesColor);
             }
 
             return connections;
@@ -42,7 +39,7 @@ namespace TriangulatedTopology.Props.Algorithms
         public void ProcessNet(Engine engine, Net<LogicalNode> net)
         {
             int resolution = 32;
-            float radius = 0.3f;
+            float radius = 0.28f;
 
             var nodes = net.ToList();
             var (points, joints) = GetPipePoints(nodes, radius);
@@ -103,8 +100,10 @@ namespace TriangulatedTopology.Props.Algorithms
 
                 var prevNormal = Mathematics.GetNormal(prev.Corners);
                 var nextNormal = Mathematics.GetNormal(next.Corners);
+                var cosa = Math.Clamp(Vector3.Dot(prevNormal, nextNormal), -1, 1);
+                var acos = MathF.Acos(cosa);
 
-                if (Mathematics.ApproximatelyEqualEpsilon(Vector3.Dot(prevNormal, nextNormal), 1.0f, epsilon))
+                if (acos < MathHelper.PiOver3)
                 {
                     joints.Add(jointPoints[jointPoints.Count / 2]);
                 }
@@ -299,10 +298,10 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static void InstantiateJoints(Engine engine, List<SplineVertex> points, List<SplineVertex> joints)
         {
-            float minimumDistance = 0.2f;
-            float desiredDistance = 2.0f;
+            //float minimumDistance = 0.2f;
+            //float desiredDistance = 2.0f;
 
-            float epsilon = 0.01f;
+            //float epsilon = 0.01f;
 
             InstantiateDualPipeJoints(engine, points[0].Up, points[0].Position, points[0].Forward);
 
