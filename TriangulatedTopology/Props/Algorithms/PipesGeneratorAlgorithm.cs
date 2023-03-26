@@ -486,7 +486,19 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static void InstantiateDualPipeJoints(Engine engine, Vector3 axis, Vector3 position, Vector3 direction)
         {
-            var forwardRotation = Mathematics.FromToRotation(axis, Vector3.UnitY, direction);
+            float epsilon = 0.01f;
+            var forwardRotation = Quaternion.Identity;
+
+            if (Mathematics.ApproximatelyEqualEpsilon(MathF.Abs(Vector3.Dot(axis, Vector3.UnitY)), 1.0f, epsilon))
+            {
+                axis = Vector3.Normalize(Vector3.Cross(axis, direction));
+                forwardRotation = Mathematics.FromToRotation(axis, Vector3.UnitY, direction);
+            }
+            else
+            {
+                forwardRotation = Mathematics.FromToRotation(axis, Vector3.UnitY, direction);
+            }
+
             var backwardRotation = Quaternion.FromAxisAngle(axis, MathF.PI) * forwardRotation;
             InstantiatePipeJoint(engine, position, forwardRotation);
             InstantiatePipeJoint(engine, position, backwardRotation);
