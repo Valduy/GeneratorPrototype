@@ -300,20 +300,26 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static void InstantiateJoints(Engine engine, List<SplineVertex> points, List<SplineVertex> joints)
         {
-            //float minimumDistance = 0.2f;
-            //float desiredDistance = 2.0f;
+            {
+                var first = points[0];
+                var rotation = Mathematics.FromToRotation(Vector3.UnitY, first.Forward);
+                InstantiatePipeJoint(engine, first.Position, rotation);
+            }
 
-            //float epsilon = 0.01f;
-
-            InstantiateDualPipeJoints(engine, points[0].Up, points[0].Position, points[0].Forward);
+            {
+                var last = points[points.Count - 1];
+                var rotation = Mathematics.FromToRotation(Vector3.UnitY, -last.Forward);
+                InstantiatePipeJoint(engine, last.Position, rotation);
+            }
 
             foreach (var joint in joints)
             {
                 InstantiateDualPipeJoints(engine, joint.Up, joint.Position, joint.Forward);
             }
 
-            InstantiateDualPipeJoints(engine, points[points.Count - 1].Up, points[points.Count - 1].Position, points[points.Count - 1].Forward);
-            return;
+            //float minimumDistance = 0.2f;
+            //float desiredDistance = 2.0f;
+            //float epsilon = 0.01f;
 
             //var (lines, curves) = ExtractLinesAndCurves(points);
 
@@ -488,18 +494,13 @@ namespace TriangulatedTopology.Props.Algorithms
         private static void InstantiateDualPipeJoints(Engine engine, Vector3 axis, Vector3 position, Vector3 direction)
         {
             float epsilon = 0.01f;
-            var forwardRotation = Quaternion.Identity;
 
             if (Mathematics.ApproximatelyEqualEpsilon(MathF.Abs(Vector3.Dot(axis, Vector3.UnitY)), 1.0f, epsilon))
             {
                 axis = Vector3.Normalize(Vector3.Cross(axis, direction));
-                forwardRotation = Mathematics.FromToRotation(axis, Vector3.UnitY, direction);
-            }
-            else
-            {
-                forwardRotation = Mathematics.FromToRotation(axis, Vector3.UnitY, direction);
             }
 
+            var forwardRotation = Mathematics.FromToRotation(axis, Vector3.UnitY, direction);
             var backwardRotation = Quaternion.FromAxisAngle(axis, MathF.PI) * forwardRotation;
             InstantiatePipeJoint(engine, position, forwardRotation);
             InstantiatePipeJoint(engine, position, backwardRotation);

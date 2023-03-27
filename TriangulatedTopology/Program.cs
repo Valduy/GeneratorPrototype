@@ -427,8 +427,10 @@ namespace TriangulatedTopology
             //CollectionsHelper.UseSeed(1145917631);
             //CollectionsHelper.UseSeed(56224625);
             //CollectionsHelper.UseSeed(935418399);
-            //CollectionsHelper.UseSeed(1310155548);887817102
+            //CollectionsHelper.UseSeed(1310155548);
             //CollectionsHelper.UseSeed(887817102);
+            //CollectionsHelper.UseSeed(1902612879); 
+            //CollectionsHelper.UseSeed(113611668); // Провод на лестнице
 
             using var engine = new Engine();
 

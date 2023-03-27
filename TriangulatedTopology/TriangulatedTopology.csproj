@@ -99,6 +99,9 @@
     <None Update="Content\Models\PipeSupport.fbx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Models\VentilationJoint.fbx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Models\WireSupport.fbx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -3,6 +3,7 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Mathematics;
+using GameEngine.Utils;
 using Graph;
 using OpenTK.Mathematics;
 using System.Drawing;
@@ -13,6 +14,8 @@ namespace TriangulatedTopology.Props.Algorithms
 {
     public class VentilationGeneratorAlgorithm : INetAlgorithm
     {
+        private static Model VentilationJoint = Model.Load("Content/Models/VentilationJoint.fbx");
+
         public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
 
         public bool CanProcessRule(Rule rule)
@@ -34,12 +37,41 @@ namespace TriangulatedTopology.Props.Algorithms
         }
 
         public void ProcessNet(Engine engine, Net<LogicalNode> net)
-        {            
-            float side = 0.5f;
+        {
+            float epsilon = 0.01f;
+            float side = 0.55f;
             float extrusionFactor = 0.6f;
 
             var nodes = net.ToList();
-            var points = GetPoints(nodes, side, extrusionFactor);
+            var (points, joints) = GetPoints(nodes, side, extrusionFactor);
+            InstantiateJoints(engine, points, joints);
+
+            foreach(var joint in joints)
+            {
+                var position = joint.Position;
+                var direction = joint.Forward;
+
+                var forwardRotation = Quaternion.Identity;
+                var backwardRotation = Quaternion.Identity;
+
+                forwardRotation = Mathematics.FromToRotation(Vector3.UnitY, direction);
+                forwardRotation *= Mathematics.FromToRotation(Vector3.UnitX, joint.Up);
+
+                if (Mathematics.ApproximatelyEqualEpsilon(MathF.Abs(Vector3.Dot(direction, Vector3.UnitY)), 1.0f, epsilon))
+                {
+                    var axis = Vector3.Transform(Vector3.UnitX, forwardRotation);
+                    backwardRotation = Quaternion.FromAxisAngle(axis, MathHelper.Pi) * forwardRotation;              
+                }
+                else
+                {
+                    backwardRotation = Mathematics.FromToRotation(Vector3.UnitY, -direction);
+                    backwardRotation *= Mathematics.FromToRotation(Vector3.UnitX, joint.Up);                    
+                }
+
+                InstantiateVentilationJoint(engine, position, forwardRotation);
+                InstantiateVentilationJoint(engine, position, backwardRotation);
+            }
+
             var model = MeshGenerator.GenerateTubeFromSpline(points, side);
 
             var go = engine.CreateGameObject();
@@ -47,9 +79,10 @@ namespace TriangulatedTopology.Props.Algorithms
             render.Model = model;
         }
 
-        private static List<SplineVertex> GetPoints(List<LogicalNode> nodes, float radius, float extrusionFactor)
+        private static (List<SplineVertex> Points, List<SplineVertex> Joints) GetPoints(List<LogicalNode> nodes, float radius, float extrusionFactor)
         {
             var points = new List<SplineVertex>();
+            var joints = new List<SplineVertex>();
             var segments = new List<List<SplineVertex>>();
             int resolution = 3;
 
@@ -60,6 +93,7 @@ namespace TriangulatedTopology.Props.Algorithms
 
                 var jointPoints = CreatePointsAroundJoint(prev, next, extrusionFactor, radius, resolution);
                 segments.Add(jointPoints);
+                joints.Add(jointPoints[jointPoints.Count / 2]);
             }
 
             points.AddRange(CreateBegin(nodes[0], nodes[1], extrusionFactor, radius, resolution));
@@ -75,7 +109,7 @@ namespace TriangulatedTopology.Props.Algorithms
 
             points.AddRange(segments[segments.Count - 1]);
             points.AddRange(CreateEnd(nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, radius, resolution));
-            return points;
+            return (points, joints);
         }
 
         private static List<SplineVertex> CreatePointsAroundJoint(
@@ -242,6 +276,63 @@ namespace TriangulatedTopology.Props.Algorithms
             }
 
             return points;
+        }
+
+        private static void InstantiateJoints(Engine engine, List<SplineVertex> points, List<SplineVertex> joints)
+        {
+            float epsilon = 0.01f;
+
+            {
+                var first = points[0];
+                var rotation = Mathematics.FromToRotation(Vector3.UnitY, first.Forward);
+                var axis = Vector3.Transform(Vector3.UnitX, rotation);
+                rotation = Mathematics.FromToRotation(axis, first.Up) * rotation;
+                InstantiateVentilationJoint(engine, first.Position, rotation);
+            }
+
+            {
+                var last = points[points.Count - 1];
+                var rotation = Mathematics.FromToRotation(Vector3.UnitY, -last.Forward);
+                var axis = Vector3.Transform(Vector3.UnitX, rotation);
+                rotation = Mathematics.FromToRotation(axis, last.Up) * rotation;
+                InstantiateVentilationJoint(engine, last.Position, rotation);
+            }
+
+            foreach (var joint in joints)
+            {
+                var position = joint.Position;
+                var direction = joint.Forward;
+
+                var forwardRotation = Quaternion.Identity;
+                var backwardRotation = Quaternion.Identity;
+
+                forwardRotation = Mathematics.FromToRotation(Vector3.UnitY, direction);
+                forwardRotation *= Mathematics.FromToRotation(Vector3.UnitX, joint.Up);
+
+                if (Mathematics.ApproximatelyEqualEpsilon(MathF.Abs(Vector3.Dot(direction, Vector3.UnitY)), 1.0f, epsilon))
+                {
+                    var axis = Vector3.Transform(Vector3.UnitX, forwardRotation);
+                    backwardRotation = Quaternion.FromAxisAngle(axis, MathHelper.Pi) * forwardRotation;
+                }
+                else
+                {
+                    backwardRotation = Mathematics.FromToRotation(Vector3.UnitY, -direction);
+                    backwardRotation *= Mathematics.FromToRotation(Vector3.UnitX, joint.Up);
+                }
+
+                InstantiateVentilationJoint(engine, position, forwardRotation);
+                InstantiateVentilationJoint(engine, position, backwardRotation);
+            }
+        }
+
+        private static GameObject InstantiateVentilationJoint(Engine engine, Vector3 position, Quaternion rotation)
+        {
+            var go = engine.CreateGameObject();
+            var renderer = go.Add<MaterialRenderComponent>();
+            renderer.Model = VentilationJoint;
+            go.Position = position;
+            go.Rotation = rotation;
+            return go;
         }
     }
 }
