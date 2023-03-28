@@ -270,7 +270,7 @@ namespace TriangulatedTopology.Props.Algorithms
                 var prev = points[i + 1];
                 var next = points[i + 2];
 
-                if (IsSplineVertexLieOnFloor(prev) &&
+                if (IsSplineVertexLieOnFloor(prev) ||
                     IsSplineVertexLieOnFloor(next))
                 {
                     spline.AddRange(GenerateInnerVertices(prev, next));
