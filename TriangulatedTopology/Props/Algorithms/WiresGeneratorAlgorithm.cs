@@ -13,9 +13,12 @@ namespace TriangulatedTopology.Props.Algorithms
 {
     public class WiresGeneratorAlgorithm : INetAlgorithm
     {
+        private const float Trashold = 45.0f;
+
         public static readonly Color WireColor = Color.FromArgb(255, 0, 24);
 
         public static Model WireSupportModel = Model.Load("Content/Models/WireSupport.fbx");
+        public static Model SourceModel = Model.Load("Content/Models/Source.fbx");
         public static Model MonitorModel = Model.Load("Content/Models/Monitor.fbx");
 
         public static Texture MonitorTexture = Texture.LoadFromFile("Content/Textures/Monitor.png");
@@ -84,10 +87,18 @@ namespace TriangulatedTopology.Props.Algorithms
             {
                 InstantiateMonitor(engine, first.Position + first.Up * 0.2f, Mathematics.FromToRotation(Vector3.UnitZ, first.Up));
             }
+            else
+            {
+                InstantiateSource(engine, first.Position, Mathematics.FromToRotation(Vector3.UnitZ, first.Forward));
+            }
 
             if (MathHelper.ApproximatelyEqualEpsilon(Vector3.Dot(last.Up, Vector3.UnitY), 0.0f, 0.01f))
             {
                 InstantiateMonitor(engine, last.Position + last.Up * 0.2f, Mathematics.FromToRotation(Vector3.UnitZ, last.Up));
+            }
+            else
+            {
+                InstantiateSource(engine, last.Position, Mathematics.FromToRotation(Vector3.UnitZ, -last.Forward));
             }
 
             return models;
@@ -95,7 +106,7 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static List<List<SplineVertex>> GetWiresPointsLines(List<LogicalNode> nodes, int count)
         {
-            float extrusionFactor = 0.2f;
+            float extrusionFactor = 0.1f;
             float offset = 0.2f;
             var pointsLines = new List<List<SplineVertex>>();
 
@@ -113,7 +124,16 @@ namespace TriangulatedTopology.Props.Algorithms
                 var temp = nodes[i];
                 var next = nodes[i + 1];
 
-                AddSplineVertexInsideNode(pointsLines, prev, temp, next, extrusionFactor, offset, count);
+                var normal = Mathematics.GetNormal(temp.Corners);
+                var cosa = Vector3.Dot(Vector3.UnitY, normal);
+                var acos = MathF.Acos(cosa);
+                var angle = MathHelper.RadiansToDegrees(acos);
+
+                if (angle > Trashold)
+                {
+                    AddSplineVertexInsideNode(pointsLines, prev, temp, next, extrusionFactor, offset, count);
+                }                
+               
                 AddSharedSplineVertex(pointsLines, temp, next, extrusionFactor, offset, count);
             }
 
@@ -218,7 +238,7 @@ namespace TriangulatedTopology.Props.Algorithms
             int half = count / 2;
             var prevNormal = Mathematics.GetNormal(prev.Corners);
             var nextNormal = Mathematics.GetNormal(next.Corners);
-            var normal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, 0.5f));
+            var blendedNormal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, 0.5f));
 
             var prevPivot = Mathematics.GetCentroid(prev.Corners);
             var nextPivot = Mathematics.GetCentroid(next.Corners);
@@ -230,13 +250,13 @@ namespace TriangulatedTopology.Props.Algorithms
             var fromJointDirection = Vector3.Normalize(nextPivot - joint);
             var blendedDirection = Vector3.Normalize(Vector3.Lerp(toJointDirection, fromJointDirection, 0.5f));
 
-            var right = Vector3.Cross(blendedDirection, normal);
-            var position = joint + extrusionFactor * normal;
+            var right = Vector3.Cross(blendedDirection, blendedNormal);
+            var position = joint + extrusionFactor * blendedNormal;
 
             for (int i = 0; i < count; i++)
             {
                 int factor = i - half;
-                pointsLines[i].Add(new SplineVertex(position + offset * factor * right, normal, blendedDirection));
+                pointsLines[i].Add(new SplineVertex(position + offset * factor * right, blendedNormal, blendedDirection));
             }
         }
 
@@ -247,7 +267,18 @@ namespace TriangulatedTopology.Props.Algorithms
 
             for (int i = 0; i < points.Count - 3; i++)
             {
-                spline.AddRange(GenerateInnerVertices(points[i], points[i + 1], points[i + 2], points[i + 3]));
+                var prev = points[i + 1];
+                var next = points[i + 2];
+
+                if (IsSplineVertexLieOnFloor(prev) &&
+                    IsSplineVertexLieOnFloor(next))
+                {
+                    spline.AddRange(GenerateInnerVertices(prev, next));
+                }
+                else
+                {
+                    spline.AddRange(GenerateInnerVertices(points[i], points[i + 1], points[i + 2], points[i + 3]));
+                }               
             }
 
             spline.AddRange(GenerateInnerVertices(points[points.Count - 2], points[points.Count - 1]));
@@ -263,7 +294,7 @@ namespace TriangulatedTopology.Props.Algorithms
             {
                 float tempPercent = (float)j / resolution;
                 float nextPercent = (float)(j + 1) / resolution;
-                float coerce = 0.5f;
+                float coerce = 1.0f;
 
                 var position = Curves.Hermite(
                     a.Position,
@@ -294,13 +325,13 @@ namespace TriangulatedTopology.Props.Algorithms
             SplineVertex p3)
         {
             int resolution = 20;
+            float alpha = 0.5f;
             var inner = new List<SplineVertex>();
 
             for (int j = 0; j < resolution; j++)
             {
                 float tempPercent = (float)j / resolution;
-                float nextPercent = (float)(j + 1) / resolution;
-                float alpha = 0.5f;
+                float nextPercent = (float)(j + 1) / resolution;                
 
                 var position = Curves.CatmullRom(
                     p0.Position,
@@ -328,13 +359,26 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static void PlaceSupports(Engine engine, List<SplineVertex> points)
         {
-            for (int i = 2; i < points.Count - 1; i += 2)
+            for (int i = 1; i < points.Count - 1; i += 1)
             {
+                if (IsSplineVertexLieOnFloor(points[i]))
+                {
+                    continue;
+                }
+
                 var rotation = Mathematics.FromToRotation(Vector3.UnitY, points[i].Up);
-                var forward = Vector3.Transform(Vector3.UnitX, rotation);
+                var forward = Vector3.Transform(Vector3.UnitZ, rotation);
                 rotation = Mathematics.FromToRotation(forward, points[i].Forward) * rotation;
                 InstantiateWireSupport(engine, points[i].Position, rotation);
             }
+        }
+
+        private static bool IsSplineVertexLieOnFloor(SplineVertex vertex)
+        {
+            var cosa = Vector3.Dot(Vector3.UnitY, vertex.Up);
+            var acos = MathF.Acos(cosa);
+            var angle = MathHelper.RadiansToDegrees(acos);
+            return angle < Trashold;
         }
 
         private static GameObject InstantiateWireSupport(Engine engine, Vector3 position, Quaternion rotation)
@@ -342,6 +386,18 @@ namespace TriangulatedTopology.Props.Algorithms
             var go = engine.CreateGameObject();
             var renderer = go.Add<MaterialRenderComponent>();
             renderer.Model = WireSupportModel;
+            renderer.Material.Color = Colors.Gray;
+            go.Position = position;
+            go.Rotation = rotation;
+            return go;
+        }
+
+        private static GameObject InstantiateSource(Engine engine, Vector3 position, Quaternion rotation)
+        {
+            var go = engine.CreateGameObject();
+            var renderer = go.Add<MaterialRenderComponent>();
+            renderer.Model = SourceModel;
+            renderer.Material.Color = Colors.Gray;
             go.Position = position;
             go.Rotation = rotation;
             return go;
