@@ -41,7 +41,7 @@ void main()
 
     //specular
     vec3 viewDirection = normalize(viewPosition - worldPosition);
-    vec3 reflectDirection = reflect(toLightDirection, norm);
+    vec3 reflectDirection = reflect(lightDirection, norm);
     float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), material.shininess);
     vec3 specular = material.specular * spec * light.color;
 

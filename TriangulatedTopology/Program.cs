@@ -472,10 +472,13 @@ namespace TriangulatedTopology
             var cells = IslandsToCells(islands);
             WfcGenerator.GraphWfc(cells, wallRules, floorRules, ceilRules);
 
+            float extrusion = 0.05f;
+
             var propsGenerator = new PropsGenerator()
-                .PushNetAlgorithm(new WiresGeneratorAlgorithm())
-                .PushNetAlgorithm(new PipesGeneratorAlgorithm())
-                .PushNetAlgorithm(new VentilationGeneratorAlgorithm());
+                .PushCellAlgorithm(new PanelsGeneratorAlgorithm(extrusion))
+                .PushNetAlgorithm(new WiresGeneratorAlgorithm(extrusion))
+                .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
+                .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
             propsGenerator.Generate(engine, topology, cells, size);
 
             //var nets = ExtractNets(topology, cells, size);

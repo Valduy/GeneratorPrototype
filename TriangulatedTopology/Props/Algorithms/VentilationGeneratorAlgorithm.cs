@@ -17,6 +17,21 @@ namespace TriangulatedTopology.Props.Algorithms
         private static Model VentilationJoint = Model.Load("Content/Models/VentilationJoint.fbx");
 
         public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
+        private static Material VentilationMaterial = new Material
+        {
+            Color = new Vector3(0.50754f, 0.50754f, 0.50754f),
+            Ambient = 0.19225f,
+            Specular = 0.508273f,
+            Shininess = 51.2f,
+        };
+
+
+        public readonly float ZeroLevel;
+
+        public VentilationGeneratorAlgorithm(float zeroLevel)
+        {
+            ZeroLevel = zeroLevel;
+        }
 
         public bool CanProcessRule(Rule rule)
         {
@@ -77,9 +92,13 @@ namespace TriangulatedTopology.Props.Algorithms
             var go = engine.CreateGameObject();
             var render = go.Add<MaterialRenderComponent>();
             render.Model = model;
+            render.Material = VentilationMaterial;
         }
 
-        private static (List<SplineVertex> Points, List<SplineVertex> Joints) GetPoints(List<LogicalNode> nodes, float radius, float extrusion)
+        private (List<SplineVertex> Points, List<SplineVertex> Joints) GetPoints(
+            List<LogicalNode> nodes, 
+            float radius, 
+            float extrusion)
         {
             var points = new List<SplineVertex>();
             var joints = new List<SplineVertex>();
@@ -112,7 +131,7 @@ namespace TriangulatedTopology.Props.Algorithms
             return (points, joints);
         }
 
-        private static List<SplineVertex> CreatePointsAroundJoint(
+        private List<SplineVertex> CreatePointsAroundJoint(
             LogicalNode prev,
             LogicalNode next,
             float extrusion,
@@ -136,12 +155,12 @@ namespace TriangulatedTopology.Props.Algorithms
             var nextDirection = Vector3.Normalize(nextPivot - joint);
             var blendedDirection = Vector3.Normalize(Vector3.Lerp(prevDirection, nextDirection, 0.5f));
 
-            var prevP1 = prevPivot + extrusion * prevNormal;
-            var prevP2 = joint + extrusion * prevNormal;
+            var prevP1 = prevPivot + (ZeroLevel + extrusion) * prevNormal;
+            var prevP2 = joint + (ZeroLevel + extrusion) * prevNormal;
             var e1 = prevP2 - prevP1;
 
-            var nextP1 = nextPivot + extrusion * nextNormal;
-            var nextP2 = joint + extrusion * nextNormal;
+            var nextP1 = nextPivot + (ZeroLevel + extrusion) * nextNormal;
+            var nextP2 = joint + (ZeroLevel + extrusion) * nextNormal;
             var e2 = nextP2 - nextP1;
 
             if (Mathematics.TryGetIntersactionPoint(prevP1, e1, nextP1, e2, epsilon, out var p))
@@ -172,13 +191,13 @@ namespace TriangulatedTopology.Props.Algorithms
             }
             else
             {
-                points.Add(new SplineVertex(joint + extrusion * blendedNormal, blendedNormal, blendedDirection));
+                points.Add(new SplineVertex(joint + (ZeroLevel + extrusion) * blendedNormal, blendedNormal, blendedDirection));
             }
 
             return points;
         }
 
-        private static List<SplineVertex> CreateBegin(
+        private List<SplineVertex> CreateBegin(
             LogicalNode begin,
             LogicalNode next,
             float extrusion,
@@ -199,10 +218,10 @@ namespace TriangulatedTopology.Props.Algorithms
             var fromPivotDirection = beginNormal;
             var toJointDirection = Vector3.Normalize(joint - pivot);
 
-            var p = pivot + extrusion * beginNormal;
+            var p = pivot + (ZeroLevel + extrusion) * beginNormal;
             var rotationPivot = p - radius * fromPivotDirection + radius * toJointDirection;
 
-            points.Add(new SplineVertex(pivot, -toJointDirection, fromPivotDirection));
+            points.Add(new SplineVertex(pivot + ZeroLevel * beginNormal, -toJointDirection, fromPivotDirection));
 
             for (int i = 0; i <= resolution; i++)
             {
@@ -216,10 +235,10 @@ namespace TriangulatedTopology.Props.Algorithms
             return points;
         }
 
-        private static List<SplineVertex> CreateEnd(
+        private List<SplineVertex> CreateEnd(
             LogicalNode prev,
             LogicalNode end,
-            float extrusionFactor,
+            float extrusion,
             float radius,
             int resolution)
         {
@@ -237,7 +256,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var fromJointDirection = Vector3.Normalize(pivot - joint);
             var toPivotDirection = -endNormal;
 
-            var p = pivot + extrusionFactor * endNormal;
+            var p = pivot + (ZeroLevel + extrusion) * endNormal;
             var rotationPivot = p + radius * toPivotDirection - radius * fromJointDirection;
 
             for (int i = 0; i <= resolution; i++)
@@ -249,7 +268,7 @@ namespace TriangulatedTopology.Props.Algorithms
                 points.Add(new SplineVertex(position, normal, direction));
             }
 
-            points.Add(new SplineVertex(pivot, fromJointDirection, toPivotDirection));
+            points.Add(new SplineVertex(pivot + ZeroLevel * endNormal, fromJointDirection, toPivotDirection));
             return points;
         }
 
@@ -330,6 +349,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var go = engine.CreateGameObject();
             var renderer = go.Add<MaterialRenderComponent>();
             renderer.Model = VentilationJoint;
+            renderer.Material = VentilationMaterial;
             go.Position = position;
             go.Rotation = rotation;
             return go;

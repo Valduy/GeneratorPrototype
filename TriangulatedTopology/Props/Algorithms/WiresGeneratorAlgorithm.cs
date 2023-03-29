@@ -15,13 +15,36 @@ namespace TriangulatedTopology.Props.Algorithms
     {
         private const float Trashold = 45.0f;
 
-        public static readonly Color WireColor = Color.FromArgb(255, 0, 24);
+        private static readonly Color WireColor = Color.FromArgb(255, 0, 24);
 
-        public static Model WireSupportModel = Model.Load("Content/Models/WireSupport.fbx");
-        public static Model SourceModel = Model.Load("Content/Models/Source.fbx");
-        public static Model MonitorModel = Model.Load("Content/Models/Monitor.fbx");
+        private static readonly Material WireMaterial = new Material
+        {
+            Color = new Vector3(0.4f, 0.7f, 0.4f),
+            Ambient = 0.05f,
+            Specular = 0.2f,
+            Shininess = 10.0f,
+        };
 
-        public static Texture MonitorTexture = Texture.LoadFromFile("Content/Textures/Monitor.png");
+        private static readonly Material SourceMaterial = new Material
+        {
+            Color = new Vector3(0.93f, 0.93f, 0.93f),
+            Ambient = 0.0f,
+            Specular = 0.7f,
+            Shininess = 32.0f,
+        };
+
+        private static Model WireSupportModel = Model.Load("Content/Models/WireSupport.fbx");
+        private static Model SourceModel = Model.Load("Content/Models/Source.fbx");
+        private static Model MonitorModel = Model.Load("Content/Models/Monitor.fbx");
+
+        private static Texture MonitorTexture = Texture.LoadFromFile("Content/Textures/Monitor.png");
+
+        public readonly float ZeroLevel;
+
+        public WiresGeneratorAlgorithm(float zeroLevel)
+        {
+            ZeroLevel = zeroLevel;
+        }
 
         public bool CanProcessRule(Rule rule)
         {
@@ -48,20 +71,20 @@ namespace TriangulatedTopology.Props.Algorithms
             foreach (var model in models)
             {
                 var go = engine.CreateGameObject();
-                var render = go.Add<MaterialRenderComponent>();
-                render.Material.Color = new Vector3(0.1f, 0.7f, 0.4f);
-                render.Model = model;
+                var renderer = go.Add<MaterialRenderComponent>();
+                renderer.Model = model;
+                renderer.Material = WireMaterial;
             }
         }
 
-        private static List<Model> GenerateWiresModels(Engine engine, Net<LogicalNode> net)
+        private List<Model> GenerateWiresModels(Engine engine, Net<LogicalNode> net)
         {
             int resolution = 32;
             float radius = 0.1f;
 
             var models = new List<Model>();
             var nodes = net.ToList();
-            var pointsLines = GetWiresPointsLines(nodes, 3);
+            var pointsLines = GetWiresControlPointsLines(nodes, 3);
 
             foreach (var line in pointsLines)
             {
@@ -104,19 +127,19 @@ namespace TriangulatedTopology.Props.Algorithms
             return models;
         }
 
-        private static List<List<SplineVertex>> GetWiresPointsLines(List<LogicalNode> nodes, int count)
+        private List<List<SplineVertex>> GetWiresControlPointsLines(List<LogicalNode> nodes, int count)
         {
             float extrusion = 0.1f;
             float offset = 0.2f;
-            var pointsLines = new List<List<SplineVertex>>();
+            var controlPointsLines = new List<List<SplineVertex>>();
 
             for (int i = 0; i < count; i++)
             {
-                pointsLines.Add(new List<SplineVertex>());
+                controlPointsLines.Add(new List<SplineVertex>());
             }
 
-            AddFirstSplineVertex(pointsLines, nodes[0], nodes[1], extrusion, offset, count);
-            AddSharedSplineVertex(pointsLines, nodes[0], nodes[1], extrusion, offset, count);
+            AddFirstSplineVertex(controlPointsLines, nodes[0], nodes[1], extrusion, offset, count);
+            AddSharedSplineVertex(controlPointsLines, nodes[0], nodes[1], extrusion, offset, count);
 
             for (int i = 1; i < nodes.Count - 1; i++)
             {
@@ -131,17 +154,17 @@ namespace TriangulatedTopology.Props.Algorithms
 
                 if (angle > Trashold)
                 {
-                    AddSplineVertexInsideNode(pointsLines, prev, temp, next, extrusion, offset, count);
+                    AddSplineVertexInsideNode(controlPointsLines, prev, temp, next, extrusion, offset, count);
                 }                
                
-                AddSharedSplineVertex(pointsLines, temp, next, extrusion, offset, count);
+                AddSharedSplineVertex(controlPointsLines, temp, next, extrusion, offset, count);
             }
 
-            AddLastSplineVertex(pointsLines, nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusion, offset, count);
-            return pointsLines;
+            AddLastSplineVertex(controlPointsLines, nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusion, offset, count);
+            return controlPointsLines;
         }
 
-        private static void AddFirstSplineVertex(
+        private void AddFirstSplineVertex(
             List<List<SplineVertex>> pointsLines,
             LogicalNode temp,
             LogicalNode next,
@@ -157,7 +180,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var pivot = Mathematics.GetCentroid(temp.Corners);
             var direction = Vector3.Normalize(centroid - pivot);
             var right = Vector3.Cross(direction, normal);
-            var position = pivot + extrusion * normal;
+            var position = pivot + (ZeroLevel + extrusion) * normal;
 
             for (int i = 0; i < count; i++)
             {
@@ -166,7 +189,7 @@ namespace TriangulatedTopology.Props.Algorithms
             }
         }
 
-        private static void AddLastSplineVertex(
+        private void AddLastSplineVertex(
             List<List<SplineVertex>> pointsLines,
             LogicalNode prev,
             LogicalNode temp,
@@ -183,7 +206,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var pivot = Mathematics.GetCentroid(temp.Corners);
             var direction = Vector3.Normalize(pivot - centroid);
             var right = Vector3.Cross(direction, normal);
-            var position = pivot + extrusion * normal;
+            var position = pivot + (ZeroLevel + extrusion) * normal;
 
             for (int i = 0; i < count; i++)
             {
@@ -192,7 +215,7 @@ namespace TriangulatedTopology.Props.Algorithms
             }
         }
 
-        private static void AddSplineVertexInsideNode(
+        private void AddSplineVertexInsideNode(
             List<List<SplineVertex>> pointsLines,
             LogicalNode prev,
             LogicalNode temp,
@@ -217,7 +240,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var blendedDirection = Vector3.Normalize(Vector3.Lerp(toPivotDirection, fromPivotDirection, 0.5f));
 
             var right = Vector3.Cross(blendedDirection, normal);
-            var position = pivot + extrusion * normal;
+            var position = pivot + (ZeroLevel + extrusion) * normal;
 
             for (int i = 0; i < count; i++)
             {
@@ -226,7 +249,7 @@ namespace TriangulatedTopology.Props.Algorithms
             }
         }
 
-        private static void AddSharedSplineVertex(
+        private void AddSharedSplineVertex(
             List<List<SplineVertex>> pointsLines,
             LogicalNode prev,
             LogicalNode next,
@@ -251,7 +274,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var blendedDirection = Vector3.Normalize(Vector3.Lerp(toJointDirection, fromJointDirection, 0.5f));
 
             var right = Vector3.Cross(blendedDirection, blendedNormal);
-            var position = joint + extrusion * blendedNormal;
+            var position = joint + (ZeroLevel + extrusion) * blendedNormal;
 
             for (int i = 0; i < count; i++)
             {
@@ -397,7 +420,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var go = engine.CreateGameObject();
             var renderer = go.Add<MaterialRenderComponent>();
             renderer.Model = SourceModel;
-            renderer.Material.Color = Colors.Gray;
+            renderer.Material = SourceMaterial;
             go.Position = position;
             go.Rotation = rotation;
             return go;

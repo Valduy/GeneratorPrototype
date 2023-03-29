@@ -17,6 +17,21 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static Model PipeSupportModel = Model.Load("Content/Models/PipeSupport.fbx");
 
+        private static Material PipeMaterial = new Material
+        {
+            Color = new Vector3(0.427451f, 0.470588f, 0.541176f),
+            Ambient = 0.08f,
+            Specular = 0.4f,
+            Shininess = 9.84615f,
+        };
+
+        public readonly float ZeroLevel;
+
+        public PipesGeneratorAlgorithm(float zeroLevel)
+        {
+            ZeroLevel = zeroLevel;
+        }
+
         public bool CanProcessRule(Rule rule)
         {
             return rule.Logical.Enumerate().Any(c => c.IsSame(PipesColor));
@@ -79,9 +94,10 @@ namespace TriangulatedTopology.Props.Algorithms
             var go = engine.CreateGameObject();
             var render = go.Add<MaterialRenderComponent>();
             render.Model = model;
+            render.Material = PipeMaterial;
         }
 
-        private static (List<SplineVertex> Points, List<SplineVertex> Joints) GetPipePoints(
+        private (List<SplineVertex> Points, List<SplineVertex> Joints) GetPipePoints(
             List<LogicalNode> nodes, 
             float radius,
             float extrusion)
@@ -132,7 +148,7 @@ namespace TriangulatedTopology.Props.Algorithms
             return (points, joints);
         }
 
-        private static List<SplineVertex> CreatePipePointsAroundJoint(
+        private List<SplineVertex> CreatePipePointsAroundJoint(
             LogicalNode prev,
             LogicalNode next,
             float extrusion,
@@ -156,12 +172,12 @@ namespace TriangulatedTopology.Props.Algorithms
             var nextDirection = Vector3.Normalize(nextPivot - joint);
             var blendedDirection = Vector3.Normalize(Vector3.Lerp(prevDirection, nextDirection, 0.5f));
 
-            var prevP1 = prevPivot + extrusion * prevNormal;
-            var prevP2 = joint + extrusion * prevNormal;
+            var prevP1 = prevPivot + (ZeroLevel + extrusion) * prevNormal;
+            var prevP2 = joint + (ZeroLevel + extrusion) * prevNormal;
             var e1 = prevP2 - prevP1;
 
-            var nextP1 = nextPivot + extrusion * nextNormal;
-            var nextP2 = joint + extrusion * nextNormal;
+            var nextP1 = nextPivot + (ZeroLevel + extrusion) * nextNormal;
+            var nextP2 = joint + (ZeroLevel + extrusion) * nextNormal;
             var e2 = nextP2 - nextP1;
 
             if (Mathematics.TryGetIntersactionPoint(prevP1, e1, nextP1, e2, epsilon, out var p))
@@ -192,13 +208,13 @@ namespace TriangulatedTopology.Props.Algorithms
             }
             else
             {
-                points.Add(new SplineVertex(joint + extrusion * blendedNormal, blendedNormal, blendedDirection));
+                points.Add(new SplineVertex(joint + (ZeroLevel + extrusion) * blendedNormal, blendedNormal, blendedDirection));
             }
 
             return points;
         }
 
-        private static List<SplineVertex> CreatePipeBegin(
+        private List<SplineVertex> CreatePipeBegin(
             LogicalNode begin,
             LogicalNode next,
             float extrusion,
@@ -219,10 +235,10 @@ namespace TriangulatedTopology.Props.Algorithms
             var fromPivotDirection = beginNormal;
             var toJointDirection = Vector3.Normalize(joint - pivot);
 
-            var p = pivot + extrusion * beginNormal;
+            var p = pivot + (ZeroLevel + extrusion) * beginNormal;
             var rotationPivot = p - radius * fromPivotDirection + radius * toJointDirection;
 
-            points.Add(new SplineVertex(pivot, -toJointDirection, fromPivotDirection));
+            points.Add(new SplineVertex(pivot + ZeroLevel * beginNormal, -toJointDirection, fromPivotDirection));
 
             for (int i = 0; i <= resolution; i++)
             {
@@ -236,7 +252,7 @@ namespace TriangulatedTopology.Props.Algorithms
             return points;
         }
 
-        private static List<SplineVertex> CreatePipeEnd(
+        private List<SplineVertex> CreatePipeEnd(
             LogicalNode prev,
             LogicalNode end,
             float extrusion,
@@ -257,7 +273,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var fromJointDirection = Vector3.Normalize(pivot - joint);
             var toPivotDirection = -endNormal;
 
-            var p = pivot + extrusion * endNormal;
+            var p = pivot + (ZeroLevel + extrusion) * endNormal;
             var rotationPivot = p + radius * toPivotDirection - radius * fromJointDirection;
 
             for (int i = 0; i <= resolution; i++)
@@ -269,7 +285,7 @@ namespace TriangulatedTopology.Props.Algorithms
                 points.Add(new SplineVertex(position, normal, direction));
             }
 
-            points.Add(new SplineVertex(pivot, fromJointDirection, toPivotDirection));
+            points.Add(new SplineVertex(pivot + ZeroLevel * endNormal, fromJointDirection, toPivotDirection));
             return points;
         }
 
@@ -511,6 +527,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var go = engine.CreateGameObject();
             var renderer = go.Add<MaterialRenderComponent>();
             renderer.Model = PipeSupportModel;
+            renderer.Material = PipeMaterial;
             go.Position = position;
             go.Rotation = rotation;
             return go;

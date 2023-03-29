@@ -20,17 +20,10 @@ namespace TriangulatedTopology.Props
         public static readonly Color WireColor = Color.FromArgb(255, 0, 24);
         public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
 
-        public static INetAlgorithm WiresAlgorithm = new WiresGeneratorAlgorithm();
-        public static INetAlgorithm PipesAlgorithm = new PipesGeneratorAlgorithm();
-        //public static INetAlgorithm PipesAlgorithm = new SkeletalPipesGeneratorAlgorithm();
-
         private List<ICellAlgorithm> _cellAlgorithms = new();
         private List<INetAlgorithm> _netAlgorithms = new();
 
-        public PropsGenerator()
-        {
-            _cellAlgorithms.Add(new PanelsGeneratorAlgorithm());        
-        }
+        public PropsGenerator() { }
 
         public PropsGenerator PushCellAlgorithm(ICellAlgorithm cellAlgorithm)
         {
