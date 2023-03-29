@@ -1,4 +1,5 @@
 ﻿using GameEngine.Graphics;
+using MeshTopology;
 using OpenTK.Mathematics;
 
 namespace TriangulatedTopology.Props
@@ -53,7 +54,7 @@ namespace TriangulatedTopology.Props
 
         public static Model GenerateTubeFromSpline(List<SplineVertex> spline, float side)
         {
-            var squares = new List<List<List<Vertex>>>();
+            var squares = new List<List<Edge>>();
             var meshes = new List<Mesh>();
 
             var first = spline[0];
@@ -75,10 +76,10 @@ namespace TriangulatedTopology.Props
                     var edge1 = previous[j];
                     var edge2 = current[j];
 
-                    vertices.Add(edge1[0]);
-                    vertices.Add(edge2[0]);
-                    vertices.Add(edge2[1]);
-                    vertices.Add(edge1[1]);
+                    vertices.Add(edge1.A);
+                    vertices.Add(edge2.A);
+                    vertices.Add(edge2.B);
+                    vertices.Add(edge1.B);
 
                     indices.Add(4 * j + 1);
                     indices.Add(4 * j);
@@ -112,10 +113,10 @@ namespace TriangulatedTopology.Props
             return circle;
         }
 
-        private static List<List<Vertex>> GenerateSquare(SplineVertex splineVertex, float side)
+        private static List<Edge> GenerateSquare(SplineVertex splineVertex, float side)
         {
             var half = side / 2;
-            var square = new List<List<Vertex>>();
+            var square = new List<Edge>();
             var right = Vector3.Normalize(Vector3.Cross(splineVertex.Up, splineVertex.Forward));
 
             var a = splineVertex.Position + half * splineVertex.Up - half * right;
@@ -123,26 +124,21 @@ namespace TriangulatedTopology.Props
             var c = splineVertex.Position - half * splineVertex.Up + half * right;
             var d = splineVertex.Position - half * splineVertex.Up - half * right;
 
-            square.Add(new List<Vertex>
-            {
+            square.Add(new Edge(
                 new Vertex(a, splineVertex.Up, Vector2.Zero),
-                new Vertex(b, splineVertex.Up, Vector2.Zero),
-            });
-            square.Add(new List<Vertex>
-            {
+                new Vertex(b, splineVertex.Up, Vector2.Zero)));
+            
+            square.Add(new Edge(
                 new Vertex(b, right, Vector2.Zero),
-                new Vertex(c, right, Vector2.Zero),
-            });
-            square.Add(new List<Vertex>
-            {
+                new Vertex(c, right, Vector2.Zero)));
+
+            square.Add(new Edge(
                 new Vertex(c, -splineVertex.Up, Vector2.Zero),
-                new Vertex(d, -splineVertex.Up, Vector2.Zero),
-            });
-            square.Add(new List<Vertex>
-            {
+                new Vertex(d, -splineVertex.Up, Vector2.Zero)));
+
+            square.Add(new Edge(
                 new Vertex(d, -right, Vector2.Zero),
-                new Vertex(a, -right, Vector2.Zero),
-            });
+                new Vertex(a, -right, Vector2.Zero)));
 
             return square;
         }

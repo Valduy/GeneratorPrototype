@@ -106,7 +106,7 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static List<List<SplineVertex>> GetWiresPointsLines(List<LogicalNode> nodes, int count)
         {
-            float extrusionFactor = 0.1f;
+            float extrusion = 0.1f;
             float offset = 0.2f;
             var pointsLines = new List<List<SplineVertex>>();
 
@@ -115,8 +115,8 @@ namespace TriangulatedTopology.Props.Algorithms
                 pointsLines.Add(new List<SplineVertex>());
             }
 
-            AddFirstSplineVertex(pointsLines, nodes[0], nodes[1], extrusionFactor, offset, count);
-            AddSharedSplineVertex(pointsLines, nodes[0], nodes[1], extrusionFactor, offset, count);
+            AddFirstSplineVertex(pointsLines, nodes[0], nodes[1], extrusion, offset, count);
+            AddSharedSplineVertex(pointsLines, nodes[0], nodes[1], extrusion, offset, count);
 
             for (int i = 1; i < nodes.Count - 1; i++)
             {
@@ -131,13 +131,13 @@ namespace TriangulatedTopology.Props.Algorithms
 
                 if (angle > Trashold)
                 {
-                    AddSplineVertexInsideNode(pointsLines, prev, temp, next, extrusionFactor, offset, count);
+                    AddSplineVertexInsideNode(pointsLines, prev, temp, next, extrusion, offset, count);
                 }                
                
-                AddSharedSplineVertex(pointsLines, temp, next, extrusionFactor, offset, count);
+                AddSharedSplineVertex(pointsLines, temp, next, extrusion, offset, count);
             }
 
-            AddLastSplineVertex(pointsLines, nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, offset, count);
+            AddLastSplineVertex(pointsLines, nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusion, offset, count);
             return pointsLines;
         }
 
@@ -145,7 +145,7 @@ namespace TriangulatedTopology.Props.Algorithms
             List<List<SplineVertex>> pointsLines,
             LogicalNode temp,
             LogicalNode next,
-            float extrusionFactor,
+            float extrusion,
             float offset,
             int count)
         {
@@ -157,7 +157,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var pivot = Mathematics.GetCentroid(temp.Corners);
             var direction = Vector3.Normalize(centroid - pivot);
             var right = Vector3.Cross(direction, normal);
-            var position = pivot + extrusionFactor * normal;
+            var position = pivot + extrusion * normal;
 
             for (int i = 0; i < count; i++)
             {
@@ -170,7 +170,7 @@ namespace TriangulatedTopology.Props.Algorithms
             List<List<SplineVertex>> pointsLines,
             LogicalNode prev,
             LogicalNode temp,
-            float extrusionFactor,
+            float extrusion,
             float offset,
             int count)
         {
@@ -183,7 +183,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var pivot = Mathematics.GetCentroid(temp.Corners);
             var direction = Vector3.Normalize(pivot - centroid);
             var right = Vector3.Cross(direction, normal);
-            var position = pivot + extrusionFactor * normal;
+            var position = pivot + extrusion * normal;
 
             for (int i = 0; i < count; i++)
             {
@@ -197,7 +197,7 @@ namespace TriangulatedTopology.Props.Algorithms
             LogicalNode prev,
             LogicalNode temp,
             LogicalNode next,
-            float extrusionFactor,
+            float extrusion,
             float offset,
             int count)
         {
@@ -217,7 +217,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var blendedDirection = Vector3.Normalize(Vector3.Lerp(toPivotDirection, fromPivotDirection, 0.5f));
 
             var right = Vector3.Cross(blendedDirection, normal);
-            var position = pivot + extrusionFactor * normal;
+            var position = pivot + extrusion * normal;
 
             for (int i = 0; i < count; i++)
             {
@@ -230,7 +230,7 @@ namespace TriangulatedTopology.Props.Algorithms
             List<List<SplineVertex>> pointsLines,
             LogicalNode prev,
             LogicalNode next,
-            float extrusionFactor,
+            float extrusion,
             float offset,
             int count)
         {
@@ -251,7 +251,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var blendedDirection = Vector3.Normalize(Vector3.Lerp(toJointDirection, fromJointDirection, 0.5f));
 
             var right = Vector3.Cross(blendedDirection, blendedNormal);
-            var position = joint + extrusionFactor * blendedNormal;
+            var position = joint + extrusion * blendedNormal;
 
             for (int i = 0; i < count; i++)
             {

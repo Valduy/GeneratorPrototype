@@ -40,10 +40,10 @@ namespace TriangulatedTopology.Props.Algorithms
         {
             float epsilon = 0.01f;
             float side = 0.55f;
-            float extrusionFactor = 0.6f;
+            float extrusion = 0.6f;
 
             var nodes = net.ToList();
-            var (points, joints) = GetPoints(nodes, side, extrusionFactor);
+            var (points, joints) = GetPoints(nodes, side, extrusion);
             InstantiateJoints(engine, points, joints);
 
             foreach(var joint in joints)
@@ -79,7 +79,7 @@ namespace TriangulatedTopology.Props.Algorithms
             render.Model = model;
         }
 
-        private static (List<SplineVertex> Points, List<SplineVertex> Joints) GetPoints(List<LogicalNode> nodes, float radius, float extrusionFactor)
+        private static (List<SplineVertex> Points, List<SplineVertex> Joints) GetPoints(List<LogicalNode> nodes, float radius, float extrusion)
         {
             var points = new List<SplineVertex>();
             var joints = new List<SplineVertex>();
@@ -91,12 +91,12 @@ namespace TriangulatedTopology.Props.Algorithms
                 var prev = nodes[i - 1];
                 var next = nodes[i];
 
-                var jointPoints = CreatePointsAroundJoint(prev, next, extrusionFactor, radius, resolution);
+                var jointPoints = CreatePointsAroundJoint(prev, next, extrusion, radius, resolution);
                 segments.Add(jointPoints);
                 joints.Add(jointPoints[jointPoints.Count / 2]);
             }
 
-            points.AddRange(CreateBegin(nodes[0], nodes[1], extrusionFactor, radius, resolution));
+            points.AddRange(CreateBegin(nodes[0], nodes[1], extrusion, radius, resolution));
 
             for (int i = 1; i < segments.Count; i++)
             {
@@ -108,14 +108,14 @@ namespace TriangulatedTopology.Props.Algorithms
             }
 
             points.AddRange(segments[segments.Count - 1]);
-            points.AddRange(CreateEnd(nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusionFactor, radius, resolution));
+            points.AddRange(CreateEnd(nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusion, radius, resolution));
             return (points, joints);
         }
 
         private static List<SplineVertex> CreatePointsAroundJoint(
             LogicalNode prev,
             LogicalNode next,
-            float extrusionFactor,
+            float extrusion,
             float radius,
             int resolution)
         {
@@ -136,12 +136,12 @@ namespace TriangulatedTopology.Props.Algorithms
             var nextDirection = Vector3.Normalize(nextPivot - joint);
             var blendedDirection = Vector3.Normalize(Vector3.Lerp(prevDirection, nextDirection, 0.5f));
 
-            var prevP1 = prevPivot + extrusionFactor * prevNormal;
-            var prevP2 = joint + extrusionFactor * prevNormal;
+            var prevP1 = prevPivot + extrusion * prevNormal;
+            var prevP2 = joint + extrusion * prevNormal;
             var e1 = prevP2 - prevP1;
 
-            var nextP1 = nextPivot + extrusionFactor * nextNormal;
-            var nextP2 = joint + extrusionFactor * nextNormal;
+            var nextP1 = nextPivot + extrusion * nextNormal;
+            var nextP2 = joint + extrusion * nextNormal;
             var e2 = nextP2 - nextP1;
 
             if (Mathematics.TryGetIntersactionPoint(prevP1, e1, nextP1, e2, epsilon, out var p))
@@ -172,7 +172,7 @@ namespace TriangulatedTopology.Props.Algorithms
             }
             else
             {
-                points.Add(new SplineVertex(joint + extrusionFactor * blendedNormal, blendedNormal, blendedDirection));
+                points.Add(new SplineVertex(joint + extrusion * blendedNormal, blendedNormal, blendedDirection));
             }
 
             return points;
@@ -181,7 +181,7 @@ namespace TriangulatedTopology.Props.Algorithms
         private static List<SplineVertex> CreateBegin(
             LogicalNode begin,
             LogicalNode next,
-            float extrusionFactor,
+            float extrusion,
             float radius,
             int resolution)
         {
@@ -199,7 +199,7 @@ namespace TriangulatedTopology.Props.Algorithms
             var fromPivotDirection = beginNormal;
             var toJointDirection = Vector3.Normalize(joint - pivot);
 
-            var p = pivot + extrusionFactor * beginNormal;
+            var p = pivot + extrusion * beginNormal;
             var rotationPivot = p - radius * fromPivotDirection + radius * toJointDirection;
 
             points.Add(new SplineVertex(pivot, -toJointDirection, fromPivotDirection));

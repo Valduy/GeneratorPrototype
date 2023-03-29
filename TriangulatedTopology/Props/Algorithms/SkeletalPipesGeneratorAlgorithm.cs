@@ -35,7 +35,7 @@ namespace TriangulatedTopology.Props.Algorithms
         public void ProcessNet(Engine engine, Net<LogicalNode> net)
         {
             float epsilon = 0.01f;
-            float extrusionFactor = 0.5f;
+            float extrusion = 0.5f;
 
             foreach (var node in net.GetNodes())
             {
@@ -46,7 +46,7 @@ namespace TriangulatedTopology.Props.Algorithms
 
                 var centroid = Mathematics.GetCentroid(node.Item.Corners);
                 var normal = Mathematics.GetNormal(node.Item.Corners);
-                var pivot = centroid + extrusionFactor * normal;
+                var pivot = centroid + extrusion * normal;
                 float k = 0.96f;
 
                 if (node.Neighbours.Count == 2)
@@ -56,7 +56,7 @@ namespace TriangulatedTopology.Props.Algorithms
 
                     GetPipeSideDeformations(
                         node.Item, node.Neighbours[0].Item,
-                        pivot, normal, Vector3.UnitZ * k, extrusionFactor,
+                        pivot, normal, Vector3.UnitZ * k, extrusion,
                         out var topSideDirection,
                         out var topSocketCoerce,
                         out var topSocketRotation);
@@ -69,7 +69,7 @@ namespace TriangulatedTopology.Props.Algorithms
 
                     GetPipeSideDeformations(
                         node.Item, node.Neighbours[1].Item,
-                        pivot, normal, -Vector3.UnitZ * k, extrusionFactor,
+                        pivot, normal, -Vector3.UnitZ * k, extrusion,
                         out var bottomSideDirection,
                         out var bottomSocketCoerce,
                         out var bottomSocketRotation);
@@ -86,7 +86,7 @@ namespace TriangulatedTopology.Props.Algorithms
                     var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
 
                     GetPipeSideDeformations(node.Item, node.Neighbours[0].Item,
-                        pivot, normal, Vector3.UnitZ * k, extrusionFactor,
+                        pivot, normal, Vector3.UnitZ * k, extrusion,
                         out var topSideDirection,
                         out var topSocketCoerce,
                         out var topSocketRotation);
@@ -98,7 +98,7 @@ namespace TriangulatedTopology.Props.Algorithms
                     topHand.Rotation = topSocketRotation;
 
                     var shared = Mathematics.GetSharedPoints(node.Item.Corners, node.Neighbours[0].Item.Corners, epsilon);
-                    var to = Mathematics.GetCentroid(shared) + extrusionFactor * normal;
+                    var to = Mathematics.GetCentroid(shared) + extrusion * normal;
                     var toNeighbour = to - pivot;
                     toNeighbour.Normalize();
 
@@ -123,7 +123,7 @@ namespace TriangulatedTopology.Props.Algorithms
             Vector3 pivot,
             Vector3 normal,
             Vector3 socketOffset,
-            float extrusionFactor,
+            float extrusion,
             out Vector3 sideDirection,
             out Vector3 socketCoerce,
             out Quaternion socketRotation)
@@ -136,8 +136,8 @@ namespace TriangulatedTopology.Props.Algorithms
             var sharedPoints = Mathematics.GetSharedPoints(node.Corners, neighbour.Corners, epsilon);
             var centroid = Mathematics.GetCentroid(sharedPoints);
 
-            var to = centroid + extrusionFactor * extrusionDirection;
-            var forward = centroid + extrusionFactor * normal - pivot;
+            var to = centroid + extrusion * extrusionDirection;
+            var forward = centroid + extrusion * normal - pivot;
             sideDirection = to - pivot;
 
             var edgeAxis = sharedPoints[1] - sharedPoints[0];

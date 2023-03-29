@@ -13,6 +13,10 @@ namespace TriangulatedTopology.Props
         public IReadOnlyList<Vector3> Corners => _corners;
         public IReadOnlyList<bool> Connections => _connections;
 
+        public LogicalNode(IEnumerable<Vector3> corners, Rule rule) :
+            this(corners, rule, Enumerable.Empty<bool>())
+        { }
+
         public LogicalNode(IEnumerable<Vector3> corners, Rule rule, IEnumerable<bool> connections)
         {
             Rule = rule;

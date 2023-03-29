@@ -10,6 +10,7 @@ using System.Drawing;
 using TextureUtils;
 using TriangulatedTopology.Helpers;
 using TriangulatedTopology.Props.Algorithms;
+using TriangulatedTopology.TextureIsland;
 
 namespace TriangulatedTopology.Props
 {
@@ -23,11 +24,18 @@ namespace TriangulatedTopology.Props
         public static INetAlgorithm PipesAlgorithm = new PipesGeneratorAlgorithm();
         //public static INetAlgorithm PipesAlgorithm = new SkeletalPipesGeneratorAlgorithm();
 
-        private List<INetAlgorithm> _netAlgorithms = new List<INetAlgorithm>();
+        private List<ICellAlgorithm> _cellAlgorithms = new();
+        private List<INetAlgorithm> _netAlgorithms = new();
 
         public PropsGenerator()
         {
-        
+            _cellAlgorithms.Add(new PanelsGeneratorAlgorithm());        
+        }
+
+        public PropsGenerator PushCellAlgorithm(ICellAlgorithm cellAlgorithm)
+        {
+            _cellAlgorithms.Add(cellAlgorithm);
+            return this;
         }
 
         public PropsGenerator PushNetAlgorithm(INetAlgorithm netAlgorithm)
@@ -39,7 +47,8 @@ namespace TriangulatedTopology.Props
         public void Generate(Engine engine, Topology topology, List<Cell> cells, int size)
         {
             var nets = ExtractNets(topology, cells, size);
-            InstantiateProps(engine, nets);
+            ProcessCells(engine, topology, cells, size);
+            ProcessNets(engine, nets);
         }
 
         #region ForDebug
@@ -214,7 +223,23 @@ namespace TriangulatedTopology.Props
             throw new ArgumentException();
         }
 
-        private void InstantiateProps(Engine engine, List<Net<LogicalNode>> nets)
+        private void ProcessCells(Engine engine, Topology topology, List<Cell> cells, int size)
+        {
+            foreach (var cell in cells)
+            {
+                var node = new LogicalNode(GetNodeCorners(topology, cell, size), cell.Rules[0]);
+
+                foreach (var cellAlgorithm in _cellAlgorithms)
+                {
+                    if (cellAlgorithm.ProcessCell(engine, node))
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void ProcessNets(Engine engine, List<Net<LogicalNode>> nets)
         {
             foreach (var net in nets)
             {
