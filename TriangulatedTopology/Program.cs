@@ -316,7 +316,7 @@ namespace TriangulatedTopology
                 ? RotationDirection.Negative
                 : RotationDirection.Positive;
 
-            var origins = new CoordSystem[]
+            var bases = new CoordSystem[]
             {
                 new(new Vector2i(0, 0),
                     new Vector2i(1, 0),
@@ -337,22 +337,22 @@ namespace TriangulatedTopology
                 case RotationDirection.Negative:
                     for (int i = 0; i < rotations; i++)
                     {
-                        origins.ShiftRight();
+                        bases.ShiftRight();
                     }
 
                     break;
                 case RotationDirection.Positive:
                     for (int i = 0; i < rotations; i++)
                     {
-                        origins.ShiftLeft();
+                        bases.ShiftLeft();
                     }
 
                     break;
             }
 
-            origin = origins[0].Origin;
-            xAxis = origins[0].XAxis;
-            yAxis = origins[0].YAxis;
+            origin = bases[0].Origin;
+            xAxis = bases[0].XAxis;
+            yAxis = bases[0].YAxis;
 
             if (isShouldTranspose)
             {
