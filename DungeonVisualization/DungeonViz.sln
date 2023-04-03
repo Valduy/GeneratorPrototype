@@ -1,13 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32126.315
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DungeonViz", "DungeonViz\DungeonViz.csproj", "{73D800DC-87A1-4984-B0C1-E746382269C1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComplexDungeonSetup", "ComplexDungeonSetup\ComplexDungeonSetup.csproj", "{6B5734CB-3786-4CB1-A2EF-36F3150F4C2C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComplexDungeonSetup", "ComplexDungeonSetup\ComplexDungeonSetup.csproj", "{6B5734CB-3786-4CB1-A2EF-36F3150F4C2C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneratorDungeonGraph", "GeneratorDungeonGraph\GeneratorDungeonGraph.csproj", "{B4DE8B4B-53D1-46D2-A72B-FA87ED1A13D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GeneratorDungeonGraph", "GeneratorDungeonGraph\GeneratorDungeonGraph.csproj", "{B4DE8B4B-53D1-46D2-A72B-FA87ED1A13D4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StoryGenerator", "StoryGenerator\StoryGenerator.csproj", "{1CAF5085-04D6-4501-B423-775BD03B676E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimulationModeling", "SimulationModeling\SimulationModeling.csproj", "{763A3C40-547D-40A2-B813-68109528F470}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FasadeTestGeneration", "FasadeTestGeneration\FasadeTestGeneration.csproj", "{D6E0BDEF-3818-4172-972F-0AED91327414}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextGeneratorBasedOnTemporalGraphModel", "TextGeneratorBasedOnTemporalGraphModel\TextGeneratorBasedOnTemporalGraphModel.csproj", "{27DDCF7A-B23B-4930-9092-46B7CA19B99D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +35,22 @@ Global
 		{B4DE8B4B-53D1-46D2-A72B-FA87ED1A13D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4DE8B4B-53D1-46D2-A72B-FA87ED1A13D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4DE8B4B-53D1-46D2-A72B-FA87ED1A13D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CAF5085-04D6-4501-B423-775BD03B676E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CAF5085-04D6-4501-B423-775BD03B676E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CAF5085-04D6-4501-B423-775BD03B676E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CAF5085-04D6-4501-B423-775BD03B676E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{763A3C40-547D-40A2-B813-68109528F470}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{763A3C40-547D-40A2-B813-68109528F470}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{763A3C40-547D-40A2-B813-68109528F470}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{763A3C40-547D-40A2-B813-68109528F470}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6E0BDEF-3818-4172-972F-0AED91327414}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6E0BDEF-3818-4172-972F-0AED91327414}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6E0BDEF-3818-4172-972F-0AED91327414}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6E0BDEF-3818-4172-972F-0AED91327414}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27DDCF7A-B23B-4930-9092-46B7CA19B99D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27DDCF7A-B23B-4930-9092-46B7CA19B99D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27DDCF7A-B23B-4930-9092-46B7CA19B99D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27DDCF7A-B23B-4930-9092-46B7CA19B99D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
