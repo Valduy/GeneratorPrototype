@@ -3,7 +3,6 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Mathematics;
-using GameEngine.Utils;
 using Graph;
 using OpenTK.Mathematics;
 using System.Drawing;
