@@ -3,8 +3,10 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Mathematics;
+using GameEngine.Utils;
 using Graph;
 using OpenTK.Mathematics;
+using System.Collections.Generic;
 using System.Drawing;
 using TextureUtils;
 using TriangulatedTopology.Helpers;
@@ -51,7 +53,6 @@ namespace TriangulatedTopology.Props.Algorithms
 
         public void ProcessNet(Engine engine, Net<LogicalNode> net)
         {
-            float epsilon = 0.01f;
             float side = 0.55f;
             float extrusion = 0.6f;
 
@@ -59,37 +60,9 @@ namespace TriangulatedTopology.Props.Algorithms
             var (points, joints) = GetPoints(nodes, side, extrusion);
             InstantiateJoints(engine, points, joints);
 
-            foreach(var joint in joints)
-            {
-                var position = joint.Position;
-                var direction = joint.Forward;
-
-                var forwardRotation = Quaternion.Identity;
-                var backwardRotation = Quaternion.Identity;
-
-                forwardRotation = Mathematics.FromToRotation(Vector3.UnitY, direction);
-                forwardRotation *= Mathematics.FromToRotation(Vector3.UnitX, joint.Up);
-
-                if (Mathematics.ApproximatelyEqualEpsilon(MathF.Abs(Vector3.Dot(direction, Vector3.UnitY)), 1.0f, epsilon))
-                {
-                    var axis = Vector3.Transform(Vector3.UnitX, forwardRotation);
-                    backwardRotation = Quaternion.FromAxisAngle(axis, MathHelper.Pi) * forwardRotation;              
-                }
-                else
-                {
-                    backwardRotation = Mathematics.FromToRotation(Vector3.UnitY, -direction);
-                    backwardRotation *= Mathematics.FromToRotation(Vector3.UnitX, joint.Up);                    
-                }
-
-                InstantiateVentilationJoint(engine, position, forwardRotation);
-                InstantiateVentilationJoint(engine, position, backwardRotation);
-            }
-
-            var model = MeshGenerator.GenerateTubeFromSpline(points, side);
-
             var go = engine.CreateGameObject();
             var render = go.Add<MaterialRenderComponent>();
-            render.Model = model;
+            render.Model = MeshGenerator.GenerateTubeFromSpline(points, side);
             render.Material = VentilationMaterial;
         }
 
@@ -162,21 +135,11 @@ namespace TriangulatedTopology.Props.Algorithms
         {
             float epsilon = 0.01f;
 
-            {
-                var first = points[0];
-                var rotation = Mathematics.FromToRotation(Vector3.UnitY, first.Forward);
-                var axis = Vector3.Transform(Vector3.UnitX, rotation);
-                rotation = Mathematics.FromToRotation(axis, first.Up) * rotation;
-                InstantiateVentilationJoint(engine, first.Position, rotation);
-            }
+            var first = points[0];
+            var last = points[points.Count - 1];
 
-            {
-                var last = points[points.Count - 1];
-                var rotation = Mathematics.FromToRotation(Vector3.UnitY, -last.Forward);
-                var axis = Vector3.Transform(Vector3.UnitX, rotation);
-                rotation = Mathematics.FromToRotation(axis, last.Up) * rotation;
-                InstantiateVentilationJoint(engine, last.Position, rotation);
-            }
+            InstantiateVentilationEnding(engine, first.Position, first.Forward, -first.Up);
+            InstantiateVentilationEnding(engine, last.Position, -last.Forward, -last.Up);
 
             foreach (var joint in joints)
             {
@@ -203,6 +166,26 @@ namespace TriangulatedTopology.Props.Algorithms
                 InstantiateVentilationJoint(engine, position, forwardRotation);
                 InstantiateVentilationJoint(engine, position, backwardRotation);
             }
+        }
+
+        private static void InstantiateVentilationEnding(
+            Engine engine, 
+            Vector3 position, 
+            Vector3 normal, 
+            Vector3 direction)
+        {
+            float epsilon = 0.01f;
+
+            var rotation = Mathematics.FromToRotation(Vector3.UnitY, normal);
+            var right = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));
+            var axis = Vector3.Cross(right, direction);
+
+            if (!Mathematics.ApproximatelyEqualEpsilon(right, -direction, epsilon))
+            {
+                rotation = Mathematics.FromToRotation(axis, right, direction) * rotation;
+            }
+
+            InstantiateVentilationJoint(engine, position, rotation);
         }
 
         private static GameObject InstantiateVentilationJoint(Engine engine, Vector3 position, Quaternion rotation)
