@@ -3,8 +3,10 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Mathematics;
+using GameEngine.Utils;
 using Graph;
 using OpenTK.Mathematics;
+using System.Collections.Generic;
 using System.Drawing;
 using TextureUtils;
 using TriangulatedTopology.Helpers;
@@ -92,36 +94,8 @@ namespace TriangulatedTopology.Props.Algorithms
             var last = middleLine[middleLine.Count - 1];
 
             PlaceSupports(engine, joints);
-
-            if (MathHelper.ApproximatelyEqualEpsilon(Vector3.Dot(first.Forward, Vector3.UnitY), 0.0f, 0.01f))
-            {
-                InstantiateMonitor(
-                    engine, 
-                    first.Position + (ZeroLevel + extrusion * 2) * first.Forward, 
-                    Mathematics.FromToRotation(Vector3.UnitZ, first.Forward));
-            }
-            else
-            {
-                InstantiateSource(
-                    engine, 
-                    first.Position + ZeroLevel * first.Forward, 
-                    Mathematics.FromToRotation(Vector3.UnitZ, -first.Up));
-            }
-
-            if (MathHelper.ApproximatelyEqualEpsilon(Vector3.Dot(-last.Forward, Vector3.UnitY), 0.0f, 0.01f))
-            {
-                InstantiateMonitor(
-                    engine,
-                    last.Position - (ZeroLevel + extrusion * 2) * last.Forward,
-                    Mathematics.FromToRotation(Vector3.UnitZ, -last.Forward));
-            }
-            else
-            {
-                InstantiateSource(
-                    engine, 
-                    last.Position - ZeroLevel * last.Forward, 
-                    Mathematics.FromToRotation(Vector3.UnitZ, -last.Up));
-            }
+            InstantiateWireEnding(engine, first.Position, first.Forward, -first.Up, radius);
+            InstantiateWireEnding(engine, last.Position, -last.Forward, -last.Up, radius);
         }
 
         private (List<List<SplineVertex>> Points, List<SplineVertex> Joints) GetPoints(
@@ -275,6 +249,44 @@ namespace TriangulatedTopology.Props.Algorithms
             go.Position = position;
             go.Rotation = rotation;
             return go;
+        }
+
+        private static void InstantiateWireEnding(
+            Engine engine, 
+            Vector3 position, 
+            Vector3 normal, 
+            Vector3 direction, 
+            float radius)
+        {
+            float epsilon = 0.01f;
+            float monitorAdjustment = 0.1f;
+
+            var cosa = Vector3.Dot(Vector3.UnitY, normal);
+            var acos = MathF.Acos(cosa);
+            var angle = MathHelper.RadiansToDegrees(acos);
+
+            if (angle >= Trashold)
+            {
+                var monitorPosition = position + (2 * radius + monitorAdjustment) * normal;
+                var monitorRotation = Quaternion.Identity;
+
+                if (Mathematics.ApproximatelyEqualEpsilon(normal, -Vector3.UnitZ, epsilon))
+                {
+                    monitorRotation = Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.Pi);
+                }
+                else
+                {
+                    monitorRotation = Mathematics.FromToRotation(Vector3.UnitZ, normal);
+                }
+
+                InstantiateMonitor(engine, monitorPosition, monitorRotation);
+            }
+            else
+            {
+                var sourcePosition = position + radius * normal;
+                var sourceRotation = Mathematics.FromToRotation(Vector3.UnitZ, direction);
+                InstantiateSource(engine, sourcePosition, sourceRotation);
+            }
         }
 
         private static GameObject InstantiateSource(Engine engine, Vector3 position, Quaternion rotation)

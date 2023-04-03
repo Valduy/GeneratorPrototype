@@ -49,10 +49,16 @@ namespace GameEngine.Utils
 
         public static GameObject Line(this Engine engine, Vector3 a, Vector3 b, Vector3 color)
         {
+            return engine.Line(a, b, color, 1.0f);
+        }
+
+        public static GameObject Line(this Engine engine, Vector3 a, Vector3 b, Vector3 color, float width)
+        {
             var lineGo = engine.CreateGameObject();
             var render = lineGo.Add<LineRenderComponent>();
             render.Color = color;
             render.Line = new Line(new List<Vector3> { a, b });
+            render.Width = width;
             return lineGo;
         }
     }

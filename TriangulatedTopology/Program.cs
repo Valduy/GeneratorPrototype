@@ -431,8 +431,9 @@ namespace TriangulatedTopology
             //CollectionsHelper.UseSeed(887817102);
             //CollectionsHelper.UseSeed(1902612879); 
             //CollectionsHelper.UseSeed(113611668); // Провод на лестнице
-            //CollectionsHelper.UseSeed(580746622);2117749366
+            //CollectionsHelper.UseSeed(580746622);
             //CollectionsHelper.UseSeed(2117749366);
+            CollectionsHelper.UseSeed(584469435);
 
             using var engine = new Engine();
 
@@ -441,7 +442,8 @@ namespace TriangulatedTopology
             operatorGo.Add<LightComponent>();
             operatorGo.Position = new Vector3(0, 0, 0);
 
-            var model = Model.Load("Content/Models/TriangulatedTower.obj");
+            //var model = Model.Load("Content/Models/TriangulatedTower.obj");
+            var model = Model.Load("Content/Models/Cube12x12.obj");
 
             int size = 2048;
             int step = 32;
