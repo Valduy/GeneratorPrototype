@@ -3,7 +3,7 @@ using GameEngine.Graphics;
 using GameEngine.Utils;
 using MeshTopology;
 
-namespace TriangulatedTopology
+namespace TriangulatedTopology.DebugUtils
 {
     public static class DebugMeshVisualizer
     {

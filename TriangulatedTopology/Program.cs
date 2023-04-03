@@ -2,20 +2,18 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
-using TextureUtils;
 using GameEngine.Utils;
 using MeshTopology;
 using OpenTK.Mathematics;
-using Mathematics = GameEngine.Mathematics.Mathematics;
-using TriangulatedTopology.RulesAdapters;
 using System.Drawing;
-using Quaternion = OpenTK.Mathematics.Quaternion;
+using TextureUtils;
+using TriangulatedTopology.RulesAdapters;
 using TriangulatedTopology.TextureIsland;
-using TriangulatedTopology.Geometry;
-using Graph;
-using System.Reflection;
-using GameEngine.Mathematics;
-using System.IO.Pipes;
+using Vector2 = OpenTK.Mathematics.Vector2;
+using Vector3 = OpenTK.Mathematics.Vector3;
+using TriangulatedTopology.Wfc;
+using TriangulatedTopology.Props;
+using TriangulatedTopology.Props.Algorithms;
 
 namespace TriangulatedTopology
 {
@@ -43,15 +41,6 @@ namespace TriangulatedTopology
     {
         public const int LogicalResolution = 4;
         public const int DetailedResolution = 20;
-
-        public static readonly Color PipesColor = Color.FromArgb(255, 217, 0);
-        public static readonly Color WireColor = Color.FromArgb(255, 0, 24);
-        public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
-
-        public static Model RingModel = Model.Load("Content/Models/Ring.obj");
-        public static Model PipeModel = Model.Load("Content/Models/PipeSegment.fbx");
-
-        public static Engine Engine;
 
         public static List<Island> CreateIslands(Topology topology, int size, int step)
         {
@@ -227,13 +216,6 @@ namespace TriangulatedTopology
             return Vector3.Cross(a, b).Normalized();
         }
 
-        public static Vector3 GetNormal(IReadOnlyList<Vector3> face)
-        {
-            var a = Vector3.Normalize(face[0] - face[1]);
-            var b = Vector3.Normalize(face[2] - face[1]);
-            return Vector3.Cross(a, b).Normalized();
-        }
-
         public static void ConnectCells(List<Island> islands, int size, int step)
         {
             foreach (var island in islands)
@@ -334,7 +316,7 @@ namespace TriangulatedTopology
                 ? RotationDirection.Negative
                 : RotationDirection.Positive;
 
-            var origins = new CoordSystem[]
+            var bases = new CoordSystem[]
             {
                 new(new Vector2i(0, 0),
                     new Vector2i(1, 0),
@@ -355,22 +337,22 @@ namespace TriangulatedTopology
                 case RotationDirection.Negative:
                     for (int i = 0; i < rotations; i++)
                     {
-                        origins.ShiftRight();
+                        bases.ShiftRight();
                     }
 
                     break;
                 case RotationDirection.Positive:
                     for (int i = 0; i < rotations; i++)
                     {
-                        origins.ShiftLeft();
+                        bases.ShiftLeft();
                     }
 
                     break;
             }
 
-            origin = origins[0].Origin;
-            xAxis = origins[0].XAxis;
-            yAxis = origins[0].YAxis;
+            origin = bases[0].Origin;
+            xAxis = bases[0].XAxis;
+            yAxis = bases[0].YAxis;
 
             if (isShouldTranspose)
             {
@@ -401,590 +383,6 @@ namespace TriangulatedTopology
         public static Island GetNeighbourIsland(Island island, List<Island> islands, Edge segment)
         {
             return islands.First(o => !o.Equals(island) && o.IsContainsSegment(segment.A.Position, segment.B.Position));
-        }
-
-        public static List<Net<LogicalNode>> ExtractNets(Topology topology, List<Cell> cells, int size)
-        {
-            var cellToLogicalNode = CreateLogicalNodes(topology, cells, size);
-            var net = ConnectLogicalNodes(cells, cellToLogicalNode);
-            return net.GetSubNets().ToList();
-        }
-
-        public static Dictionary<Cell, LogicalNode> CreateLogicalNodes(Topology topology, List<Cell> cells, int size)
-        {
-            var cellToLogicalNode = new Dictionary<Cell, LogicalNode>();
-
-            foreach (var cell in cells)
-            {
-                var rule = cell.Rules[0].Logical;
-
-                if (rule.Enumerate().Any(c => c.IsSame(PipesColor)))
-                {
-                    var corners = GetNodeCorners(topology, cell, size);
-                    var connections = GetConnections(cell, PipesColor);
-                    cellToLogicalNode[cell] = new LogicalNode(corners, PipesColor, connections);
-                }
-                if (rule.Enumerate().Any(c => c.IsSame(WireColor)))
-                {
-                    var corners = GetNodeCorners(topology, cell, size);
-                    var connections = GetConnections(cell, WireColor);
-                    cellToLogicalNode[cell] = new LogicalNode(corners, WireColor, connections);
-                }
-                if (rule.Enumerate().Any(c => c.IsSame(VentilationColor)))
-                {
-                    var corners = GetNodeCorners(topology, cell, size);
-                    var connections = GetConnections(cell, VentilationColor);
-                    cellToLogicalNode[cell] = new LogicalNode(corners, VentilationColor, connections);
-                }
-            }
-
-            return cellToLogicalNode;
-        }
-
-        public static List<Vector3> GetNodeCorners(Topology topology, Cell cell, int size)
-        {
-            var corners = new List<Vector3>();
-
-            foreach (var uv in cell)
-            {
-                var point = GetPoint(topology, uv, size);
-                corners.Add(point);
-            }
-
-            return corners;
-        }
-
-        public static bool[] GetConnections(Cell cell, Color color)
-        {
-            var connections = new bool[4];
-            var rule = cell.Rules[0];
-
-            for (int i = 0; i < Cell.NeighboursCount; i++)
-            {
-                var side = rule[i];
-                connections[i] = side[1].IsSame(color) && side[2].IsSame(color);
-            }
-
-            return connections;
-        }
-
-        public static Net<LogicalNode> ConnectLogicalNodes(List<Cell> cells, Dictionary<Cell, LogicalNode> cellToLogicalNode)
-        {
-            var cellToNetNode = new Dictionary<Cell, Node<LogicalNode>>();
-            var net = new Net<LogicalNode>();
-
-            foreach (var cell in cells)
-            {
-                if (!cellToLogicalNode.TryGetValue(cell, out var thisLogicalNode))
-                {
-                    continue;
-                }
-                if (!cellToNetNode.TryGetValue(cell, out var thisNetNode))
-                {
-                    thisNetNode = net.CreateNode(thisLogicalNode);
-                    cellToNetNode[cell] = thisNetNode;
-                }
-
-                for (int i = 0; i < cell.Neighbours.Length; i++)
-                {
-                    if (!thisLogicalNode.Connections[i])
-                    {
-                        continue;
-                    }
-
-                    var otherCell = cell.Neighbours[i]!.Cell;
-
-                    if (!cellToLogicalNode.TryGetValue(otherCell, out var otherLogicalNode))
-                    {
-                        continue;
-                    }
-                    if (!cellToNetNode.TryGetValue(otherCell, out var otherNetNode))
-                    {
-                        otherNetNode = net.CreateNode(otherLogicalNode);
-                        cellToNetNode[otherCell] = otherNetNode;                        
-                    }
-
-                    net.Connect(thisNetNode, otherNetNode);
-                }
-
-                var expected = thisLogicalNode.Connections.Count(o => o);
-                var actual = thisNetNode.Neighbours.Count;
-            }
-
-            return net;
-        }
-
-        public static void VisualizeNets(Engine engine, List<Net<LogicalNode>> nets)
-        {
-            float extrusionFactor = 0.3f;
-
-            foreach (var net in nets)
-            {
-                foreach (var node in net.GetNodes())
-                {
-                    var centroid = GetCentroid(node.Item.Corners);
-                    var normal = GetNormal(node.Item.Corners);
-                    var from = centroid + extrusionFactor * normal;
-                    var scale = new Vector3(0.3f);                    
-
-                    foreach (var neighbour in node.Neighbours)
-                    {
-                        var lineGo = engine.CreateGameObject();
-                        var render = lineGo.Add<LineRenderComponent>();
-                        render.Color = RgbaToVector3(node.Item.Color);
-
-                        var neighbourNormal = GetNormal(neighbour.Item.Corners);
-                        var extrusionDirection = Vector3.Lerp(normal, neighbourNormal, 0.5f).Normalized();
-                        var sharedPoints = GetSharedPoints(node.Item.Corners, neighbour.Item.Corners);
-                        var to = GetCentroid(sharedPoints) + extrusionFactor * extrusionDirection;
-
-                        render.Line = new Line(from, to);
-                        render.Width = 5.0f;
-                    }
-
-                    {
-                        var lineGo = engine.CreateGameObject();
-                        var render = lineGo.Add<LineRenderComponent>();
-                        render.Line = new Line(centroid, centroid + normal);
-                        render.Color = Colors.Red;
-                    }
-
-                    if (node.Neighbours.Count == 1)
-                    {
-                        var rotation = Mathematics.GetRotation(Vector3.UnitY, normal);
-                        var cube = InstantiateCube(engine, from, rotation, scale, node.Item.Color);
-
-                        var lineGo = engine.CreateGameObject();
-                        var render = lineGo.Add<LineRenderComponent>();
-                        render.Line = new Line(Vector3.Zero, Vector3.UnitY);
-                        render.Color = Colors.Blue;
-                        cube.AddChild(lineGo);
-                    }
-                    if (node.Neighbours.Count >= 3)
-                    {
-                        InstantiateSphere(engine, from, Quaternion.Identity, scale, node.Item.Color);
-                    }
-                }
-            }
-        }
-
-        public static void VisualizePipes(Engine engine, List<Net<LogicalNode>> nets)
-        {
-            float extrusionFactor = 0.5f;
-
-            foreach (var net in nets)
-            {
-                // Search for purple lines.
-                if (!net.GetNodes().First().Item.Color.IsSame(VentilationColor))
-                {
-                    continue;
-                }
-
-                foreach (var node in net.GetNodes())
-                {
-                    if (node.Neighbours.Count > 2 || node.Neighbours.Count <= 0)
-                    {
-                        throw new ArgumentException("Pipe should has 1 or 2 neighbours.");
-                    }
-
-                    var centroid = GetCentroid(node.Item.Corners);
-                    var normal = GetNormal(node.Item.Corners);
-                    var pivot = centroid + extrusionFactor * normal;
-                    float k = 0.96f;
-
-                    if (node.Neighbours.Count == 2)
-                    {
-                        var pipe = InstantiatePipe(engine, pivot, Quaternion.Identity);
-                        var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
-
-                        GetPipeSideDeformations(
-                            node.Item, node.Neighbours[0].Item,
-                            pivot, normal, Vector3.UnitZ * k, extrusionFactor,
-                            out var topSideDirection, 
-                            out var topSocketCoerce, 
-                            out var topSocketRotation);
-
-                        var top = skeleton["Top"];
-                        var topHand = skeleton["TopHand"];
-                        top.Position = topSideDirection;
-                        topHand.Position = topSocketCoerce;
-                        topHand.Rotation = topSocketRotation;
-
-                        GetPipeSideDeformations(
-                            node.Item, node.Neighbours[1].Item,
-                            pivot, normal, -Vector3.UnitZ * k, extrusionFactor,
-                            out var bottomSideDirection, 
-                            out var bottomSocketCoerce, 
-                            out var bottomSocketRotation);
-
-                        var bottom = skeleton["Bottom"];
-                        var bottomHand = skeleton["BottomHand"];
-                        bottom.Position = bottomSideDirection;
-                        bottomHand.Position = bottomSocketCoerce;
-                        bottomHand.Rotation = bottomSocketRotation;
-                    }
-                    else
-                    {
-                        var pipe = InstantiatePipe(engine, pivot, Quaternion.Identity);
-                        var skeleton = pipe.Get<SkeletalMeshRenderComponent>()!.Model.Skeleton!;
-
-                        GetPipeSideDeformations(node.Item, node.Neighbours[0].Item,
-                            pivot, normal, Vector3.UnitZ * k, extrusionFactor,
-                            out var topSideDirection, 
-                            out var topSocketCoerce, 
-                            out var topSocketRotation);
-
-                        var top = skeleton["Top"];
-                        var topHand = skeleton["TopHand"];
-                        top.Position = topSideDirection;
-                        topHand.Position = topSocketCoerce;
-                        topHand.Rotation = topSocketRotation;
-
-                        var shared = GetSharedPoints(node.Item.Corners, node.Neighbours[0].Item.Corners);
-                        var to = GetCentroid(shared) + extrusionFactor * normal;
-                        var toNeighbour = to - pivot;
-                        toNeighbour.Normalize();
-
-                        GetPipeEndingDeformations(
-                            centroid, pivot, -toNeighbour, -Vector3.UnitZ * k,
-                            out var bottomSideDirection, 
-                            out var bottomSocketCoerce, 
-                            out var bottomSocketRotation);
-
-                        var bottom = skeleton["Bottom"];
-                        var bottomHand = skeleton["BottomHand"];
-                        bottom.Position = bottomSideDirection;
-                        bottomHand.Position = bottomSocketCoerce;
-                        bottomHand.Rotation = bottomSocketRotation;
-                    }                    
-                }
-            }
-        }
-
-        public static void GetPipeSideDeformations(
-            LogicalNode node,
-            LogicalNode neighbour,            
-            Vector3 pivot,
-            Vector3 normal,
-            Vector3 socketOffset,
-            float extrusionFactor,
-            out Vector3 sideDirection,
-            out Vector3 socketCoerce,
-            out Quaternion socketRotation)
-        {
-            var neighbourNormal = GetNormal(neighbour.Corners);
-            var extrusionDirection = Vector3.Lerp(normal, neighbourNormal, 0.5f).Normalized();
-
-            var sharedPoints = GetSharedPoints(node.Corners, neighbour.Corners);
-            var centroid = GetCentroid(sharedPoints);
-            
-            var to = centroid + extrusionFactor * extrusionDirection;
-            var forward = centroid + extrusionFactor * normal - pivot;            
-            sideDirection = to - pivot;
-
-            var edgeAxis = sharedPoints[1] - sharedPoints[0];
-            edgeAxis.Normalize();
-
-            var socketDirection = Vector3.Cross(edgeAxis, extrusionDirection);
-            socketDirection.Normalize();
-
-            // Rough but ok...
-            if (Vector3.Dot(socketDirection, sideDirection) < 0)
-            {
-                socketDirection = -socketDirection;
-            }
-
-            var normalRotation = Mathematics.GetRotation(forward, socketDirection);
-            normal = Vector3.Transform(normal, normalRotation).Normalized();
-
-            socketRotation = Mathematics.GetRotation(socketOffset, socketDirection);
-            var unwinding = GetUnwinding(socketDirection, socketRotation, normal);
-            var withoutUnwinding = socketRotation; // for debug            
-
-            var socketTransform = Matrix4.CreateTranslation(socketOffset);
-            socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
-            socketCoerce = -socketTransform.ExtractTranslation();
-            socketRotation = unwinding * socketRotation;
-
-            //var a0 = to;
-            //var b0 = a0 + Vector3.Transform(Vector3.UnitY * 2, withoutUnwinding);
-
-            //var line0 = Engine.Line(a0, b0, Colors.Green);
-            //line0.Get<LineRenderComponent>()!.Width = 2;
-
-            //var a1 = to;
-            //var b1 = a1 + Vector3.Transform(Vector3.UnitY * 2, socketRotation);
-
-            //var line1 = Engine.Line(a1, b1, Colors.Green);
-            //line1.Get<LineRenderComponent>()!.Width = 2;
-        }
-
-        public static void GetPipeEndingDeformations(
-            Vector3 centroid,
-            Vector3 pivot,
-            Vector3 normal,
-            Vector3 socketOffset,
-            out Vector3 sideDirection,
-            out Vector3 socketCoerce,
-            out Quaternion socketRotation)
-        {
-            sideDirection = centroid - pivot;
-            socketRotation = Mathematics.GetRotation(socketOffset, sideDirection);
-            var unwinding = GetUnwinding(sideDirection, socketRotation, normal);
-            var withoutUnwinding = socketRotation; // for debug           
-
-            var socketTransform = Matrix4.CreateTranslation(socketOffset);
-            socketTransform *= Matrix4.CreateFromQuaternion(socketRotation);
-            socketCoerce = -socketTransform.ExtractTranslation();
-            socketRotation = unwinding * socketRotation;
-
-            //var a0 = centroid;
-            //var b0 = a0 + Vector3.Transform(yAxis * 2, withoutUnwinding);
-
-            //var line0 = Engine.Line(a0, b0, Colors.Green);
-            //line0.Get<LineRenderComponent>()!.Width = 2;
-
-            //var a1 = centroid;
-            //var b1 = a1 + Vector3.Transform(yAxis * 2, socketRotation);
-
-            //var line1 = Engine.Line(a1, b1, Colors.Red);
-            //line1.Get<LineRenderComponent>()!.Width = 2;
-        }
-
-        public static Quaternion GetUnwinding(
-            Vector3 sideDirection,
-            Quaternion socketRotation,
-            Vector3 normal)
-        {
-            var yAxis = Vector3.UnitY;
-            var axis = sideDirection.Normalized();
-            var up = Vector3.Transform(yAxis, socketRotation);
-            var unwinding = GetRotation(axis, up, normal);
-
-            var epsilon = 0.01f;
-            var unwindedUp = Vector3.Transform(up, unwinding);
-            var normalUpAngle = Vector3.Dot(unwindedUp, normal);
-
-            // GetRotation return always positive value.
-            // We invert unwinding rotation if we should use negative angle.
-            if (!MathHelper.ApproximatelyEqualEpsilon(normalUpAngle, 1.0f, epsilon))
-            {
-                unwinding.Invert();
-            }
-
-            var socketRotationWithUnwinding = unwinding * socketRotation;
-            var upWithUnwinding = Vector3.Transform(yAxis, socketRotationWithUnwinding);
-            var angle = Vector3.Dot(upWithUnwinding.Normalized(), normal);
-
-            // Fix not correct rotation for 90 degrees between up and normal case.
-            if (MathHelper.ApproximatelyEqualEpsilon(angle, -1.0f, epsilon))
-            {
-                unwinding *= Quaternion.FromAxisAngle(axis, MathF.PI);
-            }
-
-            return unwinding;
-        }
-
-        public static Quaternion GetRotation(Vector3 axis, Vector3 from, Vector3 to)
-        {
-            from.Normalize();
-            to.Normalize();
-
-            if (Mathematics.ApproximatelyEqualEpsilon(from, to, float.Epsilon))
-            {
-                return Quaternion.Identity;
-            }
-            if (Mathematics.ApproximatelyEqualEpsilon(from, -to, float.Epsilon))
-            {
-                return Quaternion.FromAxisAngle(axis, MathF.PI);
-            }
-
-            float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
-            float angle = MathF.Acos(cosa);
-            return Quaternion.FromAxisAngle(axis, angle);
-        }
-
-        public static Vector3 GetCentroid(IReadOnlyList<Vector3> points)
-        {
-            return points.Aggregate((p1, p2) => p1 + p2) / points.Count;
-        }
-
-        public static List<Vector3> GetSharedPoints(IEnumerable<Vector3> poly1, IEnumerable<Vector3> poly2)
-        {
-            var sharedPoints = new List<Vector3>();
-            var epsilon = 0.01f; // Just great enough;
-
-            foreach (var a in poly1)
-            {
-                foreach (var b in poly2)
-                {
-                    if (Mathematics.ApproximatelyEqualEpsilon(a, b, epsilon))
-                    {
-                        sharedPoints.Add(a);
-                    }
-                }
-            }
-
-            return sharedPoints;
-        }
-
-        //public static void GenerateDetails(Engine engine, Topology topology, List<Cell> cells, int size)
-        //{
-        //    foreach (var cell in cells)
-        //    {
-        //        BuildNet(engine, topology, cell, PipesColor, size);
-        //        BuildNet(engine, topology, cell, WireColor, size);
-        //        BuildNet(engine, topology, cell, VentilationColor, size);
-        //    }
-        //}
-
-        public static Vector3 GetPoint(Topology topology, Vector2 uv, int size)
-        {
-            foreach (var node in topology)
-            {
-                Vertex a = node.Face[0];
-                Vertex b = node.Face[1];
-                Vertex c = node.Face[2];
-
-                Vector2 barycentric = GetBarycentric(
-                    a.TextureCoords * size, 
-                    b.TextureCoords * size, 
-                    c.TextureCoords * size, 
-                    uv);
-                
-                float u = barycentric.X;
-                float v = barycentric.Y;
-
-                // Face contain this uv
-                if (u >= 0 && v >= 0 && u + v <= 1)
-                {
-                    Vector3 point = (1 - u - v) * a.Position + v * b.Position + u * c.Position;
-                    return point;
-                }
-            }
-
-            throw new ArgumentException();            
-        }
-
-        public static Vector2 GetBarycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 p)
-        {
-            Vector2 v0 = c - a;
-            Vector2 v1 = b - a;
-            Vector2 v2 = p - a;
-
-            float dot00 = Vector2.Dot(v0, v0);
-            float dot01 = Vector2.Dot(v0, v1);
-            float dot02 = Vector2.Dot(v0, v2);
-            float dot11 = Vector2.Dot(v1, v1);
-            float dot12 = Vector2.Dot(v1, v2);
-
-            float inverseDenominator = 1.0f / (dot00 * dot11 - dot01 * dot01);
-            float u = (dot11 * dot02 - dot01 * dot12) * inverseDenominator;
-            float v = (dot00 * dot12 - dot01 * dot02) * inverseDenominator;
-
-            return new Vector2(u, v);
-        }
-
-        //public static void BuildNet(Engine engine, Topology topology, Cell cell, Color color, int size)
-        //{
-        //    if (!cell.Rules[0].Logical.Enumerate().Any(c => c.IsSame(color)))
-        //    {
-        //        return;
-        //    }
-
-        //    var scaleFactor = 2.2f;
-        //    var scale = new Vector3(scaleFactor);            
-        //    var rule = cell.Rules[0];
-
-        //    var centroidUV = cell.Aggregate((p1, p2) => p1 + p2) / 4;
-        //    var centroid = GetPoint(topology, centroidUV, size);
-        //    float step = 0.1f;
-
-        //    for (int i = 0; i < 4; i++)
-        //    {
-        //        var side = rule[i];
-
-        //        if (side[1].IsSame(color) && side[2].IsSame(color))
-        //        {                    
-        //            var uv = (cell[i] + cell.GetCircular(i + 1)) / 2;
-        //            uv += (centroidUV - uv).Normalized(); // Move inside face;
-        //            var edgePoint = GetPoint(topology, uv, size);
-        //            var direction = centroid - edgePoint;
-        //            var length = direction.Length;
-        //            direction.Normalize();
-
-        //            var rotation = Mathematics.GetRotation(Vector3.UnitY, direction);
-
-        //            for (float offset = 0; offset < length; offset += step)
-        //            {
-        //                var position = edgePoint + direction * offset + cell.Normal * 0.3f;
-        //                InstantiateRing(engine, position, rotation, scale, color);
-        //            }                    
-        //        }
-        //    }
-
-        //    //InstantiateCube(engine, centroid, rotation, scale, color);
-        //}
-
-        public static GameObject InstantiateCube(
-            Engine engine, 
-            Vector3 position, 
-            Quaternion rotation, 
-            Vector3 scale,
-            Color color)
-        {
-            var cube = engine.CreateCube(position, Quaternion.Identity, scale);
-            var renderer = cube.Get<MaterialRenderComponent>();
-            renderer!.Material.Color = RgbaToVector3(color);
-            cube.Rotation = rotation;
-            return cube;
-        }
-
-        public static GameObject InstantiateSphere(
-            Engine engine,
-            Vector3 position,
-            Quaternion rotation,
-            Vector3 scale,
-            Color color)
-        {
-            var cube = engine.CreateSphere(position, scale);
-            var renderer = cube.Get<MaterialRenderComponent>();
-            renderer!.Material.Color = RgbaToVector3(color);
-            cube.Rotation = rotation;
-            return cube;
-        }
-
-        public static GameObject InstantiateRing(
-            Engine engine,
-            Vector3 position,
-            Quaternion rotation,
-            Vector3 scale,
-            Color color)
-        {
-            var ring = engine.CreateGameObject();
-            var renderer = ring.Add<MaterialRenderComponent>();
-            renderer!.Model = RingModel;
-            renderer!.Material.Color = RgbaToVector3(color);
-            ring.Position = position;
-            ring.Rotation = rotation;
-            ring.Scale = scale;
-            return ring;
-        }
-
-        public static GameObject InstantiatePipe(Engine engine, Vector3 position, Quaternion rotation)
-        {
-            var pipe = engine.CreateGameObject();
-            var renderer = pipe.Add<SkeletalMeshRenderComponent>();
-            //renderer.Model = Model.Load("Content/Models/PipeSegment.fbx");
-            renderer.Model = Model.Load("Content/Models/CurvePipe.fbx");
-            pipe.Position = position;
-            pipe.Rotation = rotation;
-            return pipe;
-        }
-
-        public static Vector3 RgbaToVector3(Color color)
-        {
-            return new Vector3((float)color.R / 255, (float)color.G / 255, (float)color.B / 255);
         }
 
         public static bool IsAllColorsSameInWindow(Color[,] rule, int x, int y, int size, Color color)
@@ -1025,14 +423,18 @@ namespace TriangulatedTopology
             Console.WriteLine(seed);
             CollectionsHelper.UseSeed(seed);
 
-            //CollectionsHelper.UseSeed(1628667546);
+            //CollectionsHelper.UseSeed(1628667546);1176043099
             //CollectionsHelper.UseSeed(1145917631);
             //CollectionsHelper.UseSeed(56224625);
             //CollectionsHelper.UseSeed(935418399);
             //CollectionsHelper.UseSeed(1310155548);
+            //CollectionsHelper.UseSeed(887817102);
+            //CollectionsHelper.UseSeed(1902612879); 
+            //CollectionsHelper.UseSeed(113611668); // Провод на лестнице
+            //CollectionsHelper.UseSeed(580746622);2117749366
+            //CollectionsHelper.UseSeed(2117749366);
 
             using var engine = new Engine();
-            Engine = engine;
 
             var operatorGo = engine.CreateGameObject();
             operatorGo.Add<Operator3DComponent>();
@@ -1070,10 +472,19 @@ namespace TriangulatedTopology
                 DetailedResolution);
 
             var cells = IslandsToCells(islands);
-            Wfc.GraphWfc(cells, wallRules, floorRules, ceilRules);
-            var nets = ExtractNets(topology, cells, size);
+            WfcGenerator.GraphWfc(cells, wallRules, floorRules, ceilRules);
+
+            float extrusion = 0.05f;
+
+            var propsGenerator = new PropsGenerator()
+                .PushCellAlgorithm(new PanelsGeneratorAlgorithm(extrusion))
+                .PushNetAlgorithm(new WiresGeneratorAlgorithm(extrusion))
+                .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
+                .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
+            propsGenerator.Generate(engine, topology, cells, size);
+
+            //var nets = ExtractNets(topology, cells, size);
             //VisualizeNets(engine, nets);
-            VisualizePipes(engine, nets);
             //GenerateDetails(engine, topology, cells, size);
 
             var texture = TextureCreator.CreateDetailedTexture(cells, size, step);

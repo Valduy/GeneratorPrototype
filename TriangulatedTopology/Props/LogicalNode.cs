@@ -1,21 +1,25 @@
 ﻿using OpenTK.Mathematics;
-using System.Drawing;
+using TextureUtils;
 
-namespace TriangulatedTopology.Geometry
+namespace TriangulatedTopology.Props
 {
     public class LogicalNode
     {
         private List<Vector3> _corners;
         private List<bool> _connections;
 
-        public readonly Color Color;
+        public readonly Rule Rule;
 
         public IReadOnlyList<Vector3> Corners => _corners;
         public IReadOnlyList<bool> Connections => _connections;
 
-        public LogicalNode(IEnumerable<Vector3> corners, Color color, IEnumerable<bool> connections)
+        public LogicalNode(IEnumerable<Vector3> corners, Rule rule) :
+            this(corners, rule, Enumerable.Empty<bool>())
+        { }
+
+        public LogicalNode(IEnumerable<Vector3> corners, Rule rule, IEnumerable<bool> connections)
         {
-            Color = color;
+            Rule = rule;
             _corners = new List<Vector3>(corners);
             _connections = new List<bool>(connections);
         }

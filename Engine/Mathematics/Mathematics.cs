@@ -276,17 +276,133 @@ namespace GameEngine.Mathematics
             return new Vector2(vector3d.X, vector3d.Y);
         }
 
+        public static Vector2 GetCentroid(IReadOnlyList<Vector2> points)
+        {
+            return points.Aggregate((p1, p2) => p1 + p2) / points.Count;
+        }
+
+        public static Vector3 GetCentroid(IReadOnlyList<Vector3> points)
+        {
+            return points.Aggregate((p1, p2) => p1 + p2) / points.Count;
+        }
+
+        public static Vector3 GetNormal(IReadOnlyList<Vector3> face)
+        {
+            var a = Vector3.Normalize(face[0] - face[1]);
+            var b = Vector3.Normalize(face[2] - face[1]);
+            return Vector3.Cross(a, b).Normalized();
+        }
+
+        public static List<Vector3> GetSharedPoints(IEnumerable<Vector3> poly1, IEnumerable<Vector3> poly2, float epsilon)
+        {
+            var sharedPoints = new List<Vector3>();
+
+            foreach (var a in poly1)
+            {
+                foreach (var b in poly2)
+                {
+                    if (ApproximatelyEqualEpsilon(a, b, epsilon))
+                    {
+                        sharedPoints.Add(a);
+                    }
+                }
+            }
+
+            return sharedPoints;
+        }
+
+        public static bool TryGetIntersactionPoint(
+            Vector3 r1,
+            Vector3 e1,
+            Vector3 r2,
+            Vector3 e2,
+            float epsilon,
+            out Vector3 p)
+        {
+            float distance = float.PositiveInfinity;
+            var n = Vector3.Cross(e1, e2);
+            p = Vector3.Zero;
+
+            if (ApproximatelyEqualEpsilon(n, Vector3.Zero, epsilon))
+            {
+                return false;
+            }
+
+            distance = MathF.Abs(Vector3.Dot(n, r1 - r2)) / n.Length;
+
+            if (distance > epsilon)
+            {
+                return false;
+            }
+
+            var squareN = Vector3.Dot(n, n);
+            var direction = r2 - r1;
+
+            var t1 = Vector3.Dot(Vector3.Cross(e2, n), direction) / squareN;
+            var t2 = Vector3.Dot(Vector3.Cross(e1, n), direction) / squareN;
+
+            var p1 = r1 + t1 * e1;
+            var p2 = r2 + t2 * e2;
+
+            p = (p1 + p2) / 2;
+            return true;
+        }
+
+        public static bool IsPointLieOnLine(Vector3 r, Vector3 e, Vector3 p, float epsilon)
+        {
+            var distacne = DistanceToLine(r, e, p);
+
+            if (ApproximatelyEqualEpsilon(distacne, 0.0f, epsilon))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static float DistanceToLine(Vector3 r, Vector3 e, Vector3 p)
+        {
+            var toPoint = p - r;
+            var projection = (Vector3.Dot(toPoint, e) * e) / e.LengthSquared;
+            var perpendicular = toPoint - projection;
+            return perpendicular.Length;
+        }
+
+        public static Vector2 GetBarycentric(Vector2 a, Vector2 b, Vector2 c, Vector2 p)
+        {
+            Vector2 v0 = c - a;
+            Vector2 v1 = b - a;
+            Vector2 v2 = p - a;
+
+            float dot00 = Vector2.Dot(v0, v0);
+            float dot01 = Vector2.Dot(v0, v1);
+            float dot02 = Vector2.Dot(v0, v2);
+            float dot11 = Vector2.Dot(v1, v1);
+            float dot12 = Vector2.Dot(v1, v2);
+
+            float inverseDenominator = 1.0f / (dot00 * dot11 - dot01 * dot01);
+            float u = (dot11 * dot02 - dot01 * dot12) * inverseDenominator;
+            float v = (dot00 * dot12 - dot01 * dot02) * inverseDenominator;
+
+            return new Vector2(u, v);
+        }
+
+        public static bool ApproximatelyEqualEpsilon(float a, float b, float epsilon)
+        {
+            return MathF.Abs(a - b) <= epsilon;
+        }
+
         public static bool ApproximatelyEqualEpsilon(Vector2 a, Vector2 b, float epsilon)
         {
-            return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon) 
-                && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
+            return ApproximatelyEqualEpsilon(a.X, b.X, epsilon) 
+                && ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon);
         }
 
         public static bool ApproximatelyEqualEpsilon(Vector3 a, Vector3 b, float epsilon)
         {
-            return MathHelper.ApproximatelyEqualEpsilon(a.X, b.X, epsilon)
-                && MathHelper.ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon)
-                && MathHelper.ApproximatelyEqualEpsilon(a.Z, b.Z, epsilon);
+            return ApproximatelyEqualEpsilon(a.X, b.X, epsilon)
+                && ApproximatelyEqualEpsilon(a.Y, b.Y, epsilon)
+                && ApproximatelyEqualEpsilon(a.Z, b.Z, epsilon);
         }
 
         public static bool IsBoundingBoxesIntersects(
@@ -297,7 +413,7 @@ namespace GameEngine.Mathematics
                 && Math.Abs(position1.Y - position2.Y) * 2 < (height1 + height2);
         }
 
-        public static Quaternion GetRotation(Vector3 from, Vector3 to)
+        public static Quaternion FromToRotation(Vector3 from, Vector3 to)
         {
             from.Normalize();
             to.Normalize();
@@ -313,6 +429,25 @@ namespace GameEngine.Mathematics
 
             float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
             var axis = Vector3.Cross(from, to);
+            float angle = MathF.Acos(cosa);
+            return Quaternion.FromAxisAngle(axis, angle);
+        }
+
+        public static Quaternion FromToRotation(Vector3 axis, Vector3 from, Vector3 to)
+        {
+            from.Normalize();
+            to.Normalize();
+
+            if (Mathematics.ApproximatelyEqualEpsilon(from, to, float.Epsilon))
+            {
+                return Quaternion.Identity;
+            }
+            if (Mathematics.ApproximatelyEqualEpsilon(from, -to, float.Epsilon))
+            {
+                return Quaternion.FromAxisAngle(axis, MathF.PI);
+            }
+
+            float cosa = MathHelper.Clamp(Vector3.Dot(from, to), -1, 1);
             float angle = MathF.Acos(cosa);
             return Quaternion.FromAxisAngle(axis, angle);
         }

@@ -72,7 +72,7 @@ namespace Pipes.Utils
                 else
                 {
                     var to = new Vector3(direction).Normalized();
-                    ringGo.Rotation = Mathematics.GetRotation(Vector3.UnitY, to);
+                    ringGo.Rotation = Mathematics.FromToRotation(Vector3.UnitY, to);
                 }
             }
         }
