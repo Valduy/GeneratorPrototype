@@ -5,9 +5,12 @@ using GameEngine.Helpers;
 using GameEngine.Mathematics;
 using Graph;
 using OpenTK.Mathematics;
+using System.Collections.Generic;
 using System.Drawing;
 using TextureUtils;
 using TriangulatedTopology.Helpers;
+using Material = GameEngine.Graphics.Material;
+using Quaternion = OpenTK.Mathematics.Quaternion;
 
 namespace TriangulatedTopology.Props.Algorithms
 {
@@ -66,15 +69,200 @@ namespace TriangulatedTopology.Props.Algorithms
 
         public void ProcessNet(Engine engine, Net<LogicalNode> net)
         {
-            var models = GenerateWiresModels(engine, net);
+            float extrusion = 0.095f;
+            float radius = extrusion;
+            float distanceBetweenLines = 2 * radius;
+            int resolution = 32;
+            int linesCount = 3;
 
-            foreach (var model in models)
+            var nodes = net.ToList();
+            var (pointsLines, joints) = GetPoints(nodes, extrusion, radius, distanceBetweenLines, linesCount);
+
+            foreach (var line in pointsLines)
             {
+                var model = MeshGenerator.GenerateTubeFromSpline(line, resolution, radius);
+
                 var go = engine.CreateGameObject();
-                var renderer = go.Add<MaterialRenderComponent>();
-                renderer.Model = model;
-                renderer.Material = WireMaterial;
+                var render = go.Add<MaterialRenderComponent>();
+                render.Model = model;
+                render.Material = WireMaterial;
             }
+
+            var middleLine = pointsLines[pointsLines.Count / 2];
+            var first = middleLine[0];
+            var last = middleLine[middleLine.Count - 1];
+
+            PlaceSupports(engine, joints);
+
+            if (MathHelper.ApproximatelyEqualEpsilon(Vector3.Dot(first.Forward, Vector3.UnitY), 0.0f, 0.01f))
+            {
+                InstantiateMonitor(
+                    engine, 
+                    first.Position + (ZeroLevel + extrusion * 2) * first.Forward, 
+                    Mathematics.FromToRotation(Vector3.UnitZ, first.Forward));
+            }
+            else
+            {
+                InstantiateSource(
+                    engine, 
+                    first.Position + ZeroLevel * first.Forward, 
+                    Mathematics.FromToRotation(Vector3.UnitZ, -first.Up));
+            }
+
+            if (MathHelper.ApproximatelyEqualEpsilon(Vector3.Dot(-last.Forward, Vector3.UnitY), 0.0f, 0.01f))
+            {
+                InstantiateMonitor(
+                    engine,
+                    last.Position - (ZeroLevel + extrusion * 2) * last.Forward,
+                    Mathematics.FromToRotation(Vector3.UnitZ, -last.Forward));
+            }
+            else
+            {
+                InstantiateSource(
+                    engine, 
+                    last.Position - ZeroLevel * last.Forward, 
+                    Mathematics.FromToRotation(Vector3.UnitZ, -last.Up));
+            }
+        }
+
+        private (List<List<SplineVertex>> Points, List<SplineVertex> Joints) GetPoints(
+            List<LogicalNode> nodes,
+            float extrusion,
+            float radius,            
+            float distanceBetweenLines,
+            int linesCount)
+        {
+            var joints = new List<SplineVertex>();
+            var pointsLines = new List<List<SplineVertex>>();            
+            var segmentsLines = new List<List<List<SplineVertex>>>();
+            int resolution = 10;
+            int half = linesCount / 2;
+
+            for (int line = 0; line < linesCount; line++)
+            {
+                pointsLines.Add(new List<SplineVertex>());
+                segmentsLines.Add(new List<List<SplineVertex>>());
+            }
+
+            for (int i = 1; i < nodes.Count; i++)
+            {
+                var prev = nodes[i - 1];
+                var next = nodes[i];
+
+                var jointPoints = SplinesGenerationHelper.CreatePointsAroundJoint(
+                    prev, next, ZeroLevel, extrusion, radius, distanceBetweenLines, resolution, linesCount);
+
+                for (int line = 0; line < linesCount; line++)
+                {
+                    segmentsLines[line].Add(jointPoints[line]);
+                }
+
+                var middlePoints = jointPoints[jointPoints.Count / 2];
+                var prevNormal = Mathematics.GetNormal(prev.Corners);
+                var nextNormal = Mathematics.GetNormal(next.Corners);
+                var cosa = Math.Clamp(Vector3.Dot(prevNormal, nextNormal), -1, 1);
+                var acos = MathF.Acos(cosa);
+
+                if (acos < MathHelper.PiOver3)
+                {
+                    joints.Add(middlePoints[middlePoints.Count / 2]);
+                }            
+            }
+
+            var beginPoints = SplinesGenerationHelper.CreateBegin(
+                nodes[0], nodes[1], ZeroLevel, extrusion, radius, distanceBetweenLines, resolution, linesCount);
+
+            for (int line = 0; line < linesCount; line++)
+            {
+                pointsLines[line].AddRange(beginPoints[line]);
+            }
+
+            for (int line = 0; line < linesCount; line++)
+            {
+                var segments = segmentsLines[line];
+                var points = pointsLines[line];
+
+                for (int i = 1; i < segments.Count; i++)
+                {
+                    var prev = segments[i - 1];
+                    var next = segments[i];
+
+                    var inner = CreateInnerPoints(prev[prev.Count - 1], next[0], resolution);
+                    points.AddRange(prev.Concat(inner));
+
+                    if (line == half)
+                    {
+                        var prevForward = inner[0].Forward;
+                        var nextForward = inner[1].Forward;
+                        var cosa = Math.Clamp(Vector3.Dot(prevForward, nextForward), -1, 1);
+                        var acos = MathF.Acos(cosa);
+
+                        if (acos < MathHelper.PiOver3)
+                        {
+                            joints.Add(inner[inner.Count / 2]);
+                        }
+                    }
+                }
+
+                points.AddRange(segments[segments.Count - 1]);
+            }
+
+            var endPoints = SplinesGenerationHelper.CreateEnd(
+                nodes[nodes.Count - 2], nodes[nodes.Count - 1], ZeroLevel, extrusion, radius, distanceBetweenLines, resolution, linesCount);
+
+            for (int line = 0; line < linesCount; line++)
+            {
+                pointsLines[line].AddRange(endPoints[line]);
+            }
+
+            return (pointsLines, joints);
+        }
+
+        private static List<SplineVertex> CreateInnerPoints(SplineVertex p1, SplineVertex p2, int resolution)
+        {
+            float epsilon = 0.1f;
+            var points = new List<SplineVertex>();
+            var t1 = 2.0f * p1.Forward;
+            var t2 = 2.0f * p2.Forward;
+
+            if (Mathematics.TryGetIntersactionPoint(p1.Position, p1.Forward, p2.Position, p2.Forward, epsilon, out var p))
+            {
+                t1 = 2.0f * (p - p1.Position);
+                t2 = 2.0f * (p2.Position - p);
+            }
+
+            for (int i = 0; i <= resolution; i++)
+            {
+                float t = (float)i / resolution;
+                var position = Curves.Hermite(p1.Position, p2.Position, t1, t2, t);
+                var normal = Vector3.Normalize(Vector3.Lerp(p1.Up, p2.Up, t));
+                var direction = Vector3.Normalize(Vector3.Lerp(p1.Forward, p2.Forward, t));
+                points.Add(new SplineVertex(position, normal, direction));
+            }
+
+            return points;
+        }
+
+        private static List<SplineVertex> CreateInnerPoints(
+            SplineVertex p0,
+            SplineVertex p1,
+            SplineVertex p2,
+            SplineVertex p3,
+            int resolution)
+        {
+            float alpha = 1.0f;
+            var points = new List<SplineVertex>();
+
+            for (int i = 0; i <= resolution; i++)
+            {
+                float t = (float)i / resolution;
+                var position = Curves.CatmullRom(p0.Position, p1.Position, p2.Position, p3.Position, t, alpha);
+                var normal = Vector3.Normalize(Vector3.Lerp(p1.Up, p2.Up, t));
+                var direction = Vector3.Normalize(Vector3.Lerp(p1.Forward, p2.Forward, t));
+                points.Add(new SplineVertex(position, normal, direction));
+            }
+
+            return points;
         }
 
         private List<Model> GenerateWiresModels(Engine engine, Net<LogicalNode> net)
@@ -382,7 +570,7 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static void PlaceSupports(Engine engine, List<SplineVertex> points)
         {
-            for (int i = 1; i < points.Count - 1; i += 1)
+            for (int i = 0; i < points.Count; i += 1)
             {
                 if (IsSplineVertexLieOnFloor(points[i]))
                 {

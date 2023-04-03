@@ -418,10 +418,10 @@ namespace TriangulatedTopology
 
         public static void Main(string[] args)
         {
-            var random = new Random();
-            int seed = random.Next();
-            Console.WriteLine(seed);
-            CollectionsHelper.UseSeed(seed);
+            //var random = new Random();
+            //int seed = random.Next();
+            //Console.WriteLine(seed);
+            //CollectionsHelper.UseSeed(seed);
 
             //CollectionsHelper.UseSeed(1628667546);1176043099
             //CollectionsHelper.UseSeed(1145917631);
@@ -431,6 +431,8 @@ namespace TriangulatedTopology
             //CollectionsHelper.UseSeed(887817102);
             //CollectionsHelper.UseSeed(1902612879); 
             //CollectionsHelper.UseSeed(113611668); // Провод на лестнице
+            //CollectionsHelper.UseSeed(580746622);2117749366
+            CollectionsHelper.UseSeed(2117749366);
 
             using var engine = new Engine();
 

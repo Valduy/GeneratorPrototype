@@ -113,7 +113,8 @@ namespace TriangulatedTopology.Props.Algorithms
                 var prev = nodes[i - 1];
                 var next = nodes[i];
 
-                var jointPoints = CreatePipePointsAroundJoint(prev, next, extrusion, radius, resolution);
+                var jointPoints = SplinesGenerationHelper.CreatePointsAroundJoint(
+                    prev, next, ZeroLevel, extrusion, radius, resolution);
                 segments.Add(jointPoints);                
 
                 var prevNormal = Mathematics.GetNormal(prev.Corners);
@@ -127,7 +128,8 @@ namespace TriangulatedTopology.Props.Algorithms
                 }
             }
 
-            points.AddRange(CreatePipeBegin(nodes[0], nodes[1], extrusion, radius, resolution));
+            points.AddRange(SplinesGenerationHelper.CreateBegin(
+                nodes[0], nodes[1], ZeroLevel, extrusion, radius, resolution));
 
             for (int i = 1; i < segments.Count; i++)
             {
@@ -144,149 +146,9 @@ namespace TriangulatedTopology.Props.Algorithms
             }
 
             points.AddRange(segments[segments.Count - 1]);
-            points.AddRange(CreatePipeEnd(nodes[nodes.Count - 2], nodes[nodes.Count - 1], extrusion, radius, resolution));
+            points.AddRange(SplinesGenerationHelper.CreateEnd(
+                nodes[nodes.Count - 2], nodes[nodes.Count - 1], ZeroLevel, extrusion, radius, resolution));
             return (points, joints);
-        }
-
-        private List<SplineVertex> CreatePipePointsAroundJoint(
-            LogicalNode prev,
-            LogicalNode next,
-            float extrusion,
-            float radius,
-            int resolution)
-        {
-            float epsilon = 0.01f;
-            var points = new List<SplineVertex>();
-
-            var prevNormal = Mathematics.GetNormal(prev.Corners);
-            var nextNormal = Mathematics.GetNormal(next.Corners);
-            var blendedNormal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, 0.5f));
-
-            var prevPivot = Mathematics.GetCentroid(prev.Corners);
-            var nextPivot = Mathematics.GetCentroid(next.Corners);
-
-            var sharedPoints = Mathematics.GetSharedPoints(prev.Corners, next.Corners, epsilon);
-            var joint = Mathematics.GetCentroid(sharedPoints);
-
-            var prevDirection = Vector3.Normalize(joint - prevPivot);
-            var nextDirection = Vector3.Normalize(nextPivot - joint);
-            var blendedDirection = Vector3.Normalize(Vector3.Lerp(prevDirection, nextDirection, 0.5f));
-
-            var prevP1 = prevPivot + (ZeroLevel + extrusion) * prevNormal;
-            var prevP2 = joint + (ZeroLevel + extrusion) * prevNormal;
-            var e1 = prevP2 - prevP1;
-
-            var nextP1 = nextPivot + (ZeroLevel + extrusion) * nextNormal;
-            var nextP2 = joint + (ZeroLevel + extrusion) * nextNormal;
-            var e2 = nextP2 - nextP1;
-
-            if (Mathematics.TryGetIntersactionPoint(prevP1, e1, nextP1, e2, epsilon, out var p))
-            {
-                var cosa = Math.Clamp(Vector3.Dot(prevDirection, nextDirection), -1.0f, 1.0f);
-                var acos = MathF.Acos(cosa);
-                var b = MathF.PI - acos;
-                var offset = MathF.Abs(radius / MathF.Tan(b / 2));
-
-                var prevP = p - offset * prevDirection;
-                var nextP = p + offset * nextDirection;
-
-                if (!Mathematics.TryGetIntersactionPoint(prevP, prevNormal, nextP, nextNormal, epsilon, out var rotationPivot))
-                {
-                    throw new ArgumentException("Something damn happened.");
-                }
-
-                var sign = MathF.Sign(Vector3.Dot(p - rotationPivot, blendedNormal));
-
-                for (int i = 0; i <= resolution; i++)
-                {
-                    var t = (float)i / resolution;
-                    var normal = Vector3.Normalize(Vector3.Lerp(prevNormal, nextNormal, t));
-                    var position = rotationPivot + sign * radius * normal;
-                    var direction = Vector3.Normalize(Vector3.Lerp(prevDirection, nextDirection, t));
-                    points.Add(new SplineVertex(position, normal, direction));
-                }
-            }
-            else
-            {
-                points.Add(new SplineVertex(joint + (ZeroLevel + extrusion) * blendedNormal, blendedNormal, blendedDirection));
-            }
-
-            return points;
-        }
-
-        private List<SplineVertex> CreatePipeBegin(
-            LogicalNode begin,
-            LogicalNode next,
-            float extrusion,
-            float radius,
-            int resolution)
-        {
-            float epsilon = 0.01f;
-
-            var points = new List<SplineVertex>();
-
-            var beginNormal = Mathematics.GetNormal(begin.Corners);
-
-            var pivot = Mathematics.GetCentroid(begin.Corners);
-
-            var sharedPoints = Mathematics.GetSharedPoints(begin.Corners, next.Corners, epsilon);
-            var joint = Mathematics.GetCentroid(sharedPoints);
-
-            var fromPivotDirection = beginNormal;
-            var toJointDirection = Vector3.Normalize(joint - pivot);
-
-            var p = pivot + (ZeroLevel + extrusion) * beginNormal;
-            var rotationPivot = p - radius * fromPivotDirection + radius * toJointDirection;
-
-            points.Add(new SplineVertex(pivot + ZeroLevel * beginNormal, -toJointDirection, fromPivotDirection));
-
-            for (int i = 0; i <= resolution; i++)
-            {
-                float t = (float)i / resolution;
-                var normal = Vector3.Normalize(Vector3.Lerp(-toJointDirection, beginNormal, t));
-                var direction = Vector3.Normalize(Vector3.Lerp(fromPivotDirection, toJointDirection, t));
-                var position = rotationPivot + radius * normal;
-                points.Add(new SplineVertex(position, normal, direction));
-            }
-
-            return points;
-        }
-
-        private List<SplineVertex> CreatePipeEnd(
-            LogicalNode prev,
-            LogicalNode end,
-            float extrusion,
-            float radius,
-            int resolution)
-        {
-            float epsilon = 0.01f;
-
-            var points = new List<SplineVertex>();
-
-            var endNormal = Mathematics.GetNormal(end.Corners);
-
-            var pivot = Mathematics.GetCentroid(end.Corners);
-
-            var sharedPoints = Mathematics.GetSharedPoints(prev.Corners, end.Corners, epsilon);
-            var joint = Mathematics.GetCentroid(sharedPoints);
-
-            var fromJointDirection = Vector3.Normalize(pivot - joint);
-            var toPivotDirection = -endNormal;
-
-            var p = pivot + (ZeroLevel + extrusion) * endNormal;
-            var rotationPivot = p + radius * toPivotDirection - radius * fromJointDirection;
-
-            for (int i = 0; i <= resolution; i++)
-            {
-                float t = (float)i / resolution;
-                var normal = Vector3.Normalize(Vector3.Lerp(endNormal, fromJointDirection, t));
-                var direction = Vector3.Normalize(Vector3.Lerp(fromJointDirection, toPivotDirection, t));
-                var position = rotationPivot + radius * normal;
-                points.Add(new SplineVertex(position, normal, direction));
-            }
-
-            points.Add(new SplineVertex(pivot + ZeroLevel * endNormal, fromJointDirection, toPivotDirection));
-            return points;
         }
 
         private static List<SplineVertex> CreatePipeInnerPoints(SplineVertex p1, SplineVertex p2, int resolution)
