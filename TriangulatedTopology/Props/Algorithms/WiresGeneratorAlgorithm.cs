@@ -268,23 +268,19 @@ namespace TriangulatedTopology.Props.Algorithms
             if (angle >= Trashold)
             {
                 var monitorPosition = position + (2 * radius + monitorAdjustment) * normal;
-                var monitorRotation = Quaternion.Identity;
-
-                if (Mathematics.ApproximatelyEqualEpsilon(normal, -Vector3.UnitZ, epsilon))
-                {
-                    monitorRotation = Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.Pi);
-                }
-                else
-                {
-                    monitorRotation = Mathematics.FromToRotation(Vector3.UnitZ, normal);
-                }
+                var monitorRotation = Mathematics.ApproximatelyEqualEpsilon(normal, -Vector3.UnitZ, epsilon)
+                    ? Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.Pi)
+                    : Mathematics.FromToRotation(Vector3.UnitZ, normal);
 
                 InstantiateMonitor(engine, monitorPosition, monitorRotation);
             }
             else
             {
                 var sourcePosition = position + radius * normal;
-                var sourceRotation = Mathematics.FromToRotation(Vector3.UnitZ, direction);
+                var sourceRotation = Mathematics.ApproximatelyEqualEpsilon(direction, -Vector3.UnitZ, epsilon)
+                    ? Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.Pi)
+                    : Mathematics.FromToRotation(Vector3.UnitZ, direction);
+
                 InstantiateSource(engine, sourcePosition, sourceRotation);
             }
         }
