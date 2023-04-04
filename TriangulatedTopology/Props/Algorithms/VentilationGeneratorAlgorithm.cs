@@ -3,10 +3,8 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Mathematics;
-using GameEngine.Utils;
 using Graph;
 using OpenTK.Mathematics;
-using System.Collections.Generic;
 using System.Drawing;
 using TextureUtils;
 using TriangulatedTopology.Helpers;
@@ -133,8 +131,6 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static void InstantiateJoints(Engine engine, List<SplineVertex> points, List<SplineVertex> joints)
         {
-            float epsilon = 0.01f;
-
             var first = points[0];
             var last = points[points.Count - 1];
 
@@ -144,27 +140,11 @@ namespace TriangulatedTopology.Props.Algorithms
             foreach (var joint in joints)
             {
                 var position = joint.Position;
+                var normal = joint.Up;
                 var direction = joint.Forward;
 
-                var forwardRotation = Quaternion.Identity;
-                var backwardRotation = Quaternion.Identity;
-
-                forwardRotation = Mathematics.FromToRotation(Vector3.UnitY, direction);
-                forwardRotation *= Mathematics.FromToRotation(Vector3.UnitX, joint.Up);
-
-                if (Mathematics.ApproximatelyEqualEpsilon(MathF.Abs(Vector3.Dot(direction, Vector3.UnitY)), 1.0f, epsilon))
-                {
-                    var axis = Vector3.Transform(Vector3.UnitX, forwardRotation);
-                    backwardRotation = Quaternion.FromAxisAngle(axis, MathHelper.Pi) * forwardRotation;
-                }
-                else
-                {
-                    backwardRotation = Mathematics.FromToRotation(Vector3.UnitY, -direction);
-                    backwardRotation *= Mathematics.FromToRotation(Vector3.UnitX, joint.Up);
-                }
-
-                InstantiateVentilationJoint(engine, position, forwardRotation);
-                InstantiateVentilationJoint(engine, position, backwardRotation);
+                InstantiateVentilationJoint(engine, position, normal, direction);
+                InstantiateVentilationJoint(engine, position, normal, -direction);
             }
         }
 
@@ -177,12 +157,36 @@ namespace TriangulatedTopology.Props.Algorithms
             float epsilon = 0.01f;
 
             var rotation = Mathematics.FromToRotation(Vector3.UnitY, normal);
-            var right = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));
-            var axis = Vector3.Cross(right, direction);
-
-            if (!Mathematics.ApproximatelyEqualEpsilon(right, -direction, epsilon))
+            var xAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));
+            
+            if (!Mathematics.ApproximatelyEqualEpsilon(xAxis, -direction, epsilon))
             {
-                rotation = Mathematics.FromToRotation(axis, right, direction) * rotation;
+                var rotationAxis = Vector3.Cross(xAxis, direction);
+                rotation = Mathematics.FromToRotation(rotationAxis, xAxis, direction) * rotation;
+            }
+
+            InstantiateVentilationJoint(engine, position, rotation);
+        }
+
+        private static void InstantiateVentilationJoint(
+            Engine engine,
+            Vector3 position,
+            Vector3 normal,
+            Vector3 direction)
+        {
+            float epsilon = 0.01f;
+
+            var right = Vector3.Cross(normal, direction);
+            var rotation = Mathematics.ApproximatelyEqualEpsilon(Vector3.UnitY, -direction, epsilon)
+                ? Quaternion.FromAxisAngle(right, MathHelper.Pi)
+                : Mathematics.FromToRotation(Vector3.UnitY, direction);
+
+            var xAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));            
+
+            if (!Mathematics.ApproximatelyEqualEpsilon(xAxis, -normal, epsilon))
+            {
+                var rotationAxis = Vector3.Cross(xAxis, normal);
+                rotation = Mathematics.FromToRotation(rotationAxis, xAxis, normal) * rotation;
             }
 
             InstantiateVentilationJoint(engine, position, rotation);
