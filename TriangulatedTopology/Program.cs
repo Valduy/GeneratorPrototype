@@ -442,8 +442,8 @@ namespace TriangulatedTopology
             operatorGo.Add<LightComponent>();
             operatorGo.Position = new Vector3(0, 0, 0);
 
-            //var model = Model.Load("Content/Models/TriangulatedTower.obj");
-            var model = Model.Load("Content/Models/Cube12x12.obj");
+            var model = Model.Load("Content/Models/TriangulatedTower.obj");
+            //var model = Model.Load("Content/Models/Cube12x12.obj");
 
             int size = 2048;
             int step = 32;

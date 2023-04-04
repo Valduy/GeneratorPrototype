@@ -218,6 +218,8 @@ namespace TriangulatedTopology.Props.Algorithms
 
         private static void PlaceSupports(Engine engine, List<SplineVertex> points)
         {
+            float epsilon = 0.01f;
+
             for (int i = 0; i < points.Count; i += 1)
             {
                 if (IsSplineVertexLieOnFloor(points[i]))
@@ -227,7 +229,12 @@ namespace TriangulatedTopology.Props.Algorithms
 
                 var rotation = Mathematics.FromToRotation(Vector3.UnitY, points[i].Up);
                 var forward = Vector3.Transform(Vector3.UnitZ, rotation);
-                rotation = Mathematics.FromToRotation(forward, points[i].Forward) * rotation;
+
+                if (!Mathematics.ApproximatelyEqualEpsilon(forward, -points[i].Forward, epsilon))
+                {
+                    rotation = Mathematics.FromToRotation(forward, points[i].Forward) * rotation;
+                }
+                
                 InstantiateWireSupport(engine, points[i].Position, rotation);
             }
         }
