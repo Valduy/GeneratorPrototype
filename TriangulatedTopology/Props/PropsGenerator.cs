@@ -1,16 +1,14 @@
 ﻿using GameEngine.Components;
 using GameEngine.Core;
 using GameEngine.Graphics;
-using GameEngine.Helpers;
 using GameEngine.Mathematics;
 using Graph;
 using MeshTopology;
 using OpenTK.Mathematics;
 using System.Drawing;
-using TextureUtils;
 using TriangulatedTopology.Helpers;
+using TriangulatedTopology.LevelGraph;
 using TriangulatedTopology.Props.Algorithms;
-using TriangulatedTopology.TextureIsland;
 
 namespace TriangulatedTopology.Props
 {

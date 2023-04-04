@@ -3,7 +3,7 @@ using GameEngine.Helpers;
 using MeshTopology;
 using OpenTK.Mathematics;
 
-namespace TriangulatedTopology.TextureIsland
+namespace TriangulatedTopology.LevelGraph.TextureIsland
 {
     // Island scheme:
     //   1   <----   0

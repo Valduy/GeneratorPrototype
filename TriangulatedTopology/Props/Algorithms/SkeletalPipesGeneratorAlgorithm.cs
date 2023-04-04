@@ -7,6 +7,7 @@ using Graph;
 using OpenTK.Mathematics;
 using System.Drawing;
 using TextureUtils;
+using TriangulatedTopology.LevelGraph;
 
 namespace TriangulatedTopology.Props.Algorithms
 {

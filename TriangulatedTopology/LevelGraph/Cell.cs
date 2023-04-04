@@ -3,7 +3,7 @@ using System.Collections;
 using TextureUtils;
 using TriangulatedTopology.RulesAdapters;
 
-namespace TriangulatedTopology
+namespace TriangulatedTopology.LevelGraph
 {
     public class NeighbourData
     {

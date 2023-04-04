@@ -2,7 +2,7 @@
 using MeshTopology;
 using System.Collections;
 
-namespace TriangulatedTopology.TextureIsland
+namespace TriangulatedTopology.LevelGraph.TextureIsland
 {
     public class Side : IReadOnlyList<Edge>
     {

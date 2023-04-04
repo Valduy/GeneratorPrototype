@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using TextureUtils;
 using TriangulatedTopology.Helpers;
+using TriangulatedTopology.LevelGraph;
 using Material = GameEngine.Graphics.Material;
 using Quaternion = OpenTK.Mathematics.Quaternion;
 

@@ -2,6 +2,7 @@
 using MeshTopology;
 using System.Drawing;
 using TextureUtils;
+using TriangulatedTopology.LevelGraph;
 
 namespace TriangulatedTopology.DebugUtils
 {

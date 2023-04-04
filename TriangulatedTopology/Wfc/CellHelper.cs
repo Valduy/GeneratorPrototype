@@ -1,4 +1,6 @@
-﻿namespace TriangulatedTopology.Wfc
+﻿using TriangulatedTopology.LevelGraph;
+
+namespace TriangulatedTopology.Wfc
 {
     public static class CellHepler
     {
