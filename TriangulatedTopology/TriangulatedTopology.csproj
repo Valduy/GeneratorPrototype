@@ -11,26 +11,16 @@
     <ProjectReference Include="..\Engine\GameEngine.csproj" />
     <ProjectReference Include="..\Graph\Net.csproj" />
     <ProjectReference Include="..\MeshTopology\MeshTopology.csproj" />
+    <ProjectReference Include="..\SciFiAlgorithms\SciFiAlgorithms.csproj" />
     <ProjectReference Include="..\TextureUtils\TextureUtils.csproj" />
+    <ProjectReference Include="..\UVWfc\UVWfc.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Content\CeilDetailed.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\CeilLogical.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Content\Corner.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Corner.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\FloorDetailed.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\FloorLogical.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\HorizontalLogical.png">
@@ -93,19 +83,10 @@
     <None Update="Content\Models\Cube8x8.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Models\CurvePipe.fbx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Content\Models\Line.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Models\Line.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Models\Monitor.fbx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Models\PipeSegment.fbx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Models\Ring.mtl">
@@ -126,18 +107,6 @@
     <None Update="Content\Models\Scene.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Models\PipeSupport.fbx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Models\Source.fbx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Models\VentilationJoint.fbx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Models\WireSupport.fbx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Content\Models\Tower.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -148,9 +117,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Models\TriangulatedTower.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Models\Wire.fbx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Room.mtl">
@@ -165,9 +131,6 @@
     <None Update="Content\Scene.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Textures\Monitor.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Content\Tower.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -178,12 +141,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\VerticalLogical.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\WallDetailed.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\WallLogical.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

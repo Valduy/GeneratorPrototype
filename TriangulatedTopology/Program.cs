@@ -6,10 +6,11 @@ using GameEngine.Utils;
 using MeshTopology;
 using TextureUtils;
 using Vector3 = OpenTK.Mathematics.Vector3;
-using TriangulatedTopology.Wfc;
-using TriangulatedTopology.Props;
-using TriangulatedTopology.Props.Algorithms;
-using TriangulatedTopology.LevelGraph;
+using UVWfc.Wfc;
+using UVWfc.Props;
+using UVWfc.LevelGraph;
+using UVWfc.Textures;
+using SciFiAlgorithms;
 
 namespace TriangulatedTopology
 {
@@ -47,20 +48,20 @@ namespace TriangulatedTopology
             roomRenderer.Model = model;
 
             var wallRules = RulesLoader.CreateRules(
-                "Content/WallLogical.png",
-                "Content/WallDetailed.png",
+                "Content/Rules/WallLogical.png",
+                "Content/Rules/WallDetailed.png",
                 LogicalResolution,
                 DetailedResolution);
 
             var floorRules = RulesLoader.CreateRules(
-                "Content/FloorLogical.png",
-                "Content/FloorDetailed.png",
+                "Content/Rules/FloorLogical.png",
+                "Content/Rules/FloorDetailed.png",
                 LogicalResolution,
                 DetailedResolution);
 
             var ceilRules = RulesLoader.CreateRules(
-                "Content/CeilLogical.png",
-                "Content/CeilDetailed.png",
+                "Content/Rules/CeilLogical.png",
+                "Content/Rules/CeilDetailed.png",
                 LogicalResolution,
                 DetailedResolution);
 
