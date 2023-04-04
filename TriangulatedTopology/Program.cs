@@ -36,7 +36,6 @@ namespace TriangulatedTopology
             operatorGo.Position = new Vector3(0, 0, 0);
 
             var model = Model.Load("Content/Models/TriangulatedTower.obj");
-            //var model = Model.Load("Content/Models/Cube12x12.obj");
 
             int textureSize = 2048;
             int cellSize = 32;
