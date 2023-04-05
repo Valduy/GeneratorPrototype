@@ -12,7 +12,7 @@ using UVWfc.Props;
 using UVWfc.Textures;
 using UVWfc.Wfc;
 
-namespace TowerDemo
+namespace CubeDemo
 {
     public class Program
     {
@@ -32,7 +32,7 @@ namespace TowerDemo
 
             //CollectionsHelper.UseSeed(584469435);
 
-            var model = Model.Load("Content/Models/TriangulatedTower.obj");            
+            var model = Model.Load("Content/Models/Cube12x12.obj");
             var topology = new Topology(model.Meshes[0], 3);
 
             var wallRules = RulesLoader.CreateRules(
@@ -68,7 +68,7 @@ namespace TowerDemo
                 .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
                 .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
             propsGenerator.Generate(engine, topology, cells, textureSize);
-            
+
             var operatorGo = engine.CreateGameObject();
             operatorGo.Add<Operator3DComponent>();
             operatorGo.Add<LightComponent>();

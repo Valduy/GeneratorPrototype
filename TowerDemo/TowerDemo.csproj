@@ -7,4 +7,18 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SciFiAlgorithms\SciFiAlgorithms.csproj" />
+    <ProjectReference Include="..\UVWfc\UVWfc.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Content\Models\TriangulatedTower.mtl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Models\TriangulatedTower.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
