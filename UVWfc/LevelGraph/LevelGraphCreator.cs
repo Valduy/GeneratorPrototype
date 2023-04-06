@@ -101,7 +101,8 @@ namespace UVWfc.LevelGraph
 
                 foreach (var other in edges)
                 {
-                    if (other.A == temp.B)
+                    if (other.A.Position == temp.B.Position &&
+                        other.A.TextureCoords == temp.B.TextureCoords)
                     {
                         temp = other;
                         break;

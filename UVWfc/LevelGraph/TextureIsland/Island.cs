@@ -180,7 +180,8 @@ namespace UVWfc.LevelGraph.TextureIsland
                 var prev = side[i];
                 var next = side[i + 1];
 
-                if (prev.B != next.A)
+                if (prev.B.Position != next.A.Position &&
+                    prev.B.TextureCoords != next.A.TextureCoords)
                 {
                     return false;
                 }
@@ -196,7 +197,11 @@ namespace UVWfc.LevelGraph.TextureIsland
                 var prev = sides.GetCircular(i);
                 var next = sides.GetCircular(i + 1);
 
-                if (prev.Last().B != next.First().A)
+                var prevLastVertex = prev.Last().B;
+                var nextFirstVertex = next.First().A;
+
+                if (prevLastVertex.Position != nextFirstVertex.Position ||
+                    prevLastVertex.TextureCoords != nextFirstVertex.TextureCoords)
                 {
                     return false;
                 }
