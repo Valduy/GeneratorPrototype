@@ -11,35 +11,17 @@ namespace SciFiAlgorithms
 {
     public class PanelsGeneratorAlgorithm : ICellAlgorithm
     {
-        private const float FloorTrashold = 45.0f;
-        private const float CeilTrashold = 45.0f;
-
         public readonly float Extrusion;
+        public readonly Func<LogicalNode, Material> MaterialSelector;
 
-        private Material WallMaterial = new Material
-        {
-            Color = new Vector3(0.714f, 0.4284f, 0.18144f),
-            Ambient = 0.15f,
-            Specular = 0.25f,
-            Shininess = 25.6f,
-        };
-
-        private Material FloorMaterial = new Material
-        {
-            Color = new Vector3(0.4f, 0.4f, 0.4f),
-            Ambient = 0.25f,
-            Specular = 0.774597f,
-            Shininess = 76.8f,
-        };
-
-        public PanelsGeneratorAlgorithm(float extrusion)
+        public PanelsGeneratorAlgorithm(float extrusion, Func<LogicalNode, Material> materialSelector)
         {
             Extrusion = extrusion;
+            MaterialSelector = materialSelector;
         }
 
         public bool ProcessCell(Engine engine, LogicalNode node)
         {
-            // padding wnutri
             float padding = 0.1f;
 
             var centroid = Mathematics.GetCentroid(node.Corners);
@@ -95,37 +77,9 @@ namespace SciFiAlgorithms
             var go = engine.CreateGameObject();
             var renderer = go.Add<MaterialRenderComponent>();
             renderer.Model = model;
-
-            var cosa = Vector3.Dot(Vector3.UnitY, normal);
-            var acos = MathF.Acos(cosa);
-            var angle = MathHelper.RadiansToDegrees(acos);
-
-            if (IsFloor(normal) || IsCeil(normal))
-            {
-                renderer.Material = FloorMaterial;
-            }
-            else
-            {
-                renderer.Material = WallMaterial;
-            }
+            renderer.Material = MaterialSelector(node);
 
             return true;
-        }
-
-        private static bool IsFloor(Vector3 normal)
-        {
-            var cosa = Vector3.Dot(Vector3.UnitY, normal);
-            var acos = MathF.Acos(cosa);
-            var angle = MathHelper.RadiansToDegrees(acos);
-            return angle < FloorTrashold;
-        }
-
-        private static bool IsCeil(Vector3 normal)
-        {
-            var cosa = Vector3.Dot(-Vector3.UnitY, normal);
-            var acos = MathF.Acos(cosa);
-            var angle = MathHelper.RadiansToDegrees(acos);
-            return angle < CeilTrashold;
         }
     }
 }

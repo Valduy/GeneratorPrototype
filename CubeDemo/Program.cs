@@ -2,6 +2,7 @@
 using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
+using GameEngine.Mathematics;
 using GameEngine.Utils;
 using MeshTopology;
 using OpenTK.Mathematics;
@@ -18,6 +19,53 @@ namespace CubeDemo
     {
         public const int LogicalResolution = 4;
         public const int DetailedResolution = 20;
+
+        private const float CeilTrashold = 45.0f;
+        private const float FloorTrashold = 45.0f;
+
+        private static Material WallMaterial = new Material
+        {
+            Color = new Vector3(0.714f, 0.4284f, 0.18144f),
+            Ambient = 0.15f,
+            Specular = 0.25f,
+            Shininess = 25.6f,
+        };
+
+        private static Material FloorMaterial = new Material
+        {
+            Color = new Vector3(0.4f, 0.4f, 0.4f),
+            Ambient = 0.25f,
+            Specular = 0.774597f,
+            Shininess = 76.8f,
+        };
+
+        private static bool IsCeil(Vector3 normal)
+        {
+            var cosa = Vector3.Dot(-Vector3.UnitY, normal);
+            var acos = MathF.Acos(cosa);
+            var angle = MathHelper.RadiansToDegrees(acos);
+            return angle < CeilTrashold;
+        }
+
+        private static bool IsFloor(Vector3 normal)
+        {
+            var cosa = Vector3.Dot(Vector3.UnitY, normal);
+            var acos = MathF.Acos(cosa);
+            var angle = MathHelper.RadiansToDegrees(acos);
+            return angle < FloorTrashold;
+        }
+
+        private static Material SelectPanelMaterial(LogicalNode node)
+        {
+            var normal = Mathematics.GetNormal(node.Corners);
+
+            if (IsCeil(normal) || IsFloor(normal))
+            {
+                return FloorMaterial;
+            }
+
+            return WallMaterial;
+        }
 
         public static void Main(string[] args)
         {
@@ -63,7 +111,7 @@ namespace CubeDemo
             using var engine = new Engine();
 
             var propsGenerator = new PropsGenerator()
-                .PushCellAlgorithm(new PanelsGeneratorAlgorithm(extrusion))
+                .PushCellAlgorithm(new PanelsGeneratorAlgorithm(extrusion, SelectPanelMaterial))
                 .PushNetAlgorithm(new WiresGeneratorAlgorithm(extrusion))
                 .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
                 .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
