@@ -131,7 +131,7 @@ namespace UVWfc.Wfc
                 var maxCell = cells.First();
                 int maxPossibilities = maxCell.Rules.Count;
 
-                int collapsed = 0;
+                //int collapsed = 0;
 
                 foreach (var cell in cells)
                 {
@@ -141,13 +141,13 @@ namespace UVWfc.Wfc
                         maxPossibilities = maxCell.Rules.Count;
                     }
 
-                    if (cell.Rules.Count == 1)
-                    {
-                        collapsed += 1;
-                    }
+                    //if (cell.Rules.Count == 1)
+                    //{
+                    //    collapsed += 1;
+                    //}
                 }
 
-                Console.WriteLine(collapsed);
+                //Console.WriteLine(collapsed);
 
                 if (maxPossibilities <= 1)
                 {

@@ -38,6 +38,14 @@ namespace ReactorDemo
             Shininess = 76.8f,
         };
 
+        private static Material ModelMaterial = new Material
+        {
+            Color = new Vector3(0.01f, 0.01f, 0.01f),
+            Ambient = 0.02f,
+            Specular = 0.4f,
+            Shininess = 32.0f,
+        };
+
         private static bool IsCeil(Vector3 normal)
         {
             var cosa = Vector3.Dot(-Vector3.UnitY, normal);
@@ -116,7 +124,7 @@ namespace ReactorDemo
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
             roomRenderer.Model = model;
-            roomRenderer.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);
+            roomRenderer.Material = ModelMaterial;
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);

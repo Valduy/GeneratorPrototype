@@ -12,7 +12,12 @@ using UVWfc.Wfc;
 
 namespace UVWfcBenchmark
 {
-    public class PerformanceBenchmark
+    public interface IBenchmark
+    {
+        public void Run();
+    }
+
+    public class PerformanceBenchmark : IBenchmark
     {
         private Engine _engine;
         private Topology _topology;
@@ -41,7 +46,7 @@ namespace UVWfcBenchmark
             _floorRules = floorRules;
             _ceilRules = ceilRules;
             _textureSize = textureSize;
-        }
+        }      
 
         public void Run()
         {
@@ -107,7 +112,7 @@ namespace UVWfcBenchmark
             float extrusion = 0.05f;
             int textureSize = 2048;
             int cellSize = 32;
-            var model = Model.Load("Content/Models/Cube16x16.obj");
+            var model = Model.Load("Content/Models/Cube20x20.obj");
 
             var wallRules = RulesLoader.CreateRules(
                 "Content/Rules/WallLogical.png",
@@ -137,26 +142,34 @@ namespace UVWfcBenchmark
             var topology = new Topology(model.Meshes[0], 3);
             var cells = LevelGraphCreator.CreateGraph(topology, LogicalResolution, textureSize, cellSize);
 
-            int countOfMeasurements = 100;
+            int countOfMeasurements = 1000;
             long total = 0;
             var timer = new Stopwatch();
-            
+
             for (int i = 0; i < countOfMeasurements; i++)
             {
                 using var engine = new Engine();
                 var benchmark = new PerformanceBenchmark(
-                    engine, topology, propsGenerator, cells, wallRules, floorRules, ceilRules, textureSize);
+                    engine, 
+                    topology, 
+                    propsGenerator, 
+                    cells, 
+                    wallRules, 
+                    floorRules, 
+                    ceilRules, 
+                    textureSize);
 
                 timer.Reset();
                 timer.Start();
                 benchmark.Run();
                 timer.Stop();
 
-                total += timer.Elapsed.Milliseconds;
+                total += timer.ElapsedMilliseconds;
+                Console.WriteLine($"Measurement {i} : {timer.ElapsedMilliseconds}");
             }
 
             Console.WriteLine($"Total: {total}");
-            Console.WriteLine($"Average: {(float)total / countOfMeasurements}");
+            Console.WriteLine($"Average: {total / countOfMeasurements}");
         }
     }
 }

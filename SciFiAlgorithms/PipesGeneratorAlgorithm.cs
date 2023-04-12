@@ -151,37 +151,65 @@ namespace SciFiAlgorithms
 
         private static void InstantiateJoints(Engine engine, List<SplineVertex> points, List<SplineVertex> joints)
         {
-            {
-                var first = points[0];
-                var rotation = Mathematics.FromToRotation(Vector3.UnitY, first.Forward);
-                InstantiatePipeJoint(engine, first.Position, rotation);
-            }
+            var first = points[0];
+            var last = points[points.Count - 1];
 
-            {
-                var last = points[points.Count - 1];
-                var rotation = Mathematics.FromToRotation(Vector3.UnitY, -last.Forward);
-                InstantiatePipeJoint(engine, last.Position, rotation);
-            }
+            InstantiatePipeEnding(engine, first.Position, first.Forward, -first.Up);
+            InstantiatePipeEnding(engine, last.Position, -last.Forward, -last.Up);
 
             foreach (var joint in joints)
             {
-                InstantiateDualPipeJoints(engine, joint.Up, joint.Position, joint.Forward);
+                var position = joint.Position;
+                var normal = joint.Up;
+                var direction = joint.Forward;
+
+                InstantiatePipeJoint(engine, position, normal, direction);
+                InstantiatePipeJoint(engine, position, normal, -direction);
             }
         }
 
-        private static void InstantiateDualPipeJoints(Engine engine, Vector3 axis, Vector3 position, Vector3 direction)
+        private static void InstantiatePipeEnding(
+            Engine engine,
+            Vector3 position,
+            Vector3 normal,
+            Vector3 direction)
         {
             float epsilon = 0.01f;
 
-            if (Mathematics.ApproximatelyEqualEpsilon(MathF.Abs(Vector3.Dot(axis, Vector3.UnitY)), 1.0f, epsilon))
+            var rotation = Mathematics.FromToRotation(Vector3.UnitY, normal);
+            var xAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));
+
+            if (!Mathematics.ApproximatelyEqualEpsilon(xAxis, -direction, epsilon))
             {
-                axis = Vector3.Normalize(Vector3.Cross(axis, direction));
+                var rotationAxis = Vector3.Cross(xAxis, direction);
+                rotation = Mathematics.FromToRotation(rotationAxis, xAxis, direction) * rotation;
             }
 
-            var forwardRotation = Mathematics.FromToRotation(axis, Vector3.UnitY, direction);
-            var backwardRotation = Quaternion.FromAxisAngle(axis, MathF.PI) * forwardRotation;
-            InstantiatePipeJoint(engine, position, forwardRotation);
-            InstantiatePipeJoint(engine, position, backwardRotation);
+            InstantiatePipeJoint(engine, position, rotation);
+        }
+
+        private static void InstantiatePipeJoint(
+            Engine engine,
+            Vector3 position,
+            Vector3 normal,
+            Vector3 direction)
+        {
+            float epsilon = 0.01f;
+
+            var right = Vector3.Cross(normal, direction);
+            var rotation = Mathematics.ApproximatelyEqualEpsilon(Vector3.UnitY, -direction, epsilon)
+                ? Quaternion.FromAxisAngle(right, MathHelper.Pi)
+                : Mathematics.FromToRotation(Vector3.UnitY, direction);
+
+            var xAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));
+
+            if (!Mathematics.ApproximatelyEqualEpsilon(xAxis, -normal, epsilon))
+            {
+                var rotationAxis = Vector3.Cross(xAxis, normal);
+                rotation = Mathematics.FromToRotation(rotationAxis, xAxis, normal) * rotation;
+            }
+
+            InstantiatePipeJoint(engine, position, rotation);
         }
 
         private static GameObject InstantiatePipeJoint(Engine engine, Vector3 position, Quaternion rotation)

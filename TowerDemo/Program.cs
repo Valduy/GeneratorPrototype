@@ -39,6 +39,14 @@ namespace TowerDemo
             Shininess = 76.8f,
         };
 
+        private static Material ModelMaterial = new Material
+        {
+            Color = new Vector3(0.01f, 0.01f, 0.01f),
+            Ambient = 0.02f,
+            Specular = 0.4f,
+            Shininess = 32.0f,
+        };
+
         private static bool IsCeil(Vector3 normal)
         {
             var cosa = Vector3.Dot(-Vector3.UnitY, normal);
@@ -116,16 +124,20 @@ namespace TowerDemo
                 .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
                 .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
             propsGenerator.Generate(engine, topology, cells, textureSize);
-            
+
+            //engine.Camera.Yaw = -60.0f;
+            //engine.Camera.Pitch = -65.0f;
+
             var operatorGo = engine.CreateGameObject();
-            operatorGo.Add<Operator3DComponent>();
+            var operatorComponent = operatorGo.Add<Operator3DComponent>();
             operatorGo.Add<LightComponent>();
-            operatorGo.Position = new Vector3(0, 0, 0);
+            //operatorGo.Position = new Vector3(-3.5f, 14.0f, 3.5f);
+            //operatorComponent.Sensitivity = 0.0f;
 
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
             roomRenderer.Model = model;
-            roomRenderer.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);
+            roomRenderer.Material = ModelMaterial;
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);

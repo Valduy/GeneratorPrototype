@@ -32,12 +32,14 @@ namespace SciFiAlgorithms
             var nextDirection = Vector3.Normalize(nextPivot - joint);
 
             var prevP1 = prevPivot + finalExtrusion * prevNormal;
-            var prevP2 = joint + finalExtrusion * prevNormal;
-            var e1 = prevP2 - prevP1;
+            //var prevP2 = joint + finalExtrusion * prevNormal;
+            //var e1 = prevP2 - prevP1;
+            var e1 = prevDirection;
 
             var nextP1 = nextPivot + finalExtrusion * nextNormal;
-            var nextP2 = joint + finalExtrusion * nextNormal;
-            var e2 = nextP2 - nextP1;
+            //var nextP2 = joint + finalExtrusion * nextNormal;
+            //var e2 = nextP2 - nextP1;
+            var e2 = nextDirection;
 
             if (Mathematics.TryGetIntersactionPoint(prevP1, e1, nextP1, e2, epsilon, out var intersactionPoint))
             {
