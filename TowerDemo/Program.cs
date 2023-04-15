@@ -129,15 +129,16 @@ namespace TowerDemo
             //engine.Camera.Pitch = -65.0f;
 
             var operatorGo = engine.CreateGameObject();
-            var operatorComponent = operatorGo.Add<Operator3DComponent>();
-            operatorGo.Add<LightComponent>();
             //operatorGo.Position = new Vector3(-3.5f, 14.0f, 3.5f);
+            operatorGo.Add<LightComponent>();            
+            var operatorComponent = operatorGo.Add<Operator3DComponent>();
             //operatorComponent.Sensitivity = 0.0f;
 
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
             roomRenderer.Model = model;
             roomRenderer.Material = ModelMaterial;
+            //roomRenderer.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);

@@ -19,56 +19,22 @@ namespace UVWfc.Wfc
         {
             var forRecalculation = new List<Cell>();
 
-            //var defaultRule = rules[33];
-
-            //foreach (var cell in cells)
-            //{
-            //    cell.Rules.Clear();
-
-            //    if (cell.Neighbours.All(n => n != null))
-            //    {                   
-            //        cell.Rules.AddRange(rules);
-            //    }
-            //    else
-            //    {
-            //        cell.Rules.Add(defaultRule);
-            //        cell.Define();
-            //    }
-            //}
-
-            //foreach (var c in cells)
-            //{
-            //    c.Rules.Clear();
-            //    c.Rules.AddRange(SelectRuleSet(c, wallRules, floorRules, ceilRules));
-
-            //    if (c.Rules.Count == 1)
-            //    {
-            //        c.Define();
-            //    }
-            //}
-
-            //foreach (var cell in cells.Where(c => c.IsDefined()))
-            //{
-            //    forRecalculation.AddRange(SelectNeighbourCellsForRecalculation(cell));
-            //}
-
-            foreach (var c in cells.Where(c => !c.IsDefined()))
+            foreach (var c in cells)
             {
                 c.Rules.Clear();
                 c.Rules.AddRange(SelectRuleSet(c, wallRules, floorRules, ceilRules));
             }
 
-            // If there is no defined tiles we choose tile randomly.
-            if (!forRecalculation.Any())
             {
                 var initial = cells.GetRandom();
-
                 var rule = initial.Rules.GetRandom();
                 initial.Rules.Clear();
                 initial.Rules.Add(rule);
 
                 forRecalculation.AddRange(SelectNeighbourCellsForRecalculation(initial));
             }
+
+            // TODO: Fire observation
 
             while (true)
             {
@@ -88,7 +54,9 @@ namespace UVWfc.Wfc
 
                         if (failes >= trashold)
                         {
-                            foreach (var c in cells.Where(c => !c.IsDefined()))
+                            // TODO: Fire deadlock event
+
+                            foreach (var c in cells)
                             {
                                 c.Rules.Clear();
                                 c.Rules.AddRange(SelectRuleSet(c, wallRules, floorRules, ceilRules));
@@ -103,11 +71,8 @@ namespace UVWfc.Wfc
 
                         foreach (var neighbour in cell.Neighbours)
                         {
-                            if (neighbour != null && !neighbour.Cell.IsDefined())
-                            {
-                                neighbour.Cell.Rules.Clear();
-                                neighbour.Cell.Rules.AddRange(SelectRuleSet(neighbour.Cell, wallRules, floorRules, ceilRules));
-                            }
+                            neighbour!.Cell.Rules.Clear();
+                            neighbour.Cell.Rules.AddRange(SelectRuleSet(neighbour.Cell, wallRules, floorRules, ceilRules));
                         }
 
                         continue;
@@ -117,10 +82,7 @@ namespace UVWfc.Wfc
                     {
                         foreach (var neighbour in cell.Neighbours)
                         {
-                            if (neighbour != null && !neighbour.Cell.IsDefined())
-                            {
-                                forRecalculation.Add(neighbour.Cell);
-                            }
+                            forRecalculation.Add(neighbour!.Cell);
                         }
 
                         cell.Rules.Clear();
@@ -131,8 +93,6 @@ namespace UVWfc.Wfc
                 var maxCell = cells.First();
                 int maxPossibilities = maxCell.Rules.Count;
 
-                //int collapsed = 0;
-
                 foreach (var cell in cells)
                 {
                     if (cell.Rules.Count > maxPossibilities)
@@ -140,15 +100,8 @@ namespace UVWfc.Wfc
                         maxCell = cell;
                         maxPossibilities = maxCell.Rules.Count;
                     }
-
-                    //if (cell.Rules.Count == 1)
-                    //{
-                    //    collapsed += 1;
-                    //}
                 }
-
-                //Console.WriteLine(collapsed);
-
+                
                 if (maxPossibilities <= 1)
                 {
                     break;
@@ -157,15 +110,15 @@ namespace UVWfc.Wfc
                 var rule = maxCell.Rules.GetRandom();
                 maxCell.Rules.Clear();
                 maxCell.Rules.Add(rule);
-
                 forRecalculation.AddRange(SelectNeighbourCellsForRecalculation(maxCell));
+                // TODO: Fire observation
             }
         }
 
         private static IEnumerable<Cell> SelectNeighbourCellsForRecalculation(Cell cell)
         {
             return cell.Neighbours
-                .Where(nd => nd != null && !nd.Cell.IsDefined())
+                .Where(nd => nd != null)
                 .Select(nd => nd!.Cell);
         }
 
@@ -192,45 +145,43 @@ namespace UVWfc.Wfc
             return wallRules;
         }
 
-        private static IEnumerable<Vector2i> GetNeighboursCross<T>(T[,] matrix, Vector2i coords, int padding = 0)
-        {
-            if (coords.Y > padding)
-            {
-                yield return new Vector2i(coords.X, coords.Y - 1);
-            }
-            if (coords.X > padding)
-            {
-                yield return new Vector2i(coords.X - 1, coords.Y);
-            }
-            if (coords.Y < matrix.GetLength(1) - 1 - padding)
-            {
-                yield return new Vector2i(coords.X, coords.Y + 1);
-            }
-            if (coords.X < matrix.GetLength(0) - 1 - padding)
-            {
-                yield return new Vector2i(coords.X + 1, coords.Y);
-            }
-        }
-
         private static List<Rule> FilterPossible(Cell cell)
             => cell.Rules.Where(r => IsPossible(r, cell)).ToList();
 
         private static bool IsPossible(Rule rule, Cell cell)
         {
-            for (int neighbourIndex = 0; neighbourIndex < cell.Neighbours.Length; neighbourIndex++)
+            for (int neighbourIndexInCell = 0; neighbourIndexInCell < cell.Neighbours.Length; neighbourIndexInCell++)
             {
-                var neighbour = cell.Neighbours[neighbourIndex];
+                var neighbour = cell.Neighbours[neighbourIndexInCell];
 
                 if (neighbour == null)
                 {
                     continue;
                 }
 
-                var rules = neighbour.Cell.Rules;
-                var adapter = neighbour.Adapter;
-                var nodeIndex = (neighbourIndex + 2) % 4;
+                var neighbourRules = neighbour.Cell.Rules;
+                var neighbourAdapter = neighbour.Adapter;
+                var cellIndexInNeighbour = (neighbourIndexInCell + 2) % 4;
+                var cellSide = rule[neighbourIndexInCell];
 
-                if (rules.All(r => !IsSame(adapter.GetSide(r, nodeIndex), rule[neighbourIndex])))
+                bool isPossible = false;
+
+                foreach (var neighbourRule in neighbourRules)
+                {
+                    var neighbourSide = neighbourAdapter.GetSide(neighbourRule, cellIndexInNeighbour);
+
+                    // If any rule in neighbour has same color sheme
+                    // => current rule is posible for this neighbour.
+                    if (IsSame(neighbourSide, cellSide))
+                    {
+                        isPossible = true;
+                        break;
+                    }
+                }
+
+                // If this rule inpossible for any neighbour
+                // => this rule inpossible in principle.
+                if (!isPossible)
                 {
                     return false;
                 }
@@ -239,7 +190,7 @@ namespace UVWfc.Wfc
             return true;
         }
 
-        public static bool IsSame(Color[] lhs, Color[] rhs)
+        private static bool IsSame(Color[] lhs, Color[] rhs)
         {
             if (lhs.Length != rhs.Length)
             {

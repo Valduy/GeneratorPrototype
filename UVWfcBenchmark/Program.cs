@@ -1,60 +1,14 @@
-﻿using GameEngine.Core;
-using GameEngine.Graphics;
+﻿using GameEngine.Graphics;
 using GameEngine.Mathematics;
 using MeshTopology;
 using OpenTK.Mathematics;
 using SciFiAlgorithms;
-using System.Diagnostics;
 using TextureUtils;
 using UVWfc.LevelGraph;
 using UVWfc.Props;
-using UVWfc.Wfc;
 
 namespace UVWfcBenchmark
 {
-    public interface IBenchmark
-    {
-        public void Run();
-    }
-
-    public class PerformanceBenchmark : IBenchmark
-    {
-        private Engine _engine;
-        private Topology _topology;
-        private PropsGenerator _propsGenerator;
-        private List<Cell> _cells;
-        private List<Rule> _wallRules;
-        private List<Rule> _floorRules;
-        private List<Rule> _ceilRules;
-        private int _textureSize;
-
-        public PerformanceBenchmark(
-            Engine engine,
-            Topology topology,
-            PropsGenerator propsGenerator,
-            List<Cell> cells,
-            List<Rule> wallRules,
-            List<Rule> floorRules,
-            List<Rule> ceilRules,
-            int textureSize)
-        {
-            _engine = engine;
-            _topology = topology;
-            _propsGenerator = propsGenerator;
-            _cells = cells;
-            _wallRules = wallRules;
-            _floorRules = floorRules;
-            _ceilRules = ceilRules;
-            _textureSize = textureSize;
-        }      
-
-        public void Run()
-        {
-            WfcGenerator.GraphWfc(_cells, _wallRules, _floorRules, _ceilRules);
-            _propsGenerator.Generate(_engine, _topology, _cells, _textureSize);
-        }
-    }
-
     public class Program
     {
         public const int LogicalResolution = 4;
@@ -62,6 +16,17 @@ namespace UVWfcBenchmark
 
         private const float CeilTrashold = 45.0f;
         private const float FloorTrashold = 45.0f;
+
+        private const float Extrusion = 0.05f;
+        private const int TextureSize = 2048;
+        private const int CellSize = 32;
+
+        private static readonly PropsGenerator PropsGenerator = new PropsGenerator()
+                .PushCellAlgorithm(new PanelsGeneratorAlgorithm(Extrusion, SelectPanelMaterial))
+                .PushNetAlgorithm(new WiresGeneratorAlgorithm(Extrusion))
+                .PushNetAlgorithm(new PipesGeneratorAlgorithm(Extrusion))
+                .PushNetAlgorithm(new VentilationGeneratorAlgorithm(Extrusion));
+
 
         private static Material WallMaterial = new Material
         {
@@ -107,13 +72,14 @@ namespace UVWfcBenchmark
             return WallMaterial;
         }
 
-        public static void Main(string[] args)
+        private static void WriteSingleMeasurementResult(int measurement, long time)
         {
-            float extrusion = 0.05f;
-            int textureSize = 2048;
-            int cellSize = 32;
-            var model = Model.Load("Content/Models/Cube20x20.obj");
+            var message = $"Measurement {measurement} : {time}";
+            Console.WriteLine(message);
+        }
 
+        private static void RunTimeFromCellCountDependenceBenchmark(int measurements)
+        {
             var wallRules = RulesLoader.CreateRules(
                 "Content/Rules/WallLogical.png",
                 "Content/Rules/WallDetailed.png",
@@ -126,50 +92,104 @@ namespace UVWfcBenchmark
                 LogicalResolution,
                 DetailedResolution);
 
-
             var ceilRules = RulesLoader.CreateRules(
                 "Content/Rules/CeilLogical.png",
                 "Content/Rules/CeilDetailed.png",
                 LogicalResolution,
                 DetailedResolution);
 
-            var propsGenerator = new PropsGenerator()
-                    .PushCellAlgorithm(new PanelsGeneratorAlgorithm(extrusion, SelectPanelMaterial))
-                    .PushNetAlgorithm(new WiresGeneratorAlgorithm(extrusion))
-                    .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
-                    .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
+            int[] sizes = { 4, 8, 12, 16, 20 };
 
-            var topology = new Topology(model.Meshes[0], 3);
-            var cells = LevelGraphCreator.CreateGraph(topology, LogicalResolution, textureSize, cellSize);
+            Console.WriteLine("Time from cells count dependency benchmark");
 
-            int countOfMeasurements = 1000;
-            long total = 0;
-            var timer = new Stopwatch();
-
-            for (int i = 0; i < countOfMeasurements; i++)
+            foreach (int size in sizes)
             {
-                using var engine = new Engine();
-                var benchmark = new PerformanceBenchmark(
-                    engine, 
+                Console.WriteLine($"Cells count: {size * size * 6}");
+
+                var model = Model.Load($"Content/Models/Cube{size}x{size}.obj");
+                var topology = new Topology(model.Meshes[0], 3);
+                var cells = LevelGraphCreator.CreateGraph(
                     topology, 
-                    propsGenerator, 
-                    cells, 
-                    wallRules, 
-                    floorRules, 
-                    ceilRules, 
-                    textureSize);
+                    LogicalResolution, 
+                    TextureSize, 
+                    CellSize);
 
-                timer.Reset();
-                timer.Start();
-                benchmark.Run();
-                timer.Stop();
+                var factory = () => new PerformanceBenchmark(
+                    topology,
+                    PropsGenerator,
+                    cells,
+                    wallRules,
+                    floorRules,
+                    ceilRules,
+                    TextureSize);
 
-                total += timer.ElapsedMilliseconds;
-                Console.WriteLine($"Measurement {i} : {timer.ElapsedMilliseconds}");
+                var runner = new BenchmarRunner(factory);
+                runner.SingleMeasurementCompleted += WriteSingleMeasurementResult;               
+                var result = runner.Run(measurements);
+
+                Console.WriteLine($"Total: {result.Total}");
+                Console.WriteLine($"Average: {result.Average}");
+                Console.WriteLine();
             }
+        }
 
-            Console.WriteLine($"Total: {total}");
-            Console.WriteLine($"Average: {total / countOfMeasurements}");
+        private static void RunTimeFromRuleSetDependenceBenchmark(int measurements)
+        {
+            var model = Model.Load($"Content/Models/Cube8x8.obj");
+            var topology = new Topology(model.Meshes[0], 3);
+            var cells = LevelGraphCreator.CreateGraph(
+                topology,
+                LogicalResolution,
+                TextureSize,
+                CellSize);
+
+            Console.WriteLine("Time from rule set dependency benchmark");
+
+            for (int number = 1; number <= 4; number++)
+            {
+                Console.WriteLine($"Rule set: {number}");
+
+                var wallRules = RulesLoader.CreateRules(
+                    $"Content/WallLogical{number}.png",
+                    "Content/WallDetailed.png",
+                    LogicalResolution,
+                    DetailedResolution);
+
+                var floorRules = RulesLoader.CreateRules(
+                    $"Content/WallLogical{number}.png",
+                    "Content/WallDetailed.png",
+                    LogicalResolution,
+                    DetailedResolution);
+
+                var ceilRules = RulesLoader.CreateRules(
+                    $"Content/WallLogical{number}.png",
+                    "Content/WallDetailed.png",
+                    LogicalResolution,
+                    DetailedResolution);
+
+                var factory = () => new PerformanceBenchmark(
+                     topology,
+                     PropsGenerator,
+                     cells,
+                     wallRules,
+                     floorRules,
+                     ceilRules,
+                     TextureSize);
+
+                var runner = new BenchmarRunner(factory);
+                runner.SingleMeasurementCompleted += WriteSingleMeasurementResult;
+                var result = runner.Run(measurements);
+
+                Console.WriteLine($"Total: {result.Total}");
+                Console.WriteLine($"Average: {result.Average}");
+                Console.WriteLine();
+            }
+        }
+
+        public static void Main(string[] args)
+        {
+            //RunTimeFromCellCountDependenceBenchmark(5);
+            RunTimeFromRuleSetDependenceBenchmark(10);
         }
     }
 }
