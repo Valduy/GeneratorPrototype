@@ -18,9 +18,13 @@ namespace UVWfcBenchmark
 
         private readonly Func<IBenchmark> Factory;
 
+        public delegate void InitializationCallback();
         public delegate void MasurementCallback(int measurement, long time);
+        public delegate void TerminationCallback();
 
+        public event InitializationCallback? Initialized;
         public event MasurementCallback? SingleMeasurementCompleted;
+        public event TerminationCallback? Terminated;
 
         public BenchmarRunner(Func<IBenchmark> factory)
         {
@@ -36,15 +40,17 @@ namespace UVWfcBenchmark
             {
                 var benchmark = Factory();
                 benchmark.Initialize();
+                Initialized?.Invoke();
 
                 timer.Reset();
                 timer.Start();
                 benchmark.Run();
                 timer.Stop();
+                SingleMeasurementCompleted?.Invoke(i + 1, timer.ElapsedMilliseconds);
 
                 benchmark.Terminate();
-                total += timer.ElapsedMilliseconds;
-                SingleMeasurementCompleted?.Invoke(i + 1, timer.ElapsedMilliseconds);
+                Terminated?.Invoke();
+                total += timer.ElapsedMilliseconds;                
             }
 
             long average = total / measurements;

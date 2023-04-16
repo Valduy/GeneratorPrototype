@@ -6,23 +6,21 @@ using UVWfc.LevelGraph;
 
 namespace UVWfc.Wfc
 {
-    public static class WfcGenerator
+    public class WfcGenerator
     {
-        private const float FloorTrashold = 45.0f;
-        private const float CeilTrashold = 45.0f;
+        public delegate List<Rule> RuleSetSelectorCallback(Cell cell);
 
-        public static void GraphWfc(
-            List<Cell> cells,
-            List<Rule> wallRules,
-            List<Rule> floorRules,
-            List<Rule> ceilRules)
+        public event Action? Observated;
+        public event Action? Deadlocked;
+
+        public void GraphWfc(List<Cell> cells, RuleSetSelectorCallback ruleSetSelector)
         {
             var forRecalculation = new List<Cell>();
 
             foreach (var c in cells)
             {
                 c.Rules.Clear();
-                c.Rules.AddRange(SelectRuleSet(c, wallRules, floorRules, ceilRules));
+                c.Rules.AddRange(ruleSetSelector(c));
             }
 
             {
@@ -33,8 +31,6 @@ namespace UVWfc.Wfc
 
                 forRecalculation.AddRange(SelectNeighbourCellsForRecalculation(initial));
             }
-
-            // TODO: Fire observation
 
             while (true)
             {
@@ -54,12 +50,12 @@ namespace UVWfc.Wfc
 
                         if (failes >= trashold)
                         {
-                            // TODO: Fire deadlock event
+                            Deadlocked?.Invoke();
 
                             foreach (var c in cells)
                             {
                                 c.Rules.Clear();
-                                c.Rules.AddRange(SelectRuleSet(c, wallRules, floorRules, ceilRules));
+                                c.Rules.AddRange(ruleSetSelector(c));
                             }
 
                             forRecalculation.Clear();
@@ -67,12 +63,12 @@ namespace UVWfc.Wfc
                         }
 
                         cell.Rules.Clear();
-                        cell.Rules.AddRange(SelectRuleSet(cell, wallRules, floorRules, ceilRules));
+                        cell.Rules.AddRange(ruleSetSelector(cell));
 
                         foreach (var neighbour in cell.Neighbours)
                         {
                             neighbour!.Cell.Rules.Clear();
-                            neighbour.Cell.Rules.AddRange(SelectRuleSet(neighbour.Cell, wallRules, floorRules, ceilRules));
+                            neighbour.Cell.Rules.AddRange(ruleSetSelector(neighbour.Cell));
                         }
 
                         continue;
@@ -104,6 +100,7 @@ namespace UVWfc.Wfc
                 
                 if (maxPossibilities <= 1)
                 {
+                    Observated?.Invoke();
                     break;
                 }
 
@@ -111,7 +108,7 @@ namespace UVWfc.Wfc
                 maxCell.Rules.Clear();
                 maxCell.Rules.Add(rule);
                 forRecalculation.AddRange(SelectNeighbourCellsForRecalculation(maxCell));
-                // TODO: Fire observation
+                Observated?.Invoke();
             }
         }
 
@@ -120,29 +117,6 @@ namespace UVWfc.Wfc
             return cell.Neighbours
                 .Where(nd => nd != null)
                 .Select(nd => nd!.Cell);
-        }
-
-        private static List<Rule> SelectRuleSet(
-            Cell cell,
-            List<Rule> wallRules,
-            List<Rule> floorRules,
-            List<Rule> ceilRules)
-        {
-            var floorFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(Vector3.UnitY, cell.Normal)));
-
-            if (floorFactor < FloorTrashold)
-            {
-                return floorRules;
-            }
-
-            var ceilFactor = MathHelper.RadiansToDegrees(MathHelper.Acos(Vector3.Dot(-Vector3.UnitY, cell.Normal)));
-
-            if (ceilFactor < CeilTrashold)
-            {
-                return ceilRules;
-            }
-
-            return wallRules;
         }
 
         private static List<Rule> FilterPossible(Cell cell)

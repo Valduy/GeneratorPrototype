@@ -4,35 +4,33 @@ using TextureUtils;
 using UVWfc.LevelGraph;
 using UVWfc.Props;
 using UVWfc.Wfc;
+using static UVWfc.Wfc.WfcGenerator;
 
 namespace UVWfcBenchmark
 {
-    public class PerformanceBenchmark : IBenchmark
+    public class WfcAndDecorationBenchmark : IBenchmark
     {
         private Engine? _engine;
         private Topology _topology;
-        private PropsGenerator _propsGenerator;
+        private WfcGenerator _wfcGenerator;
+        private PropsGenerator _propsGenerator;        
         private List<Cell> _cells;
-        private List<Rule> _wallRules;
-        private List<Rule> _floorRules;
-        private List<Rule> _ceilRules;
+        private RuleSetSelectorCallback _ruleSetSelector;
         private int _textureSize;
 
-        public PerformanceBenchmark(
+        public WfcAndDecorationBenchmark(
             Topology topology,
+            WfcGenerator wfcGenerator,
             PropsGenerator propsGenerator,
             List<Cell> cells,
-            List<Rule> wallRules,
-            List<Rule> floorRules,
-            List<Rule> ceilRules,
+            RuleSetSelectorCallback ruleSetSelector,
             int textureSize)
         {            
             _topology = topology;
+            _wfcGenerator = wfcGenerator;
             _propsGenerator = propsGenerator;
             _cells = cells;
-            _wallRules = wallRules;
-            _floorRules = floorRules;
-            _ceilRules = ceilRules;
+            _ruleSetSelector = ruleSetSelector;
             _textureSize = textureSize;
         }
 
@@ -48,7 +46,7 @@ namespace UVWfcBenchmark
                 throw new Exception("Benchmark is not initialized.");
             }
 
-            WfcGenerator.GraphWfc(_cells, _wallRules, _floorRules, _ceilRules);
+            _wfcGenerator.GraphWfc(_cells, _ruleSetSelector);
             _propsGenerator.Generate(_engine, _topology, _cells, _textureSize);
         }
 

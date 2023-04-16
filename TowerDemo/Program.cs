@@ -63,6 +63,24 @@ namespace TowerDemo
             return angle < FloorTrashold;
         }
 
+        private static List<Rule> SelectRuleSet(
+            Cell cell,
+            List<Rule> wallRules,
+            List<Rule> floorRules,
+            List<Rule> ceilRules)
+        {
+            if (IsFloor(cell.Normal))
+            {
+                return floorRules;
+            }
+            if (IsCeil(cell.Normal))
+            {
+                return ceilRules;
+            }
+
+            return wallRules;
+        }
+
         private static Material SelectPanelMaterial(LogicalNode node)
         {
             var normal = Mathematics.GetNormal(node.Corners);
@@ -110,7 +128,9 @@ namespace TowerDemo
                 DetailedResolution);
 
             var cells = LevelGraphCreator.CreateGraph(topology, LogicalResolution, textureSize, cellSize);
-            WfcGenerator.GraphWfc(cells, wallRules, floorRules, ceilRules);
+
+            var wfcGenerator = new WfcGenerator();
+            wfcGenerator.GraphWfc(cells, cell => SelectRuleSet(cell, wallRules, floorRules, ceilRules));
 
             var texture = TextureCreator.CreateDetailedTexture(cells, textureSize, cellSize);
             var bmp = TextureHelper.TextureToBitmap(texture, textureSize);

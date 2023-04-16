@@ -3,9 +3,11 @@ using GameEngine.Mathematics;
 using MeshTopology;
 using OpenTK.Mathematics;
 using SciFiAlgorithms;
+using System.Diagnostics;
 using TextureUtils;
 using UVWfc.LevelGraph;
 using UVWfc.Props;
+using UVWfc.Wfc;
 
 namespace UVWfcBenchmark
 {
@@ -60,6 +62,24 @@ namespace UVWfcBenchmark
             return angle < FloorTrashold;
         }
 
+        private static List<Rule> SelectRuleSet(
+            Cell cell,
+            List<Rule> wallRules,
+            List<Rule> floorRules,
+            List<Rule> ceilRules)
+        {
+            if (IsFloor(cell.Normal))
+            {
+                return floorRules;
+            }
+            if (IsCeil(cell.Normal))
+            {
+                return ceilRules;
+            }
+
+            return wallRules;
+        }
+
         private static Material SelectPanelMaterial(LogicalNode node)
         {
             var normal = Mathematics.GetNormal(node.Corners);
@@ -72,13 +92,14 @@ namespace UVWfcBenchmark
             return WallMaterial;
         }
 
-        private static void WriteSingleMeasurementResult(int measurement, long time)
+        private static void WriteSingleMeasurementResult(StreamWriter writer, int measurement, long time)
         {
-            var message = $"Measurement {measurement} : {time}";
-            Console.WriteLine(message);
+            writer.WriteLine($"Measurement {measurement} : {time}");
         }
 
-        private static void RunTimeFromCellCountDependenceBenchmark(int measurements)
+        private static void RunTimeFromCellCountDependenceBenchmark(
+            StreamWriter writer, 
+            int measurements)
         {
             var wallRules = RulesLoader.CreateRules(
                 "Content/Rules/WallLogical.png",
@@ -98,13 +119,15 @@ namespace UVWfcBenchmark
                 LogicalResolution,
                 DetailedResolution);
 
+            var wfcGenerator = new WfcGenerator();
+
             int[] sizes = { 4, 8, 12, 16, 20 };
 
-            Console.WriteLine("Time from cells count dependency benchmark");
+            writer.WriteLine("Time from cells count dependency benchmark");
 
             foreach (int size in sizes)
             {
-                Console.WriteLine($"Cells count: {size * size * 6}");
+                writer.WriteLine($"Cells count: {size * size * 6}");
 
                 var model = Model.Load($"Content/Models/Cube{size}x{size}.obj");
                 var topology = new Topology(model.Meshes[0], 3);
@@ -114,26 +137,28 @@ namespace UVWfcBenchmark
                     TextureSize, 
                     CellSize);
 
-                var factory = () => new PerformanceBenchmark(
+                var factory = () => new WfcAndDecorationBenchmark(
                     topology,
+                    wfcGenerator,
                     PropsGenerator,
                     cells,
-                    wallRules,
-                    floorRules,
-                    ceilRules,
+                    cell => SelectRuleSet(cell, wallRules, floorRules, ceilRules),
                     TextureSize);
 
                 var runner = new BenchmarRunner(factory);
-                runner.SingleMeasurementCompleted += WriteSingleMeasurementResult;               
+                runner.SingleMeasurementCompleted += (int measurement, long time) 
+                    => WriteSingleMeasurementResult(writer, measurement, time);               
                 var result = runner.Run(measurements);
 
-                Console.WriteLine($"Total: {result.Total}");
-                Console.WriteLine($"Average: {result.Average}");
-                Console.WriteLine();
+                writer.WriteLine($"Total: {result.Total}");
+                writer.WriteLine($"Average: {result.Average}");
+                writer.WriteLine();
             }
         }
 
-        private static void RunTimeFromRuleSetDependenceBenchmark(int measurements)
+        private static void RunWfcTimeFromRuleSetDependenceBenchmark(
+            StreamWriter writer,
+            int measurements)
         {
             var model = Model.Load($"Content/Models/Cube8x8.obj");
             var topology = new Topology(model.Meshes[0], 3);
@@ -143,53 +168,186 @@ namespace UVWfcBenchmark
                 TextureSize,
                 CellSize);
 
-            Console.WriteLine("Time from rule set dependency benchmark");
+            writer.WriteLine("Time from rule set dependency benchmark");
 
             for (int number = 1; number <= 4; number++)
             {
-                Console.WriteLine($"Rule set: {number}");
+                writer.WriteLine($"Rule set: {number}");
 
-                var wallRules = RulesLoader.CreateRules(
+                var rules = RulesLoader.CreateRules(
                     $"Content/WallLogical{number}.png",
                     "Content/WallDetailed.png",
                     LogicalResolution,
                     DetailedResolution);
 
-                var floorRules = RulesLoader.CreateRules(
+                var factory = () => new WfcBenchmark(new WfcGenerator(), cells, cell => rules);
+
+                var runner = new BenchmarRunner(factory);
+                runner.SingleMeasurementCompleted += (int measurement, long time)
+                    => WriteSingleMeasurementResult(writer, measurement, time);
+                var result = runner.Run(measurements);
+
+                writer.WriteLine($"Total: {result.Total}");
+                writer.WriteLine($"Average: {result.Average}");
+                writer.WriteLine();
+            }
+        }
+
+        private static void RunWfcAndDecorationTimeFromRuleSetDependenceBenchmark(
+            StreamWriter writer, 
+            int measurements)
+        {
+            var model = Model.Load($"Content/Models/Cube8x8.obj");
+            var topology = new Topology(model.Meshes[0], 3);
+            var cells = LevelGraphCreator.CreateGraph(
+                topology,
+                LogicalResolution,
+                TextureSize,
+                CellSize);
+
+            writer.WriteLine("Time from rule set dependency benchmark");
+
+            for (int number = 1; number <= 4; number++)
+            {
+                writer.WriteLine($"Rule set: {number}");
+
+                var rules = RulesLoader.CreateRules(
                     $"Content/WallLogical{number}.png",
                     "Content/WallDetailed.png",
                     LogicalResolution,
                     DetailedResolution);
-
-                var ceilRules = RulesLoader.CreateRules(
-                    $"Content/WallLogical{number}.png",
-                    "Content/WallDetailed.png",
-                    LogicalResolution,
-                    DetailedResolution);
-
-                var factory = () => new PerformanceBenchmark(
+ 
+                var factory = () => new WfcAndDecorationBenchmark(
                      topology,
+                     new WfcGenerator(),
                      PropsGenerator,
                      cells,
-                     wallRules,
-                     floorRules,
-                     ceilRules,
+                     cell => rules,
                      TextureSize);
 
                 var runner = new BenchmarRunner(factory);
-                runner.SingleMeasurementCompleted += WriteSingleMeasurementResult;
+                runner.SingleMeasurementCompleted += (int measurement, long time) 
+                    => WriteSingleMeasurementResult(writer, measurement, time);
                 var result = runner.Run(measurements);
 
-                Console.WriteLine($"Total: {result.Total}");
-                Console.WriteLine($"Average: {result.Average}");
-                Console.WriteLine();
+                writer.WriteLine($"Total: {result.Total}");
+                writer.WriteLine($"Average: {result.Average}");
+                writer.WriteLine();
+            }
+        }        
+
+        struct TimeStamp
+        {
+            public readonly long Time;
+            public readonly float Mark;
+
+            public TimeStamp(long time, float mark)
+            {
+                Time = time;
+                Mark = mark;
+            }
+        }
+
+        private static void RunMeasurementOfObservationSpeed(StreamWriter writer, int measurements)
+        {
+            var model = Model.Load($"Content/Models/Cube8x8.obj");
+            var topology = new Topology(model.Meshes[0], 3);
+            var cells = LevelGraphCreator.CreateGraph(
+                topology,
+                LogicalResolution,
+                TextureSize,
+                CellSize);
+
+            var rules1 = RulesLoader.CreateRules(
+                $"Content/WallLogical1.png",
+                "Content/WallDetailed.png",
+                LogicalResolution,
+                DetailedResolution);
+
+            var rules3 = RulesLoader.CreateRules(
+                $"Content/WallLogical3.png",
+                "Content/WallDetailed.png",
+                LogicalResolution,
+                DetailedResolution);
+
+            writer.WriteLine("Rule set 1");
+            MeasureObservationSpeed(writer, topology, cells, rules1, measurements);
+
+            writer.WriteLine("Rule set 2");
+            MeasureObservationSpeed(writer, topology, cells, rules3, measurements);
+        }
+
+        private static void MeasureObservationSpeed(
+            StreamWriter writer,
+            Topology topology,
+            List<Cell> cells,
+            List<Rule> rules,
+            int measurements)
+        {
+            var timeStamps = new List<TimeStamp>();
+            var test = new Stopwatch();
+            var timer = new Stopwatch();
+
+            var wfcGenerator = new WfcGenerator();
+            wfcGenerator.Observated += () =>
+            {
+                //timer.Stop();
+                var marks = cells.Select(c => (float)(c.Rules.Count - 1) / (rules.Count - 1));
+                var mark = marks.Sum() / marks.Count();
+                var stamp = new TimeStamp(test.ElapsedMilliseconds, mark);
+                timeStamps.Add(stamp);
+                //timer.Start();
+            };
+
+            for (int i = 0; i < measurements; i++)
+            {
+                writer.WriteLine($"Measurement {i + 1}");
+                timeStamps.Add(new TimeStamp(0, 1.0f));
+
+                var benchmark = new WfcBenchmark(wfcGenerator, cells, cell => rules);
+
+                benchmark.Initialize();
+                test.Restart();
+                timer.Restart();
+                benchmark.Run();
+                timer.Stop();
+                test.Stop();
+                benchmark.Terminate();
+
+                Console.WriteLine($"{test.ElapsedMilliseconds} ?= {timeStamps.Last().Time}");
+
+                foreach(var stamp in timeStamps)
+                {
+                    writer.WriteLine($"{stamp.Time};{stamp.Mark}");
+                }
+
+                timeStamps.Clear();                
             }
         }
 
         public static void Main(string[] args)
         {
-            //RunTimeFromCellCountDependenceBenchmark(5);
-            RunTimeFromRuleSetDependenceBenchmark(10);
+            using (var writer = new StreamWriter("benchmarks.txt"))
+            {
+                int measurements = 100;
+
+                //Console.WriteLine("Time from cells count dependency benchmark");
+                //RunTimeFromCellCountDependenceBenchmark(writer, measurements);
+
+                Console.WriteLine("Wfc time from rule set dependency benchmark");
+                RunWfcTimeFromRuleSetDependenceBenchmark(writer, measurements);
+
+                //Console.WriteLine("Wfc and decoration time from rule set dependency benchmark");
+                //RunWfcTimeFromRuleSetDependenceBenchmark(writer, measurements);
+            }
+
+            //using (var writer = new StreamWriter("test.csv"))
+            //{
+            //    int measurements = 6;
+
+            //    Console.WriteLine("Observation mesurements");
+            //    RunMeasurementOfObservationSpeed(writer, measurements);
+            //}
         }
     }
 }

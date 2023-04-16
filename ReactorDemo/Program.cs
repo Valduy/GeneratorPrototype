@@ -54,6 +54,19 @@ namespace ReactorDemo
             return angle < CeilTrashold;
         }
 
+        private static List<Rule> SelectRuleSet(
+            Cell cell,
+            List<Rule> wallRules,
+            List<Rule> ceilRules)
+        {
+            if (IsCeil(cell.Normal))
+            {
+                return ceilRules;
+            }
+
+            return wallRules;
+        }
+
         private static Material SelectPanelMaterial(LogicalNode node)
         {
             var normal = Mathematics.GetNormal(node.Corners);
@@ -88,12 +101,6 @@ namespace ReactorDemo
                 LogicalResolution,
                 DetailedResolution);
 
-            var floorRules = RulesLoader.CreateRules(
-                "Content/WallLogical.png",
-                "Content/Rules/WallDetailed.png",
-                LogicalResolution,
-                DetailedResolution);
-
             var ceilRules = RulesLoader.CreateRules(
                 "Content/Rules/CeilLogical.png",
                 "Content/Rules/CeilDetailed.png",
@@ -101,7 +108,9 @@ namespace ReactorDemo
                 DetailedResolution);
 
             var cells = LevelGraphCreator.CreateGraph(topology, LogicalResolution, textureSize, cellSize);
-            WfcGenerator.GraphWfc(cells, wallRules, floorRules, ceilRules);
+
+            var wfcGenerator = new WfcGenerator();
+            wfcGenerator.GraphWfc(cells, cell => SelectRuleSet(cell, wallRules, ceilRules));
 
             var texture = TextureCreator.CreateDetailedTexture(cells, textureSize, cellSize);
             var bmp = TextureHelper.TextureToBitmap(texture, textureSize);
