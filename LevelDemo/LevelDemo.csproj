@@ -14,6 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Content\FloorLogical.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Models\ComplexLevel.mtl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

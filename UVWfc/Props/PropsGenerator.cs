@@ -6,6 +6,7 @@ using Graph;
 using MeshTopology;
 using OpenTK.Mathematics;
 using System.Drawing;
+using System.Security.Cryptography;
 using UVWfc.Helpers;
 using UVWfc.LevelGraph;
 using UVWfc.Props.Algorithms;
@@ -176,18 +177,40 @@ namespace UVWfc.Props
         private static List<Vector3> GetNodeCorners(Topology topology, Cell cell, int size)
         {
             var corners = new List<Vector3>();
+            var centroid = Mathematics.GetCentroid(cell);
 
             foreach (var uv in cell)
             {
-                var point = GetPoint(topology, uv, size);
+                var uvWithError = centroid + (uv - centroid) * 0.9f;
+                var point = GetPoint(topology, uvWithError, size);
+                //var point = GetPoint(topology, uv, size);
                 corners.Add(point);
             }
-
             return corners;
+        }
+
+        static float sign(Vector2 p1, Vector2 p2, Vector2 p3)
+        {
+            return (p1.X - p3.X) * (p2.Y - p3.Y) - (p2.X - p3.X) * (p1.Y - p3.Y);
+        }
+        static bool PointInTriangle(Vector2 pt, Vector2 v1, Vector2 v2, Vector2 v3)
+        {
+            float d1, d2, d3;
+            bool has_neg, has_pos;
+            d1 = sign(pt, v1, v2);
+            d2 = sign(pt, v2, v3);
+            d3 = sign(pt, v3, v1);
+
+            has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+            has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+            return !(has_neg && has_pos);
         }
 
         private static Vector3 GetPoint(Topology topology, Vector2 uv, int size)
         {
+            float epsilon = 0.01f;
+
             foreach (var node in topology)
             {
                 Vertex a = node.Face[0];
@@ -204,12 +227,29 @@ namespace UVWfc.Props
                 float v = barycentric.Y;
 
                 // Face contain this uv
-                if (u >= 0 && v >= 0 && u + v <= 1)
+                if (u >= -epsilon && v >= 0 && u + v <= 1 + epsilon)
                 {
                     Vector3 point = (1 - u - v) * a.Position + v * b.Position + u * c.Position;
                     return point;
                 }
             }
+
+            //foreach (var node in topology)
+            //{
+            //    var a = node.Face[0].TextureCoords * size;
+            //    var b = node.Face[1].TextureCoords * size;
+            //    var c = node.Face[2].TextureCoords * size;
+
+            //    if (PointInTriangle(uv, a, b, c))
+            //    {
+            //        Vector2 barycentric = Mathematics.GetBarycentric(a, b, c, uv);
+
+            //        float u = barycentric.X;
+            //        float v = barycentric.Y;
+
+            //        var t = 0;
+            //    }
+            //}
 
             throw new ArgumentException();
         }

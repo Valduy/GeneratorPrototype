@@ -14,7 +14,7 @@ namespace SciFiAlgorithms
             float radius,
             int resolution)
         {
-            float epsilon = 0.1f;
+            float epsilon = 0.4f;
             float finalExtrusion = zeroLevel + extrusion;
 
             var points = new List<SplineVertex>();
@@ -104,7 +104,7 @@ namespace SciFiAlgorithms
             var prevPivot = Mathematics.GetCentroid(prev.Corners);
             var nextPivot = Mathematics.GetCentroid(next.Corners);
 
-            var sharedPoints = Mathematics.GetSharedPoints(prev.Corners, next.Corners, 0.01f);
+            var sharedPoints = Mathematics.GetSharedPoints(prev.Corners, next.Corners, 0.4f);
             var joint = Mathematics.GetCentroid(sharedPoints);
 
             var prevDirection = Vector3.Normalize(joint - prevPivot);
@@ -179,7 +179,7 @@ namespace SciFiAlgorithms
             float radius,
             int resolution)
         {
-            float epsilon = 0.01f;
+            float epsilon = 0.4f;
 
             var points = new List<SplineVertex>();
 
@@ -220,7 +220,7 @@ namespace SciFiAlgorithms
             int resolution,
             int linesCount)
         {
-            float epsilon = 0.01f;
+            float epsilon = 0.4f;
             int half = linesCount / 2;
 
             var pointsLines = new List<List<SplineVertex>>();
@@ -272,7 +272,7 @@ namespace SciFiAlgorithms
             float radius,
             int resolution)
         {
-            float epsilon = 0.01f;
+            float epsilon = 0.4f;
 
             var points = new List<SplineVertex>();
 
@@ -312,7 +312,7 @@ namespace SciFiAlgorithms
             int resolution,
             int linesCount)
         {
-            float epsilon = 0.01f;
+            float epsilon = 0.4f;
             int half = linesCount / 2;
 
             var pointsLines = new List<List<SplineVertex>>();

@@ -6,6 +6,7 @@ using GameEngine.Mathematics;
 using GameEngine.Utils;
 using MeshTopology;
 using OpenTK.Mathematics;
+using SciFiAlgorithms;
 using System.Drawing;
 using TextureUtils;
 using UVWfc.LevelGraph;
@@ -113,8 +114,8 @@ namespace LevelDemo
 
         public static void Main(string[] args)
         {
-            int textureSize = 4096;
-            int cellSize = 32;
+            int textureSize = 2048;
+            int cellSize = 16;
             float extrusion = 0.05f;
 
             var random = new Random();
@@ -134,7 +135,7 @@ namespace LevelDemo
                 DetailedResolution);
 
             var floorRules = RulesLoader.CreateRules(
-                "Content/Rules/FloorLogical.png",
+                "Content/FloorLogical.png",
                 "Content/Rules/FloorDetailed.png",
                 LogicalResolution,
                 DetailedResolution);
@@ -160,12 +161,12 @@ namespace LevelDemo
 
             using var engine = new Engine();
 
-            //var propsGenerator = new PropsGenerator()
-            //    .PushCellAlgorithm(new PanelsGeneratorAlgorithm(extrusion, SelectPanelMaterial))
-            //    .PushNetAlgorithm(new WiresGeneratorAlgorithm(extrusion))
-            //    .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
-            //    .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
-            //propsGenerator.Generate(engine, topology, cells, textureSize);
+            var propsGenerator = new PropsGenerator()
+                .PushCellAlgorithm(new PanelsGeneratorAlgorithm(extrusion, SelectPanelMaterial))
+                .PushNetAlgorithm(new WiresGeneratorAlgorithm(extrusion))
+                .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
+                .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
+            propsGenerator.Generate(engine, topology, cells, textureSize);
 
             var operatorGo = engine.CreateGameObject();
             operatorGo.Add<LightComponent>();

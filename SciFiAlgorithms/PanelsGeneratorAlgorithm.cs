@@ -22,7 +22,7 @@ namespace SciFiAlgorithms
 
         public bool ProcessCell(Engine engine, LogicalNode node)
         {
-            float padding = 0.1f;
+            float padding = 0.0f;
 
             var centroid = Mathematics.GetCentroid(node.Corners);
             var normal = Mathematics.GetNormal(node.Corners);
