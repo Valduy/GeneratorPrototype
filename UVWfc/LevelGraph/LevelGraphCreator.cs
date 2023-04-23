@@ -1,7 +1,11 @@
-﻿using GameEngine.Graphics;
+﻿using GameEngine.Core;
+using GameEngine.Graphics;
 using GameEngine.Helpers;
+using GameEngine.Mathematics;
+using GameEngine.Utils;
 using MeshTopology;
 using OpenTK.Mathematics;
+using UVWfc.Helpers;
 using UVWfc.LevelGraph.TextureIsland;
 using UVWfc.RulesAdapters;
 
@@ -95,9 +99,10 @@ namespace UVWfc.LevelGraph
             var temp = edges.First();
 
             while (edges.Count > 0)
-            {
+            {                
                 edges.Remove(temp);
                 loop.Add(temp);
+                bool isNotLooped = edges.Any();
 
                 foreach (var other in edges)
                 {
@@ -105,8 +110,14 @@ namespace UVWfc.LevelGraph
                         other.A.TextureCoords == temp.B.TextureCoords)
                     {
                         temp = other;
+                        isNotLooped = false;
                         break;
                     }
+                }
+
+                if (isNotLooped)
+                {
+                    throw new ArgumentException($"Edges do not create a loop.");
                 }
             }
 
@@ -115,6 +126,7 @@ namespace UVWfc.LevelGraph
 
         private static List<Side> LoopToSides(List<Edge> loop)
         {
+            float epsilon = 0.01f;
             var sides = new List<Side>();
             int initial = 0;
 
@@ -126,7 +138,7 @@ namespace UVWfc.LevelGraph
                 var prevDirection = Vector2.Normalize(prev.B.TextureCoords - prev.A.TextureCoords);
                 var nextDirection = Vector2.Normalize(next.B.TextureCoords - next.A.TextureCoords);
 
-                if (prevDirection != nextDirection)
+                if (!Mathematics.ApproximatelyEqualEpsilon(prevDirection, nextDirection, epsilon))
                 {
                     break;
                 }
@@ -146,7 +158,7 @@ namespace UVWfc.LevelGraph
 
                 edges.Add(prev);
 
-                if (prevDirection != nextDirection)
+                if (!Mathematics.ApproximatelyEqualEpsilon(prevDirection, nextDirection, epsilon))
                 {
                     var side = new Side(edges);
                     sides.Add(side);
@@ -185,8 +197,8 @@ namespace UVWfc.LevelGraph
             var xAxis = xDirection.Normalized();
             var yAxis = yDirection.Normalized();
 
-            int width = (int)MathHelper.Ceiling(xLength / cellStep);
-            int height = (int)MathHelper.Ceiling(yLength / cellStep);
+            int width = (int)MathHelper.Round(xLength / cellStep);
+            int height = (int)MathHelper.Round(yLength / cellStep);
             var grid = new Cell[width, height];
 
             var dx = cellStep * xAxis;

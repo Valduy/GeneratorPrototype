@@ -117,8 +117,8 @@ namespace UVWfc.LevelGraph.TextureIsland
 
             var distanceToA = (edge!.A.TextureCoords - side!.A.TextureCoords).Length * size;
             var distanceToB = (edge!.B.TextureCoords - side!.A.TextureCoords).Length * size;
-            var from = (int)MathHelper.Ceiling(distanceToA / step);
-            var to = (int)MathHelper.Ceiling(distanceToB / step);
+            var from = (int)MathHelper.Round(distanceToA / step);
+            var to = (int)MathHelper.Round(distanceToB / step);
 
             for (int i = from; i < to; i++)
             {
