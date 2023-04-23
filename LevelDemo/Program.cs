@@ -175,8 +175,8 @@ namespace LevelDemo
             var roomGo = engine.CreateGameObject();
             var roomRenderer = roomGo.Add<MaterialRenderComponent>();
             roomRenderer.Model = model;
-            //roomRenderer.Material = ModelMaterial;
-            roomRenderer.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);
+            roomRenderer.Material = ModelMaterial;
+            //roomRenderer.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);
