@@ -3,6 +3,7 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Mathematics;
+using GameEngine.Utils;
 using Graph;
 using OpenTK.Mathematics;
 using System.Drawing;
@@ -144,7 +145,14 @@ namespace SciFiAlgorithms
             }
 
             var beginPoints = SplinesGenerationHelper.CreateBegin(
-                nodes[0], nodes[1], ZeroLevel, extrusion, radius, distanceBetweenLines, resolution, linesCount);
+                nodes[0], 
+                nodes[1], 
+                ZeroLevel, 
+                extrusion, 
+                radius, 
+                distanceBetweenLines, 
+                resolution, 
+                linesCount);
 
             for (int line = 0; line < linesCount; line++)
             {
@@ -182,7 +190,14 @@ namespace SciFiAlgorithms
             }
 
             var endPoints = SplinesGenerationHelper.CreateEnd(
-                nodes[nodes.Count - 2], nodes[nodes.Count - 1], ZeroLevel, extrusion, radius, distanceBetweenLines, resolution, linesCount);
+                nodes[nodes.Count - 2], 
+                nodes[nodes.Count - 1], 
+                ZeroLevel, 
+                extrusion, 
+                radius, 
+                distanceBetweenLines, 
+                resolution, 
+                linesCount);
 
             for (int line = 0; line < linesCount; line++)
             {
@@ -284,13 +299,34 @@ namespace SciFiAlgorithms
             }
             else
             {
-                var sourcePosition = position + radius * normal;
-                var sourceRotation = Mathematics.ApproximatelyEqualEpsilon(direction, -Vector3.UnitZ, epsilon)
-                    ? Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.Pi)
-                    : Mathematics.FromToRotation(Vector3.UnitZ, direction);
-
-                InstantiateSource(engine, sourcePosition, sourceRotation);
+                InstantiateWireSource(engine, position, normal, direction, radius);
             }
+        }
+
+        private static void InstantiateWireSource(
+            Engine engine,
+            Vector3 position,
+            Vector3 normal,
+            Vector3 direction,
+            float radius)
+        {
+            float epsilon = 0.01f;
+
+            var right = Vector3.Cross(normal, direction);
+
+            var rotation = Mathematics.ApproximatelyEqualEpsilon(Vector3.UnitZ, -direction, epsilon)
+                ? Quaternion.FromAxisAngle(right, MathHelper.Pi)
+                : Mathematics.FromToRotation(Vector3.UnitZ, direction);
+
+            var yAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitY, rotation));
+            var rotationAxis = Vector3.Cross(yAxis, normal);
+
+            rotation = Mathematics.ApproximatelyEqualEpsilon(yAxis, -normal, epsilon)
+                ? Quaternion.FromAxisAngle(direction, MathHelper.Pi) * rotation
+                : Mathematics.FromToRotation(rotationAxis, yAxis, normal) * rotation;
+
+            position += radius * normal;
+            InstantiateSource(engine, position, rotation);
         }
 
         private static GameObject InstantiateSource(Engine engine, Vector3 position, Quaternion rotation)
