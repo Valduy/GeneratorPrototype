@@ -3,6 +3,7 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Mathematics;
+using GameEngine.Utils;
 using Graph;
 using OpenTK.Mathematics;
 using System.Drawing;
@@ -158,14 +159,26 @@ namespace SciFiAlgorithms
             Vector3 direction)
         {
             float epsilon = 0.01f;
+            var right = Vector3.Cross(normal, direction);
 
-            var rotation = Mathematics.FromToRotation(Vector3.UnitY, normal);
-            var xAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));
+            var rotation = Mathematics.ApproximatelyEqualEpsilon(Vector3.UnitY, -normal, epsilon)
+                ? Quaternion.FromAxisAngle(right, MathHelper.Pi)
+                : Mathematics.FromToRotation(Vector3.UnitY, normal);
 
-            if (!Mathematics.ApproximatelyEqualEpsilon(xAxis, -direction, epsilon))
+            var xAxis = Vector3.Transform(Vector3.UnitX, rotation);
+            var zAxis = Vector3.Transform(Vector3.UnitZ, rotation);
+            var crossWithXAxis = Vector3.Cross(xAxis, direction);
+            var crossWithZAxis = Vector3.Cross(zAxis, direction);
+
+            if (crossWithXAxis.Length > crossWithZAxis.Length)
             {
-                var rotationAxis = Vector3.Cross(xAxis, direction);
+                var rotationAxis = crossWithXAxis.Normalized();
                 rotation = Mathematics.FromToRotation(rotationAxis, xAxis, direction) * rotation;
+            }
+            else
+            {
+                var rotationAxis = crossWithZAxis.Normalized();
+                rotation = Mathematics.FromToRotation(rotationAxis, zAxis, direction) * rotation;
             }
 
             InstantiateVentilationJoint(engine, position, rotation);

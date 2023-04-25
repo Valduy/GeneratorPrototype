@@ -175,8 +175,8 @@ namespace SciFiAlgorithms
             Vector3 direction)
         {
             float epsilon = 0.01f;
-
             var right = Vector3.Cross(normal, direction);
+
             var rotation = Mathematics.ApproximatelyEqualEpsilon(Vector3.UnitY, -normal, epsilon)
                 ? Quaternion.FromAxisAngle(right, MathHelper.Pi)
                 : Mathematics.FromToRotation(Vector3.UnitY, normal);

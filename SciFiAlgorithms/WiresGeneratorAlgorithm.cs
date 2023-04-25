@@ -311,7 +311,6 @@ namespace SciFiAlgorithms
             float radius)
         {
             float epsilon = 0.01f;
-
             var right = Vector3.Cross(normal, direction);
 
             var rotation = Mathematics.ApproximatelyEqualEpsilon(Vector3.UnitZ, -direction, epsilon)
@@ -319,7 +318,7 @@ namespace SciFiAlgorithms
                 : Mathematics.FromToRotation(Vector3.UnitZ, direction);
 
             var yAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitY, rotation));
-            var rotationAxis = Vector3.Cross(yAxis, normal);
+            var rotationAxis = Vector3.Normalize(Vector3.Cross(yAxis, normal));
 
             rotation = Mathematics.ApproximatelyEqualEpsilon(yAxis, -normal, epsilon)
                 ? Quaternion.FromAxisAngle(direction, MathHelper.Pi) * rotation
