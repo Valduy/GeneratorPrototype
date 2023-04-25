@@ -176,14 +176,10 @@ namespace SciFiAlgorithms
         {
             float epsilon = 0.01f;
 
-            var rotation = Mathematics.FromToRotation(Vector3.UnitY, normal);
-            var xAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));
-
-            if (!Mathematics.ApproximatelyEqualEpsilon(xAxis, -direction, epsilon))
-            {
-                var rotationAxis = Vector3.Cross(xAxis, direction);
-                rotation = Mathematics.FromToRotation(rotationAxis, xAxis, direction) * rotation;
-            }
+            var right = Vector3.Cross(normal, direction);
+            var rotation = Mathematics.ApproximatelyEqualEpsilon(Vector3.UnitY, -normal, epsilon)
+                ? Quaternion.FromAxisAngle(right, MathHelper.Pi)
+                : Mathematics.FromToRotation(Vector3.UnitY, normal);
 
             InstantiatePipeJoint(engine, position, rotation);
         }

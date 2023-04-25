@@ -90,7 +90,7 @@ namespace ReactorDemo
             Console.WriteLine(seed);
             CollectionsHelper.UseSeed(seed);
 
-            //CollectionsHelper.UseSeed(1370866345);
+            //CollectionsHelper.UseSeed(986084672);
 
             var model = Model.Load("Content/Models/Reactor.obj");
             var topology = new Topology(model.Meshes[0], 3);
