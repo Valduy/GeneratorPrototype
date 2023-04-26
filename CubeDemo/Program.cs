@@ -104,7 +104,7 @@ namespace CubeDemo
             Console.WriteLine(seed);
             CollectionsHelper.UseSeed(seed);
 
-            //CollectionsHelper.UseSeed(584469435);
+            //CollectionsHelper.UseSeed(1533573477);
 
             var model = Model.Load("Content/Models/Cube12x12.obj");
             var topology = new Topology(model.Meshes[0], 3);

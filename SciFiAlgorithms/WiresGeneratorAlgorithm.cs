@@ -281,26 +281,44 @@ namespace SciFiAlgorithms
             Vector3 direction,
             float radius)
         {
-            float epsilon = 0.01f;
-            float monitorAdjustment = 0.1f;
-
             var cosa = Vector3.Dot(Vector3.UnitY, normal);
             var acos = MathF.Acos(cosa);
             var angle = MathHelper.RadiansToDegrees(acos);
 
             if (angle >= Trashold)
             {
-                var monitorPosition = position + (2 * radius + monitorAdjustment) * normal;
-                var monitorRotation = Mathematics.ApproximatelyEqualEpsilon(normal, -Vector3.UnitZ, epsilon)
-                    ? Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.Pi)
-                    : Mathematics.FromToRotation(Vector3.UnitZ, normal);
-
-                InstantiateMonitor(engine, monitorPosition, monitorRotation);
+                InstantiateMonitor(engine, position, normal, direction, radius);
             }
             else
             {
                 InstantiateWireSource(engine, position, normal, direction, radius);
             }
+        }
+
+        private static void InstantiateMonitor(
+            Engine engine,
+            Vector3 position,
+            Vector3 normal,
+            Vector3 direction,
+            float radius)
+        {
+            float epsilon = 0.01f;
+            float monitorAdjustment = 0.1f;
+            var right = Vector3.Cross(normal, direction);
+
+            var rotation = Mathematics.ApproximatelyEqualEpsilon(Vector3.UnitZ, -normal, epsilon)
+                ? Quaternion.FromAxisAngle(right, MathHelper.Pi)
+                : Mathematics.FromToRotation(Vector3.UnitZ, normal);
+
+            var up = Vector3.Normalize(Vector3.Transform(Vector3.UnitY, rotation));
+            var yAxis = Vector3.Normalize(Vector3.UnitY - Vector3.Dot(Vector3.UnitY, normal) * normal);
+
+            rotation = Mathematics.ApproximatelyEqualEpsilon(up, -yAxis, epsilon)
+                ? Quaternion.FromAxisAngle(normal, MathHelper.Pi) * rotation
+                : Mathematics.FromToRotation(up, yAxis) * rotation;
+
+            position += (2 * radius + monitorAdjustment) * normal; ;
+            InstantiateMonitor(engine, position, rotation);
         }
 
         private static void InstantiateWireSource(
