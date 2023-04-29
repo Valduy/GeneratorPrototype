@@ -3,7 +3,6 @@ using GameEngine.Core;
 using GameEngine.Graphics;
 using GameEngine.Helpers;
 using GameEngine.Mathematics;
-using GameEngine.Utils;
 using Graph;
 using OpenTK.Mathematics;
 using System.Drawing;
@@ -197,12 +196,20 @@ namespace SciFiAlgorithms
                 ? Quaternion.FromAxisAngle(right, MathHelper.Pi)
                 : Mathematics.FromToRotation(Vector3.UnitY, direction);
 
-            var xAxis = Vector3.Normalize(Vector3.Transform(Vector3.UnitX, rotation));
+            var xAxis = Vector3.Transform(Vector3.UnitX, rotation);
+            var zAxis = Vector3.Transform(Vector3.UnitZ, rotation);
+            var crossWithXAxis = Vector3.Cross(xAxis, normal);
+            var crossWithZAxis = Vector3.Cross(zAxis, normal);
 
-            if (!Mathematics.ApproximatelyEqualEpsilon(xAxis, -normal, epsilon))
+            if (crossWithXAxis.Length > crossWithZAxis.Length)
             {
-                var rotationAxis = Vector3.Cross(xAxis, normal);
+                var rotationAxis = crossWithXAxis.Normalized();
                 rotation = Mathematics.FromToRotation(rotationAxis, xAxis, normal) * rotation;
+            }
+            else
+            {
+                var rotationAxis = crossWithZAxis.Normalized();
+                rotation = Mathematics.FromToRotation(rotationAxis, zAxis, normal) * rotation;
             }
 
             InstantiateVentilationJoint(engine, position, rotation);
