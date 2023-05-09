@@ -5,7 +5,6 @@ using GameEngine.Mathematics;
 using Graph;
 using MeshTopology;
 using OpenTK.Mathematics;
-using System.Drawing;
 using UVWfc.Helpers;
 using UVWfc.LevelGraph;
 using UVWfc.Props.Algorithms;
@@ -14,10 +13,6 @@ namespace UVWfc.Props
 {
     public class PropsGenerator
     {
-        public static readonly Color PipesColor = Color.FromArgb(255, 217, 0);
-        public static readonly Color WireColor = Color.FromArgb(255, 0, 24);
-        public static readonly Color VentilationColor = Color.FromArgb(255, 60, 246);
-
         private List<ICellAlgorithm> _cellAlgorithms = new();
         private List<INetAlgorithm> _netAlgorithms = new();
 
@@ -35,10 +30,10 @@ namespace UVWfc.Props
             return this;
         }
 
-        public void Generate(Engine engine, Topology topology, List<Cell> cells, int size)
+        public void Generate(Engine engine, Topology topology, List<Cell> cells, int textureSize)
         {
-            var nets = ExtractNets(topology, cells, size);
-            ProcessCells(engine, topology, cells, size);
+            var nets = ExtractNets(topology, cells, textureSize);
+            ProcessCells(engine, topology, cells, textureSize);
             ProcessNets(engine, nets);
         }
 
@@ -101,14 +96,14 @@ namespace UVWfc.Props
         }
         #endregion ForDebug
 
-        private List<Net<LogicalNode>> ExtractNets(Topology topology, List<Cell> cells, int size)
+        private List<Net<LogicalNode>> ExtractNets(Topology topology, List<Cell> cells, int textureSize)
         {
-            var cellToLogicalNode = CreateLogicalNodes(topology, cells, size);
+            var cellToLogicalNode = CreateLogicalNodes(topology, cells, textureSize);
             var net = ConnectLogicalNodes(cells, cellToLogicalNode);
             return net.GetSubNets().ToList();
         }
 
-        private Dictionary<Cell, LogicalNode> CreateLogicalNodes(Topology topology, List<Cell> cells, int size)
+        private Dictionary<Cell, LogicalNode> CreateLogicalNodes(Topology topology, List<Cell> cells, int textureSize)
         {
             var cellToLogicalNode = new Dictionary<Cell, LogicalNode>();
 
@@ -120,7 +115,7 @@ namespace UVWfc.Props
                 {
                     if (netAlgorithm.CanProcessRule(rule))
                     {
-                        var corners = GetNodeCorners(topology, cell, size);
+                        var corners = GetNodeCorners(topology, cell, textureSize);
                         var connections = netAlgorithm.GetRuleConnections(rule);
                         cellToLogicalNode[cell] = new LogicalNode(corners, rule, connections);
                     }
@@ -173,13 +168,13 @@ namespace UVWfc.Props
             return net;
         }
 
-        private static List<Vector3> GetNodeCorners(Topology topology, Cell cell, int size)
+        private static List<Vector3> GetNodeCorners(Topology topology, Cell cell, int textureSize)
         {
             var corners = new List<Vector3>();
 
             foreach (var uv in cell)
             {
-                var point = GetPoint(topology, uv, size);
+                var point = GetPoint(topology, uv, textureSize);
                 corners.Add(point);
             }
 
@@ -214,11 +209,12 @@ namespace UVWfc.Props
             throw new ArgumentException();
         }
 
-        private void ProcessCells(Engine engine, Topology topology, List<Cell> cells, int size)
+        private void ProcessCells(Engine engine, Topology topology, List<Cell> cells, int textureSize)
         {
             foreach (var cell in cells)
             {
-                var node = new LogicalNode(GetNodeCorners(topology, cell, size), cell.Rules[0]);
+                var corners = GetNodeCorners(topology, cell, textureSize);
+                var node = new LogicalNode(corners, cell.Rules[0]);
 
                 foreach (var cellAlgorithm in _cellAlgorithms)
                 {

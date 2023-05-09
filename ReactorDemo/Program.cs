@@ -110,7 +110,7 @@ namespace ReactorDemo
             var cells = LevelGraphCreator.CreateGraph(topology, LogicalResolution, textureSize, cellSize);
 
             var wfcGenerator = new WfcGenerator();
-            wfcGenerator.GraphWfc(cells, cell => SelectRuleSet(cell, wallRules, ceilRules));
+            wfcGenerator.Wfc(cells, cell => SelectRuleSet(cell, wallRules, ceilRules));
 
             var texture = TextureCreator.CreateDetailedTexture(cells, textureSize, cellSize);
             var bmp = TextureHelper.TextureToBitmap(texture, textureSize);

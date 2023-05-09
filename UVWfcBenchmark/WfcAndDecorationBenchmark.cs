@@ -15,7 +15,7 @@ namespace UVWfcBenchmark
         private WfcGenerator _wfcGenerator;
         private PropsGenerator _propsGenerator;        
         private List<Cell> _cells;
-        private RuleSetSelectorCallback _ruleSetSelector;
+        private RuleSetSelector _ruleSetSelector;
         private int _textureSize;
 
         public WfcAndDecorationBenchmark(
@@ -23,7 +23,7 @@ namespace UVWfcBenchmark
             WfcGenerator wfcGenerator,
             PropsGenerator propsGenerator,
             List<Cell> cells,
-            RuleSetSelectorCallback ruleSetSelector,
+            RuleSetSelector ruleSetSelector,
             int textureSize)
         {            
             _topology = topology;
@@ -46,7 +46,7 @@ namespace UVWfcBenchmark
                 throw new Exception("Benchmark is not initialized.");
             }
 
-            _wfcGenerator.GraphWfc(_cells, _ruleSetSelector);
+            _wfcGenerator.Wfc(_cells, _ruleSetSelector);
             _propsGenerator.Generate(_engine, _topology, _cells, _textureSize);
         }
 

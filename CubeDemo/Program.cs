@@ -130,7 +130,7 @@ namespace CubeDemo
             var cells = LevelGraphCreator.CreateGraph(topology, LogicalResolution, textureSize, cellSize);
 
             var wfcGenerator = new WfcGenerator();
-            wfcGenerator.GraphWfc(cells, cell => SelectRuleSet(cell, wallRules, floorRules, ceilRules));
+            wfcGenerator.Wfc(cells, cell => SelectRuleSet(cell, wallRules, floorRules, ceilRules));
 
             var texture = TextureCreator.CreateDetailedTexture(cells, textureSize, cellSize);
             var bmp = TextureHelper.TextureToBitmap(texture, textureSize);

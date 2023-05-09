@@ -152,7 +152,7 @@ namespace LevelDemo
             var wfcGenerator = new WfcGenerator();
             wfcGenerator.Observated += () => Console.WriteLine("Observated");
             wfcGenerator.Deadlocked += () => Console.WriteLine("Deadlocked");
-            wfcGenerator.GraphWfc(cells, cell => SelectRuleSet(cell, wallRules, floorRules, ceilRules));
+            wfcGenerator.Wfc(cells, cell => SelectRuleSet(cell, wallRules, floorRules, ceilRules));
 
             var texture = TextureCreator.CreateDetailedTexture(cells, textureSize, cellSize);
             var bmp = TextureHelper.TextureToBitmap(texture, textureSize);

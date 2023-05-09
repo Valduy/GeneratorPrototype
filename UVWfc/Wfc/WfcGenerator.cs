@@ -1,5 +1,4 @@
 ﻿using GameEngine.Helpers;
-using OpenTK.Mathematics;
 using System.Drawing;
 using TextureUtils;
 using UVWfc.LevelGraph;
@@ -8,12 +7,12 @@ namespace UVWfc.Wfc
 {
     public class WfcGenerator
     {
-        public delegate List<Rule> RuleSetSelectorCallback(Cell cell);
+        public delegate List<Rule> RuleSetSelector(Cell cell);
 
         public event Action? Observated;
         public event Action? Deadlocked;
 
-        public void GraphWfc(List<Cell> cells, RuleSetSelectorCallback ruleSetSelector)
+        public void Wfc(List<Cell> cells, RuleSetSelector ruleSetSelector)
         {
             var forRecalculation = new List<Cell>();
 

@@ -10,12 +10,12 @@ namespace UVWfcBenchmark
         private Engine? _engine;
         private WfcGenerator _wfcGenerator;
         private List<Cell> _cells;
-        private RuleSetSelectorCallback _ruleSetSelector;
+        private RuleSetSelector _ruleSetSelector;
 
         public WfcBenchmark(
             WfcGenerator wfcGenerator,
             List<Cell> cells,
-            RuleSetSelectorCallback ruleSetSelector)
+            RuleSetSelector ruleSetSelector)
         {
             _wfcGenerator = wfcGenerator;
             _cells = cells;
@@ -34,7 +34,7 @@ namespace UVWfcBenchmark
                 throw new Exception("Benchmark is not initialized.");
             }
 
-            _wfcGenerator.GraphWfc(_cells, _ruleSetSelector);
+            _wfcGenerator.Wfc(_cells, _ruleSetSelector);
         }
 
         public void Terminate()

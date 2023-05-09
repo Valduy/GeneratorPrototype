@@ -27,7 +27,7 @@ namespace UVWfc.LevelGraph
         public Vector3 Normal;
 
         public readonly NeighbourData?[] Neighbours = new NeighbourData?[NeighboursCount];
-        public readonly List<Rule> Rules = new List<Rule>();
+        public readonly List<Rule> Rules = new();
 
         public Vector2 this[int index] => _points[index];
 
