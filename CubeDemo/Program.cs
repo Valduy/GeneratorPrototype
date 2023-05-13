@@ -150,10 +150,10 @@ namespace CubeDemo
             operatorGo.Add<LightComponent>();
             operatorGo.Position = new Vector3(0, 0, 0);
 
-            var roomGo = engine.CreateGameObject();
-            var roomRenderer = roomGo.Add<MaterialRenderComponent>();
-            roomRenderer.Model = model;
-            roomRenderer.Material = ModelMaterial;
+            var cube = engine.CreateGameObject();
+            var renderer = cube.Add<MaterialRenderComponent>();
+            renderer.Model = model;
+            renderer.Material = ModelMaterial;
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);

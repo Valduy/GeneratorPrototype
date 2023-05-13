@@ -6,21 +6,21 @@ using GameEngine.Mathematics;
 using GameEngine.Utils;
 using MeshTopology;
 using OpenTK.Mathematics;
-using SciFiAlgorithms;
+using PlanetAlgorithms;
 using TextureUtils;
 using UVWfc.LevelGraph;
 using UVWfc.Props;
 using UVWfc.Textures;
 using UVWfc.Wfc;
 
-namespace ReactorDemo
+namespace SphereDemo
 {
     public class Program
     {
-        public const int LogicalResolution = 4;
-        public const int DetailedResolution = 20;
+        public const int LogicalResolution = 2;
+        public const int DetailedResolution = 2;
 
-        private const float CeilTrashold = 45.0f;
+        private const float PoleTrashold = 25.0f;
 
         private static Material WallMaterial = new Material
         {
@@ -51,17 +51,25 @@ namespace ReactorDemo
             var cosa = Vector3.Dot(-Vector3.UnitY, normal);
             var acos = MathF.Acos(cosa);
             var angle = MathHelper.RadiansToDegrees(acos);
-            return angle < CeilTrashold;
+            return angle < PoleTrashold;
+        }
+
+        private static bool IsFloor(Vector3 normal)
+        {
+            var cosa = Vector3.Dot(Vector3.UnitY, normal);
+            var acos = MathF.Acos(cosa);
+            var angle = MathHelper.RadiansToDegrees(acos);
+            return angle < PoleTrashold;
         }
 
         private static List<Rule> SelectRuleSet(
             Cell cell,
             List<Rule> wallRules,
-            List<Rule> ceilRules)
+            List<Rule> poleRules)
         {
-            if (IsCeil(cell.Normal))
+            if (IsFloor(cell.Normal) || IsCeil(cell.Normal))
             {
-                return ceilRules;
+                return poleRules;
             }
 
             return wallRules;
@@ -71,7 +79,7 @@ namespace ReactorDemo
         {
             var normal = Mathematics.GetNormal(node.Corners);
 
-            if (IsCeil(normal))
+            if (IsCeil(normal) || IsFloor(normal))
             {
                 return FloorMaterial;
             }
@@ -83,34 +91,34 @@ namespace ReactorDemo
         {
             int textureSize = 2048;
             int cellSize = 32;
-            float extrusion = 0.1f;
+            float extrusion = 0.05f;
 
             var random = new Random();
             int seed = random.Next();
             Console.WriteLine(seed);
             CollectionsHelper.UseSeed(seed);
 
-            //CollectionsHelper.UseSeed(177243421);
+            //CollectionsHelper.UseSeed(375065103);
 
-            var model = Model.Load("Content/Models/Reactor.obj");
+            var model = Model.Load("Content/Models/Sphere.obj");
             var topology = new Topology(model.Meshes[0], 3);
 
             var wallRules = RulesLoader.CreateRules(
-                "Content/WallLogical.png",
-                "Content/Rules/WallDetailed.png",
+                "Content/Rules/WallTileSet.png",
+                "Content/Rules/WallTileSet.png",
                 LogicalResolution,
                 DetailedResolution);
 
-            var ceilRules = RulesLoader.CreateRules(
-                "Content/Rules/CeilLogical.png",
-                "Content/Rules/CeilDetailed.png",
+            var poleRules = RulesLoader.CreateRules(
+                "Content/Rules/PoleTileSet.png",
+                "Content/Rules/PoleTileSet.png",
                 LogicalResolution,
                 DetailedResolution);
 
             var cells = LevelGraphCreator.CreateGraph(topology, LogicalResolution, textureSize, cellSize);
 
             var wfcGenerator = new WfcGenerator();
-            wfcGenerator.Wfc(cells, cell => SelectRuleSet(cell, wallRules, ceilRules));
+            wfcGenerator.Wfc(cells, cell => SelectRuleSet(cell, wallRules, poleRules));
 
             var texture = TextureCreator.CreateDetailedTexture(cells, textureSize, cellSize);
             var bmp = TextureHelper.TextureToBitmap(texture, textureSize);
@@ -119,10 +127,7 @@ namespace ReactorDemo
             using var engine = new Engine();
 
             var propsGenerator = new PropsGenerator()
-                .PushCellAlgorithm(new PanelsGeneratorAlgorithm(extrusion, SelectPanelMaterial))
-                .PushNetAlgorithm(new WiresGeneratorAlgorithm(extrusion))
-                .PushNetAlgorithm(new PipesGeneratorAlgorithm(extrusion))
-                .PushNetAlgorithm(new VentilationGeneratorAlgorithm(extrusion));
+                .PushCellAlgorithm(new SurfaceGeneratorAlgorithm());
             propsGenerator.Generate(engine, topology, cells, textureSize);
 
             var operatorGo = engine.CreateGameObject();
@@ -130,10 +135,10 @@ namespace ReactorDemo
             operatorGo.Add<LightComponent>();
             operatorGo.Position = new Vector3(0, 0, 0);
 
-            var reactor = engine.CreateGameObject();
-            var renderer = reactor.Add<MaterialRenderComponent>();
-            renderer.Model = model;
-            renderer.Material = ModelMaterial;
+            //var planet = engine.CreateGameObject();
+            //renderer = planet.Add<MaterialRenderComponent>();
+            //renderer.Model = model;
+            //renderer.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);

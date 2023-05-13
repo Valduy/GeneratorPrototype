@@ -154,11 +154,11 @@ namespace TowerDemo
             var operatorComponent = operatorGo.Add<Operator3DComponent>();
             //operatorComponent.Sensitivity = 0.0f;
 
-            var roomGo = engine.CreateGameObject();
-            var roomRenderer = roomGo.Add<MaterialRenderComponent>();
-            roomRenderer.Model = model;
-            roomRenderer.Material = ModelMaterial;
-            //roomRenderer.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);
+            var tower = engine.CreateGameObject();
+            var renderer = tower.Add<MaterialRenderComponent>();
+            renderer.Model = model;
+            renderer.Material = ModelMaterial;
+            //renderer.Texture = Texture.LoadFromMemory(texture, textureSize, textureSize);
 
             var grid = engine.Grid(20);
             var axis = engine.Axis(2);

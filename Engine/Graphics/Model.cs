@@ -13,16 +13,16 @@ namespace GameEngine.Graphics
         public readonly IReadOnlyList<Mesh> Meshes;
         public readonly Skeleton? Skeleton;
 
-        public Model(Mesh meshes)
+        public Model(Mesh mesh)
         {
             Skeleton = null;
-            Meshes = new List<Mesh> { meshes };            
+            Meshes = new List<Mesh> { mesh };            
         }
 
-        public Model(Skeleton? skeleton, Mesh meshes)
+        public Model(Skeleton? skeleton, Mesh mesh)
         {
             Skeleton = skeleton;
-            Meshes = new List<Mesh> { meshes };            
+            Meshes = new List<Mesh> { mesh };            
         }
 
         public Model(IEnumerable<Mesh> meshes)
