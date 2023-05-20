@@ -197,6 +197,11 @@ namespace PlanetAlgorithms
             }
             else if (IsRock(sequence))
             {
+                if (_random.Next(10) > 1)
+                {
+                    return;
+                }
+
                 InstantiateTower(engine, position, rotation);
             }
         }

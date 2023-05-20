@@ -20,6 +20,12 @@
     <None Update="Content\Models\Palm.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Rules\PoleTileSet.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Rules\WallTileSet.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Models\Ship.fbx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
